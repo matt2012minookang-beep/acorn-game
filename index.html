@@ -10,6 +10,8 @@
       --panel: rgba(255,255,255,.06);
       --border: rgba(255,255,255,.16);
       --text:#ffffff;
+      --accent:#7a2cff;
+      --good:#2ecc71;
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; }
@@ -22,7 +24,7 @@
       user-select:none;
     }
 
-    /* 상단바: 왼쪽 제목 / 오른쪽 도토리 수 */
+    /* 상단바 */
     .topbar{
       position:fixed;
       top:0; left:0; right:0;
@@ -33,8 +35,10 @@
       padding:0 18px;
       background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
       z-index:10;
+      pointer-events:none; /* 상단바가 클릭 방해하지 않게 */
     }
     .title{
+      pointer-events:auto;
       font-weight:800;
       letter-spacing:-0.5px;
       font-size:22px;
@@ -42,13 +46,10 @@
       align-items:center;
       gap:10px;
     }
-    .title .badge{
-      font-size:18px;
-      opacity:.9;
-    }
+    .title .badge{ font-size:18px; opacity:.9; }
 
-    /* 운빨겜 크리스털 느낌: 오른쪽 위 칩 */
     .counter-chip{
+      pointer-events:auto;
       display:flex;
       align-items:center;
       gap:10px;
@@ -70,6 +71,110 @@
       min-width:72px;
       text-align:right;
       letter-spacing:0.2px;
+    }
+
+    /* 왼쪽 상점 버튼 */
+    .shop-btn{
+      position:fixed;
+      top:84px;
+      left:14px;
+      z-index:20;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      font-weight:800;
+    }
+    .shop-btn:active{ transform: scale(0.98); }
+
+    /* 상점 패널 */
+    .shop-panel{
+      position:fixed;
+      top:84px;
+      left:14px;
+      width:min(340px, 86vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      display:none;
+    }
+    .shop-panel.show{ display:block; }
+
+    .shop-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .shop-title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:900;
+      font-size:16px;
+    }
+    .close{
+      cursor:pointer;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:800;
+    }
+
+    .item{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px;
+    }
+    .item-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .item-name{ font-weight:900; }
+    .item-desc{ opacity:.8; font-size:13px; line-height:1.4; margin-top:4px; }
+    .price{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .buy{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+    }
+    .buy:disabled{
+      cursor:not-allowed;
+      opacity:.45;
+      background: rgba(122,44,255,.35);
+    }
+    .owned{
+      margin-top:10px;
+      font-size:12px;
+      opacity:.8;
     }
 
     /* 중앙 클릭 영역 */
@@ -94,6 +199,8 @@
       cursor:pointer;
       transition: transform .06s ease, background .15s ease;
       outline:none;
+      position:relative;
+      overflow:visible;
     }
     .acorn-btn:active{
       transform: scale(0.97);
@@ -105,7 +212,24 @@
       filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
     }
 
-    /* 클릭 피드백 텍스트 */
+    /* +1 떠오르는 텍스트 */
+    .float-text{
+      position:fixed;
+      z-index:50;
+      font-weight:1000;
+      font-size:18px;
+      pointer-events:none;
+      text-shadow: 0 6px 18px rgba(0,0,0,.45);
+      animation: floatUp 700ms ease-out forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes floatUp{
+      0%   { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.05); opacity: 0; }
+    }
+
+    /* 하단 힌트 */
     .hint{
       position:fixed;
       bottom:18px;
@@ -118,6 +242,7 @@
       background: rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.12);
       backdrop-filter: blur(8px);
+      z-index:5;
     }
   </style>
 </head>
@@ -135,37 +260,143 @@
     </div>
   </div>
 
+  <!-- 상점 버튼 -->
+  <div class="shop-btn" id="shopBtn" aria-label="상점 열기">
+    🛒 상점
+  </div>
+
+  <!-- 상점 패널 -->
+  <div class="shop-panel" id="shopPanel" aria-label="상점">
+    <div class="shop-header">
+      <div class="shop-title">🛒 상점</div>
+      <button class="close" id="shopClose">닫기</button>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">클릭 수익 +1</div>
+          <div class="item-desc">클릭할 때마다 도토리를 더 벌어!<br>구매 후: 클릭당 +2</div>
+        </div>
+        <div class="price"><span>🌰</span><span id="upgPrice">20</span></div>
+      </div>
+
+      <button class="buy" id="buyClickUpg">구매</button>
+      <div class="owned" id="ownedHint">미구매</div>
+    </div>
+  </div>
+
   <div class="stage">
     <button class="acorn-btn" id="acornBtn" aria-label="도토리 클릭">
       <div class="acorn">🌰</div>
     </button>
   </div>
 
-  <div class="hint">도토리를 눌러서 모아봐 🌰 (+1)</div>
+  <div class="hint">도토리를 눌러서 모아봐 🌰</div>
 
   <script>
+    // ====== 상태 ======
     let acorn = 0;
+    let clickValue = 1;
+
+    // 업그레이드: 클릭 수익 +1 (20도토리)
+    const CLICK_UPG_COST = 20;
+    let clickUpgOwned = false;
 
     const countEl = document.getElementById("count");
     const btn = document.getElementById("acornBtn");
 
+    const shopBtn = document.getElementById("shopBtn");
+    const shopPanel = document.getElementById("shopPanel");
+    const shopClose = document.getElementById("shopClose");
+
+    const buyClickUpg = document.getElementById("buyClickUpg");
+    const upgPriceEl = document.getElementById("upgPrice");
+    const ownedHint = document.getElementById("ownedHint");
+
     function render(){
       countEl.textContent = acorn.toLocaleString("ko-KR");
+
+      upgPriceEl.textContent = CLICK_UPG_COST.toLocaleString("ko-KR");
+
+      // 버튼 상태
+      if (clickUpgOwned){
+        buyClickUpg.disabled = true;
+        buyClickUpg.textContent = "구매 완료";
+        ownedHint.textContent = "구매됨 (클릭당 +" + clickValue + ")";
+      } else {
+        buyClickUpg.disabled = acorn < CLICK_UPG_COST;
+        buyClickUpg.textContent = "구매";
+        ownedHint.textContent = "미구매 (현재 클릭당 +" + clickValue + ")";
+      }
     }
 
-    function clickAcorn(){
-      acorn += 1;
+    // 누른 위치에 +n 떠오르게
+    function spawnFloatText(x, y, n){
+      const el = document.createElement("div");
+      el.className = "float-text";
+      el.textContent = "+" + n;
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+      // 숫자 크면 살짝 강조
+      if (n >= 2) el.style.color = "#9d7bff";
+      else el.style.color = "#ffffff";
+      document.body.appendChild(el);
+      el.addEventListener("animationend", ()=> el.remove());
+    }
+
+    function clickAcorn(e){
+      acorn += clickValue;
       render();
+
+      // 마우스/터치 위치
+      let x, y;
+      if (e && e.touches && e.touches[0]){
+        x = e.touches[0].clientX;
+        y = e.touches[0].clientY;
+      } else if (e){
+        x = e.clientX;
+        y = e.clientY;
+      } else {
+        // 키보드로 눌렀을 때는 버튼 중앙
+        const r = btn.getBoundingClientRect();
+        x = r.left + r.width/2;
+        y = r.top + r.height/2;
+      }
+      spawnFloatText(x, y, clickValue);
     }
 
+    // 클릭 / 터치
     btn.addEventListener("click", clickAcorn);
+    btn.addEventListener("touchstart", (e)=>{ clickAcorn(e); }, {passive:true});
 
-    // (선택) 스페이스/엔터로도 클릭 가능하게
+    // 스페이스/엔터
     btn.addEventListener("keydown", (e)=>{
       if(e.key === " " || e.key === "Enter"){
         e.preventDefault();
-        clickAcorn();
+        clickAcorn(null);
       }
+    });
+
+    // 상점 토글
+    function openShop(){ shopPanel.classList.add("show"); }
+    function closeShop(){ shopPanel.classList.remove("show"); }
+
+    shopBtn.addEventListener("click", ()=>{
+      if (shopPanel.classList.contains("show")) closeShop();
+      else openShop();
+    });
+    shopClose.addEventListener("click", closeShop);
+
+    // 업그레이드 구매
+    buyClickUpg.addEventListener("click", ()=>{
+      if (clickUpgOwned) return;
+      if (acorn < CLICK_UPG_COST) return;
+
+      acorn -= CLICK_UPG_COST;
+      clickUpgOwned = true;
+      clickValue = 2; // 클릭당 +2로 변경
+      render();
     });
 
     render();
