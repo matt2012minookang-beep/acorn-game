@@ -398,6 +398,32 @@
       background: rgba(255,90,122,.10);
     }
     .menu-btn:active{ transform: scale(0.99); }
+
+    /* 토스트(경고) */
+    .toast{
+      position:fixed;
+      left:50%;
+      top:92px;
+      transform: translateX(-50%);
+      z-index:200;
+      min-width: min(420px, 92vw);
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,90,122,.35);
+      background: rgba(255,90,122,.14);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      display:none;
+      font-weight:900;
+    }
+    .toast small{
+      display:block;
+      margin-top:4px;
+      opacity:.8;
+      font-weight:700;
+      font-size:12px;
+      line-height:1.4;
+    }
   </style>
 </head>
 
@@ -413,6 +439,11 @@
       <span class="emoji">🌰</span>
       <span id="count" class="count">0</span>
     </div>
+  </div>
+
+  <div class="toast" id="toast">
+    ⚠️ 핵 감지: 계정이 초기화되었습니다.
+    <small>1초에 20회 초과 클릭이 감지되어, 진행 상황을 초기화했어요.</small>
   </div>
 
   <!-- 닉네임 영역(클릭 메뉴) -->
@@ -494,7 +525,7 @@
     // =====================
     // 저장
     // =====================
-    const LS_KEY = "dotori_game_profiles_v2";
+    const LS_KEY = "dotori_game_profiles_v3";
 
     function loadProfiles(){
       try{
@@ -533,6 +564,16 @@
       { toTier: 3, toValue: 8, cost: 250, name: "클릭 수익 +4", desc: "구매 후: 클릭당 <b>+8</b>" }
     ];
 
+    // =====================
+    // 오토 방지/감지 설정
+    // =====================
+    const CLICK_COOLDOWN_MS = 10;    // 0.01초
+    const HACK_WINDOW_MS = 1000;     // 1초 윈도우
+    const HACK_THRESHOLD = 20;       // 1초에 20번 초과면 핵 감지
+
+    let lastClickTime = 0;
+    let clickTimes = [];
+
     // DOM
     const countEl = document.getElementById("count");
     const btn = document.getElementById("acornBtn");
@@ -546,7 +587,6 @@
     const upgPrice = document.getElementById("upgPrice");
     const buyUpgrade = document.getElementById("buyUpgrade");
     const upgHint = document.getElementById("upgHint");
-    const upgradeItem = document.getElementById("upgradeItem");
 
     const overlay = document.getElementById("overlay");
     const newNick = document.getElementById("newNick");
@@ -564,6 +604,15 @@
     const btnLogout = document.getElementById("btnLogout");
     const btnResetNick = document.getElementById("btnResetNick");
 
+    const toast = document.getElementById("toast");
+    let toastTimer = null;
+
+    function showToast(){
+      toast.style.display = "block";
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2400);
+    }
+
     function setLocked(isLocked){
       const lockedEls = document.querySelectorAll(".locked");
       lockedEls.forEach(el=>{
@@ -579,7 +628,6 @@
     }
 
     function normalizeByTier(){
-      // tier 기준으로 clickValue 보정
       if(tier <= 0){ tier = 0; clickValue = 1; }
       else if(tier === 1){ clickValue = 2; }
       else if(tier === 2){ clickValue = 4; }
@@ -595,8 +643,12 @@
       tier = Number(p.tier ?? 0) || 0;
       clickValue = Number(p.clickValue ?? 1) || 1;
 
-      // 저장 값이 꼬였어도 tier 우선
       normalizeByTier();
+
+      // 오토 감지 상태 초기화
+      lastClickTime = 0;
+      clickTimes = [];
+
       return true;
     }
 
@@ -605,6 +657,11 @@
       acorn = 0;
       tier = 0;
       clickValue = 1;
+      normalizeByTier();
+
+      lastClickTime = 0;
+      clickTimes = [];
+
       saveCurrent();
     }
 
@@ -613,22 +670,25 @@
       acorn = 0;
       tier = 0;
       clickValue = 1;
+      normalizeByTier();
+
+      // 오토 감지 상태도 초기화
+      lastClickTime = 0;
+      clickTimes = [];
+
       saveCurrent();
     }
 
     function logout(){
-      // 저장 후 나가기
       saveCurrent();
       currentNick = null;
       closeShop();
       closeNickMenu();
 
-      // 잠금 + 오버레이 다시
       setLocked(true);
       nickWrap.style.display = "none";
       overlay.style.display = "flex";
 
-      // 입력칸 초기화/메시지 초기화/버튼 비활성
       newNick.value = "";
       oldNick.value = "";
       setMsg(newMsg, "", null);
@@ -636,13 +696,10 @@
       newStart.disabled = true;
       oldEnter.disabled = true;
 
-      // 화면 카운트도 0처럼 보이게
       countEl.textContent = "0";
     }
 
     function getNextUpgrade(){
-      // tier에 따라 다음 업그레이드 하나만 노출
-      // tier 0 -> steps[0], tier1 -> steps[1], tier2 -> steps[2], tier3 -> none
       if(tier === 0) return UPGRADE_STEPS[0];
       if(tier === 1) return UPGRADE_STEPS[1];
       if(tier === 2) return UPGRADE_STEPS[2];
@@ -659,7 +716,6 @@
 
       const next = getNextUpgrade();
       if(!next){
-        // 더 이상 업그레이드 없음
         upgName.textContent = "업그레이드 완료";
         upgDesc.innerHTML = "현재 클릭당 <b>+" + clickValue + "</b>";
         upgPrice.textContent = "-";
@@ -696,9 +752,35 @@
       el.addEventListener("animationend", ()=> el.remove());
     }
 
+    function handleHackDetected(){
+      // 핵 감지: 계정 초기화
+      resetCurrentNickProgress();
+      render();
+      closeShop();
+      closeNickMenu();
+      showToast();
+    }
+
     function clickAcorn(e){
       if(!currentNick) return;
 
+      const now = performance.now();
+
+      // 1) 쿨다운(0.01초)
+      if(now - lastClickTime < CLICK_COOLDOWN_MS) return;
+      lastClickTime = now;
+
+      // 2) 1초에 20회 초과 => 핵 감지(계정 초기화)
+      clickTimes.push(now);
+      const cutoff = now - HACK_WINDOW_MS;
+      // 오래된 기록 제거
+      while(clickTimes.length && clickTimes[0] < cutoff) clickTimes.shift();
+      if(clickTimes.length > HACK_THRESHOLD){
+        handleHackDetected();
+        return;
+      }
+
+      // 정상 클릭 처리
       acorn += clickValue;
       render();
       saveCurrent();
@@ -771,7 +853,6 @@
     });
 
     document.addEventListener("click", ()=>{
-      // 바깥 클릭하면 메뉴 닫기
       closeNickMenu();
     });
 
@@ -782,10 +863,8 @@
 
     btnResetNick.addEventListener("click", (e)=>{
       e.stopPropagation();
-      // 진행도 초기화
       resetCurrentNickProgress();
       render();
-      saveCurrent();
       closeNickMenu();
       closeShop();
     });
