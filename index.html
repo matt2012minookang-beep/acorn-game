@@ -11,6 +11,7 @@
       --border: rgba(255,255,255,.16);
       --text:#ffffff;
       --accent:#7a2cff;
+      --danger:#ff5a7a;
       --good:#2ecc71;
     }
     *{ box-sizing:border-box; }
@@ -35,7 +36,7 @@
       padding:0 18px;
       background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
       z-index:10;
-      pointer-events:none; /* 상단바가 클릭 방해하지 않게 */
+      pointer-events:none;
     }
     .title{
       pointer-events:auto;
@@ -98,7 +99,7 @@
       position:fixed;
       top:84px;
       left:14px;
-      width:min(340px, 86vw);
+      width:min(360px, 90vw);
       z-index:30;
       background: rgba(15,15,22,.78);
       border:1px solid rgba(255,255,255,.16);
@@ -139,7 +140,10 @@
       border:1px solid rgba(255,255,255,.14);
       border-radius:16px;
       padding:12px;
+      margin-bottom:10px;
     }
+    .item:last-child{ margin-bottom:0; }
+
     .item-top{
       display:flex;
       justify-content:space-between;
@@ -185,7 +189,6 @@
       justify-content:center;
       padding-top:72px;
     }
-
     .acorn-btn{
       width:min(360px, 72vw);
       height:min(360px, 72vw);
@@ -200,7 +203,6 @@
       transition: transform .06s ease, background .15s ease;
       outline:none;
       position:relative;
-      overflow:visible;
     }
     .acorn-btn:active{
       transform: scale(0.97);
@@ -212,7 +214,7 @@
       filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
     }
 
-    /* +1 떠오르는 텍스트 */
+    /* +n 떠오르는 텍스트 */
     .float-text{
       position:fixed;
       z-index:50;
@@ -244,8 +246,123 @@
       backdrop-filter: blur(8px);
       z-index:5;
     }
+
+    /* 닉네임 시작 모달 */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(10px);
+      z-index:100;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(520px, 96vw);
+      border-radius:22px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 28px 110px rgba(0,0,0,.6);
+      padding:18px;
+    }
+    .modal h2{
+      margin:0 0 6px;
+      font-size:20px;
+      letter-spacing:-.3px;
+    }
+    .modal .sub{
+      margin:0 0 14px;
+      opacity:.75;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .section{
+      padding:12px;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .section-title{
+      font-weight:900;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    input[type="text"]{
+      flex:1;
+      min-width: 200px;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      color:#fff;
+      outline:none;
+    }
+    .btn{
+      padding:11px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+      min-width: 110px;
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background: rgba(122,44,255,.35);
+    }
+    .msg{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.85;
+    }
+    .msg.good{ color: rgba(46, 204, 113, .95); }
+    .msg.bad{ color: rgba(255, 90, 122, .95); }
+    .tiny{
+      margin-top:10px;
+      opacity:.6;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    /* 게임 시작 전에는 클릭/상점 막기 */
+    .locked{
+      pointer-events:none;
+      filter: blur(0px);
+    }
+    .nick-chip{
+      position:fixed;
+      top:84px;
+      right:14px;
+      z-index:20;
+      padding:9px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:900;
+      display:none;
+    }
   </style>
 </head>
+
 <body>
 
   <div class="topbar">
@@ -260,8 +377,10 @@
     </div>
   </div>
 
+  <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
+
   <!-- 상점 버튼 -->
-  <div class="shop-btn" id="shopBtn" aria-label="상점 열기">
+  <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
     🛒 상점
   </div>
 
@@ -272,37 +391,122 @@
       <button class="close" id="shopClose">닫기</button>
     </div>
 
+    <!-- 업그레이드 1: +2 -->
     <div class="item">
       <div class="item-top">
         <div>
           <div class="item-name">클릭 수익 +1</div>
-          <div class="item-desc">클릭할 때마다 도토리를 더 벌어!<br>구매 후: 클릭당 +2</div>
+          <div class="item-desc">구매 후: 클릭당 <b>+2</b></div>
         </div>
-        <div class="price"><span>🌰</span><span id="upgPrice">20</span></div>
+        <div class="price"><span>🌰</span><span id="upg1Price">20</span></div>
       </div>
+      <button class="buy" id="buyUpg1">구매</button>
+      <div class="owned" id="upg1Hint">미구매</div>
+    </div>
 
-      <button class="buy" id="buyClickUpg">구매</button>
-      <div class="owned" id="ownedHint">미구매</div>
+    <!-- 업그레이드 2: +4 (업그레이드 1 구매 후 열림) -->
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">클릭 수익 +2</div>
+          <div class="item-desc">업그레이드 1 구매 후 가능<br>구매 후: 클릭당 <b>+4</b></div>
+        </div>
+        <div class="price"><span>🌰</span><span id="upg2Price">100</span></div>
+      </div>
+      <button class="buy" id="buyUpg2">구매</button>
+      <div class="owned" id="upg2Hint">잠김</div>
     </div>
   </div>
 
   <div class="stage">
-    <button class="acorn-btn" id="acornBtn" aria-label="도토리 클릭">
+    <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
       <div class="acorn">🌰</div>
     </button>
   </div>
 
   <div class="hint">도토리를 눌러서 모아봐 🌰</div>
 
+  <!-- 닉네임 오버레이 -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>닉네임을 입력하세요!</h2>
+      <p class="sub">닉네임마다 진행 상황이 저장됩니다. (이 브라우저/기기 안에서만 저장)</p>
+
+      <div class="grid">
+
+        <!-- 신규 닉네임 -->
+        <div class="section">
+          <div class="section-title">🆕 새로 시작하기</div>
+          <div class="row">
+            <input id="newNick" type="text" placeholder="새 닉네임" maxlength="20" />
+            <button class="btn" id="newStart" disabled>시작</button>
+          </div>
+          <div class="msg" id="newMsg"></div>
+          <div class="tiny">입력하면 아래에 <b>사용 가능한 닉네임</b> / <b>이미 사용중인 닉네임</b>이 표시됩니다.</div>
+        </div>
+
+        <!-- 기존 닉네임 -->
+        <div class="section">
+          <div class="section-title">🔁 이미 사용중이신 닉네임이 있나요?</div>
+          <div class="row">
+            <input id="oldNick" type="text" placeholder="기존 닉네임" maxlength="20" />
+            <button class="btn" id="oldEnter" disabled>들어가기</button>
+          </div>
+          <div class="msg" id="oldMsg"></div>
+          <div class="tiny">기존 닉네임이 맞으면 저장된 상태로 들어갑니다.</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script>
-    // ====== 상태 ======
+    // =====================
+    // 저장 구조
+    // =====================
+    const LS_KEY = "dotori_game_profiles_v1";
+
+    function loadProfiles(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(!raw) return {};
+        const obj = JSON.parse(raw);
+        if(obj && typeof obj === "object") return obj;
+        return {};
+      }catch(e){
+        return {};
+      }
+    }
+    function saveProfiles(profiles){
+      localStorage.setItem(LS_KEY, JSON.stringify(profiles));
+    }
+
+    function sanitizeNick(n){
+      // 앞뒤 공백 제거 + 중간 연속 공백 정리
+      return (n ?? "").trim().replace(/\s+/g, " ");
+    }
+    function isValidNick(n){
+      // 너무 빡빡하게 제한 안 하고: 1~20, 공백만 아니면 OK
+      const s = sanitizeNick(n);
+      return s.length >= 1 && s.length <= 20;
+    }
+
+    // =====================
+    // 게임 상태
+    // =====================
+    let profiles = loadProfiles();
+    let currentNick = null;
+
     let acorn = 0;
     let clickValue = 1;
+    let upg1Owned = false; // +2
+    let upg2Owned = false; // +4
 
-    // 업그레이드: 클릭 수익 +1 (20도토리)
-    const CLICK_UPG_COST = 20;
-    let clickUpgOwned = false;
+    // 상수
+    const UPG1_COST = 20;
+    const UPG2_COST = 100;
 
+    // DOM
     const countEl = document.getElementById("count");
     const btn = document.getElementById("acornBtn");
 
@@ -310,46 +514,135 @@
     const shopPanel = document.getElementById("shopPanel");
     const shopClose = document.getElementById("shopClose");
 
-    const buyClickUpg = document.getElementById("buyClickUpg");
-    const upgPriceEl = document.getElementById("upgPrice");
-    const ownedHint = document.getElementById("ownedHint");
+    const upg1PriceEl = document.getElementById("upg1Price");
+    const upg2PriceEl = document.getElementById("upg2Price");
+
+    const buyUpg1 = document.getElementById("buyUpg1");
+    const buyUpg2 = document.getElementById("buyUpg2");
+
+    const upg1Hint = document.getElementById("upg1Hint");
+    const upg2Hint = document.getElementById("upg2Hint");
+
+    const overlay = document.getElementById("overlay");
+    const newNick = document.getElementById("newNick");
+    const newStart = document.getElementById("newStart");
+    const newMsg = document.getElementById("newMsg");
+
+    const oldNick = document.getElementById("oldNick");
+    const oldEnter = document.getElementById("oldEnter");
+    const oldMsg = document.getElementById("oldMsg");
+
+    const nickChip = document.getElementById("nickChip");
+    const nickText = document.getElementById("nickText");
+
+    function setLocked(isLocked){
+      const lockedEls = document.querySelectorAll(".locked");
+      lockedEls.forEach(el=>{
+        el.style.pointerEvents = isLocked ? "none" : "auto";
+        el.style.opacity = isLocked ? "0.75" : "1";
+      });
+    }
+
+    function saveCurrent(){
+      if(!currentNick) return;
+      profiles[currentNick] = {
+        acorn,
+        clickValue,
+        upg1Owned,
+        upg2Owned
+      };
+      saveProfiles(profiles);
+    }
+
+    function loadProfile(nick){
+      const p = profiles[nick];
+      if(!p) return false;
+
+      currentNick = nick;
+      acorn = Number(p.acorn ?? 0) || 0;
+      clickValue = Number(p.clickValue ?? 1) || 1;
+      upg1Owned = !!p.upg1Owned;
+      upg2Owned = !!p.upg2Owned;
+
+      // 클릭값이 이상하게 저장돼도 업그레이드 상태로 보정
+      if(upg2Owned) clickValue = 4;
+      else if(upg1Owned) clickValue = 2;
+      else clickValue = 1;
+
+      return true;
+    }
+
+    function createProfile(nick){
+      currentNick = nick;
+      acorn = 0;
+      clickValue = 1;
+      upg1Owned = false;
+      upg2Owned = false;
+      saveCurrent();
+    }
 
     function render(){
       countEl.textContent = acorn.toLocaleString("ko-KR");
 
-      upgPriceEl.textContent = CLICK_UPG_COST.toLocaleString("ko-KR");
+      upg1PriceEl.textContent = UPG1_COST.toLocaleString("ko-KR");
+      upg2PriceEl.textContent = UPG2_COST.toLocaleString("ko-KR");
 
-      // 버튼 상태
-      if (clickUpgOwned){
-        buyClickUpg.disabled = true;
-        buyClickUpg.textContent = "구매 완료";
-        ownedHint.textContent = "구매됨 (클릭당 +" + clickValue + ")";
+      // 닉네임 표시
+      if(currentNick){
+        nickChip.style.display = "block";
+        nickText.textContent = currentNick;
+      }
+
+      // 업그레이드 1 버튼 상태
+      if(upg1Owned){
+        buyUpg1.disabled = true;
+        buyUpg1.textContent = "구매 완료";
+        upg1Hint.textContent = "구매됨 (현재 클릭당 +" + clickValue + ")";
       } else {
-        buyClickUpg.disabled = acorn < CLICK_UPG_COST;
-        buyClickUpg.textContent = "구매";
-        ownedHint.textContent = "미구매 (현재 클릭당 +" + clickValue + ")";
+        buyUpg1.disabled = acorn < UPG1_COST;
+        buyUpg1.textContent = "구매";
+        upg1Hint.textContent = "미구매 (현재 클릭당 +" + clickValue + ")";
+      }
+
+      // 업그레이드 2 버튼 상태: 업그레이드 1이 있어야 열림
+      if(!upg1Owned){
+        buyUpg2.disabled = true;
+        buyUpg2.textContent = "잠김";
+        upg2Hint.textContent = "업그레이드 1을 먼저 구매해야 합니다.";
+      } else if(upg2Owned){
+        buyUpg2.disabled = true;
+        buyUpg2.textContent = "구매 완료";
+        upg2Hint.textContent = "구매됨 (현재 클릭당 +" + clickValue + ")";
+      } else {
+        buyUpg2.disabled = acorn < UPG2_COST;
+        buyUpg2.textContent = "구매";
+        upg2Hint.textContent = "구매 가능 (현재 클릭당 +" + clickValue + ")";
       }
     }
 
-    // 누른 위치에 +n 떠오르게
+    // =====================
+    // +n 뜨는 효과
+    // =====================
     function spawnFloatText(x, y, n){
       const el = document.createElement("div");
       el.className = "float-text";
       el.textContent = "+" + n;
       el.style.left = x + "px";
       el.style.top  = y + "px";
-      // 숫자 크면 살짝 강조
-      if (n >= 2) el.style.color = "#9d7bff";
+      if(n >= 4) el.style.color = "#ffd36e";
+      else if(n >= 2) el.style.color = "#9d7bff";
       else el.style.color = "#ffffff";
       document.body.appendChild(el);
       el.addEventListener("animationend", ()=> el.remove());
     }
 
     function clickAcorn(e){
+      if(!currentNick) return;
+
       acorn += clickValue;
       render();
+      saveCurrent();
 
-      // 마우스/터치 위치
       let x, y;
       if (e && e.touches && e.touches[0]){
         x = e.touches[0].clientX;
@@ -358,7 +651,6 @@
         x = e.clientX;
         y = e.clientY;
       } else {
-        // 키보드로 눌렀을 때는 버튼 중앙
         const r = btn.getBoundingClientRect();
         x = r.left + r.width/2;
         y = r.top + r.height/2;
@@ -366,11 +658,8 @@
       spawnFloatText(x, y, clickValue);
     }
 
-    // 클릭 / 터치
     btn.addEventListener("click", clickAcorn);
     btn.addEventListener("touchstart", (e)=>{ clickAcorn(e); }, {passive:true});
-
-    // 스페이스/엔터
     btn.addEventListener("keydown", (e)=>{
       if(e.key === " " || e.key === "Enter"){
         e.preventDefault();
@@ -378,27 +667,137 @@
       }
     });
 
-    // 상점 토글
+    // =====================
+    // 상점 열기/닫기
+    // =====================
     function openShop(){ shopPanel.classList.add("show"); }
     function closeShop(){ shopPanel.classList.remove("show"); }
 
     shopBtn.addEventListener("click", ()=>{
+      if(!currentNick) return;
       if (shopPanel.classList.contains("show")) closeShop();
       else openShop();
     });
     shopClose.addEventListener("click", closeShop);
 
-    // 업그레이드 구매
-    buyClickUpg.addEventListener("click", ()=>{
-      if (clickUpgOwned) return;
-      if (acorn < CLICK_UPG_COST) return;
+    // 업그레이드 1 구매: 클릭당 +2
+    buyUpg1.addEventListener("click", ()=>{
+      if(!currentNick) return;
+      if(upg1Owned) return;
+      if(acorn < UPG1_COST) return;
 
-      acorn -= CLICK_UPG_COST;
-      clickUpgOwned = true;
-      clickValue = 2; // 클릭당 +2로 변경
+      acorn -= UPG1_COST;
+      upg1Owned = true;
+      clickValue = 2;
+      render();
+      saveCurrent();
+    });
+
+    // 업그레이드 2 구매: 클릭당 +4 (업그1 필요)
+    buyUpg2.addEventListener("click", ()=>{
+      if(!currentNick) return;
+      if(!upg1Owned) return;
+      if(upg2Owned) return;
+      if(acorn < UPG2_COST) return;
+
+      acorn -= UPG2_COST;
+      upg2Owned = true;
+      clickValue = 4;
+      render();
+      saveCurrent();
+    });
+
+    // =====================
+    // 닉네임 UI 로직
+    // =====================
+    function setMsg(el, text, kind){
+      el.textContent = text || "";
+      el.classList.remove("good","bad");
+      if(kind) el.classList.add(kind);
+    }
+
+    function updateNewNickUI(){
+      const nick = sanitizeNick(newNick.value);
+      if(!isValidNick(nick)){
+        newStart.disabled = true;
+        setMsg(newMsg, "", null);
+        return;
+      }
+      if(profiles[nick]){
+        // 이미 존재
+        newStart.disabled = true;
+        setMsg(newMsg, "이미 사용중인 닉네임", "bad");
+      } else {
+        newStart.disabled = false;
+        setMsg(newMsg, "사용 가능한 닉네임", "good");
+      }
+    }
+
+    function updateOldNickUI(){
+      const nick = sanitizeNick(oldNick.value);
+      if(!isValidNick(nick)){
+        oldEnter.disabled = true;
+        setMsg(oldMsg, "", null);
+        return;
+      }
+      if(profiles[nick]){
+        oldEnter.disabled = false;
+        setMsg(oldMsg, "이미 사용중인 닉네임", "good");
+      } else {
+        oldEnter.disabled = true;
+        setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
+      }
+    }
+
+    newNick.addEventListener("input", updateNewNickUI);
+    oldNick.addEventListener("input", updateOldNickUI);
+
+    // 새로 시작 버튼
+    newStart.addEventListener("click", ()=>{
+      const nick = sanitizeNick(newNick.value);
+
+      if(!isValidNick(nick)) return;
+
+      // 혹시 버튼이 눌렸는데도 이미 존재하면 경고
+      if(profiles[nick]){
+        setMsg(newMsg, "이미 사용중인 닉네임", "bad");
+        newStart.disabled = true;
+        return;
+      }
+
+      createProfile(nick);
+      overlay.style.display = "none";
+      setLocked(false);
       render();
     });
 
+    // 기존 닉네임 들어가기
+    oldEnter.addEventListener("click", ()=>{
+      const nick = sanitizeNick(oldNick.value);
+      if(!isValidNick(nick)) return;
+
+      if(!profiles[nick]){
+        setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
+        oldEnter.disabled = true;
+        return;
+      }
+
+      loadProfile(nick);
+      overlay.style.display = "none";
+      setLocked(false);
+      render();
+    });
+
+    // 엔터키로도 실행
+    newNick.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" && !newStart.disabled) newStart.click();
+    });
+    oldNick.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
+    });
+
+    // 시작은 잠금 + 오버레이
+    setLocked(true);
     render();
   </script>
 
