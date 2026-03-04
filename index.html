@@ -69,7 +69,7 @@
     }
     .counter-chip .count{
       font-size:18px;
-      min-width:72px;
+      min-width:90px;
       text-align:right;
       letter-spacing:0.2px;
     }
@@ -424,6 +424,36 @@
       font-size:12px;
       line-height:1.4;
     }
+
+    /* 하단 다람쥐 */
+    .squirrel-dock{
+      position:fixed;
+      left:50%;
+      bottom:78px;
+      transform: translateX(-50%);
+      z-index:25;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      pointer-events:none;
+    }
+    .squirrel-dock .emo{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+    }
+    .squirrel-dock .txt{
+      font-weight:900;
+      font-size:14px;
+      opacity:.9;
+      white-space:nowrap;
+    }
   </style>
 </head>
 
@@ -455,6 +485,12 @@
     </div>
   </div>
 
+  <!-- 하단 다람쥐 표시 -->
+  <div class="squirrel-dock" id="squirrelDock" aria-hidden="true">
+    <span class="emo">🐿️</span>
+    <span class="txt">x <span id="dockSq">0</span> · <span id="dockIncome">0</span>/s</span>
+  </div>
+
   <!-- 상점 버튼 -->
   <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
     🛒 상점
@@ -468,7 +504,7 @@
     </div>
 
     <!-- 클릭 업그레이드(다음 1개만) -->
-    <div class="item" id="upgradeClickItem">
+    <div class="item">
       <div class="item-top">
         <div>
           <div class="item-name" id="upgName">클릭 업그레이드</div>
@@ -481,12 +517,12 @@
     </div>
 
     <!-- 다람쥐 -->
-    <div class="item" id="squirrelItem">
+    <div class="item">
       <div class="item-top">
         <div>
           <div class="item-name">🐿️ 다람쥐 고용</div>
           <div class="item-desc">
-            1마리당 <b>초당 +2</b> 도토리<br>
+            1마리당 <b>초당 +0.5</b> 도토리<br>
             보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
           </div>
         </div>
@@ -512,7 +548,6 @@
       <p class="sub">닉네임마다 진행 상황이 저장됩니다. (이 브라우저/기기 안에서만 저장)</p>
 
       <div class="grid">
-
         <div class="section">
           <div class="section-title">🆕 새로 시작하기</div>
           <div class="row">
@@ -532,7 +567,6 @@
           <div class="msg" id="oldMsg"></div>
           <div class="tiny">기존 닉네임이 맞으면 저장된 상태로 들어갑니다.</div>
         </div>
-
       </div>
     </div>
   </div>
@@ -541,7 +575,7 @@
     // =====================
     // 저장
     // =====================
-    const LS_KEY = "dotori_game_profiles_v4";
+    const LS_KEY = "dotori_game_profiles_v5";
 
     function loadProfiles(){
       try{
@@ -564,6 +598,18 @@
     }
 
     // =====================
+    // 표시 포맷
+    // =====================
+    function fmtAcorn(n){
+      // 정수면 소수 없이, 아니면 소수 1자리
+      const isInt = Math.abs(n - Math.round(n)) < 1e-9;
+      return n.toLocaleString("ko-KR", {
+        minimumFractionDigits: isInt ? 0 : 1,
+        maximumFractionDigits: isInt ? 0 : 1
+      });
+    }
+
+    // =====================
     // 게임 상태
     // =====================
     let profiles = loadProfiles();
@@ -572,13 +618,12 @@
     let acorn = 0;
     let clickValue = 1;
 
-    // 클릭 업그레이드 tier:
-    // 0(+1), 1(+2), 2(+4), 3(+8), 4(+16), 5(+32)
+    // 클릭 업그레이드 tier: 0(+1),1(+2),2(+4),3(+8),4(+16),5(+32)
     let tier = 0;
 
     // 다람쥐
     let squirrels = 0;
-    const SQUIRREL_INCOME_PER_SEC = 2;
+    const SQUIRREL_INCOME_PER_SEC = 0.5;
 
     const UPGRADE_STEPS = [
       { toTier: 1, toValue: 2,  cost: 20,   name: "클릭 수익 +1",  desc: "구매 후: 클릭당 <b>+2</b>" },
@@ -589,23 +634,22 @@
     ];
 
     // =====================
-    // 오토 방지/감지 설정
+    // 오토 방지/감지
     // =====================
     const CLICK_COOLDOWN_MS = 10;    // 0.01초
     const HACK_WINDOW_MS = 1000;     // 1초
-    const HACK_THRESHOLD = 20;       // 1초에 20회 초과면 핵
+    const HACK_THRESHOLD = 20;       // 1초 20회 초과 => 핵
 
     let lastClickTime = 0;
     let clickTimes = [];
 
     // =====================
-    // 다람쥐 가격 규칙
+    // 다람쥐 가격
     // =====================
     const SQ_COSTS_1_TO_8 = [10, 11, 13, 20, 30, 50, 100, 150];
-    function getNextSquirrelCost(nextIndex){ // nextIndex = 구매 후 보유 마리수 = squirrels+1
+    function getNextSquirrelCost(nextIndex){
       if(nextIndex <= 8) return SQ_COSTS_1_TO_8[nextIndex - 1];
-      // 9마리부터 50씩 증가: 9=200,10=250...
-      return 150 + (nextIndex - 8) * 50;
+      return 150 + (nextIndex - 8) * 50; // 9=200,10=250...
     }
 
     // DOM
@@ -647,6 +691,10 @@
     const toast = document.getElementById("toast");
     let toastTimer = null;
 
+    const squirrelDock = document.getElementById("squirrelDock");
+    const dockSq = document.getElementById("dockSq");
+    const dockIncome = document.getElementById("dockIncome");
+
     function showToast(){
       toast.style.display = "block";
       clearTimeout(toastTimer);
@@ -685,7 +733,6 @@
       clickValue = Number(p.clickValue ?? 1) || 1;
 
       normalizeByTier();
-
       lastClickTime = 0;
       clickTimes = [];
       return true;
@@ -697,7 +744,6 @@
       tier = 0;
       squirrels = 0;
       normalizeByTier();
-
       lastClickTime = 0;
       clickTimes = [];
       saveCurrent();
@@ -709,7 +755,6 @@
       tier = 0;
       squirrels = 0;
       normalizeByTier();
-
       lastClickTime = 0;
       clickTimes = [];
       saveCurrent();
@@ -736,13 +781,12 @@
     }
 
     function getNextUpgrade(){
-      // tier 0 -> step0, tier1->step1 ...
       if(tier >= 5) return null;
-      return UPGRADE_STEPS[tier]; // 깔끔하게 인덱스 매칭
+      return UPGRADE_STEPS[tier];
     }
 
     function render(){
-      countEl.textContent = acorn.toLocaleString("ko-KR");
+      countEl.textContent = fmtAcorn(acorn);
 
       if(currentNick){
         nickWrap.style.display = "block";
@@ -768,31 +812,32 @@
       }
 
       // 다람쥐
-      sqCountEl.textContent = squirrels.toLocaleString("ko-KR");
       const income = squirrels * SQUIRREL_INCOME_PER_SEC;
-      sqIncomeEl.textContent = income.toLocaleString("ko-KR");
+      sqCountEl.textContent = squirrels.toLocaleString("ko-KR");
+      sqIncomeEl.textContent = fmtAcorn(income);
+
+      dockSq.textContent = squirrels.toLocaleString("ko-KR");
+      dockIncome.textContent = fmtAcorn(income);
 
       const nextSqIndex = squirrels + 1;
       const nextSqCost = getNextSquirrelCost(nextSqIndex);
       sqPriceEl.textContent = nextSqCost.toLocaleString("ko-KR");
       buySquirrel.disabled = acorn < nextSqCost;
-      sqHint.textContent = "다음 가격: " + nextSqCost.toLocaleString("ko-KR") + " (구매 후 초당 +" + ((squirrels+1)*2).toLocaleString("ko-KR") + ")";
+
+      sqHint.textContent = "다음 가격: " + nextSqCost.toLocaleString("ko-KR") +
+        " (구매 후 수익 " + fmtAcorn((squirrels+1)*SQUIRREL_INCOME_PER_SEC) + "/s)";
     }
 
     // =====================
     // +n 뜨는 효과
     // =====================
-    function spawnFloatText(x, y, n){
+    function spawnFloatText(x, y, text, color){
       const el = document.createElement("div");
       el.className = "float-text";
-      el.textContent = "+" + n;
+      el.textContent = text;
       el.style.left = x + "px";
       el.style.top  = y + "px";
-      if(n >= 32) el.style.color = "#ffd36e";
-      else if(n >= 16) el.style.color = "#9dffb5";
-      else if(n >= 8) el.style.color = "#9d7bff";
-      else if(n >= 4) el.style.color = "#ffffff";
-      else el.style.color = "#ffffff";
+      el.style.color = color || "#ffffff";
       document.body.appendChild(el);
       el.addEventListener("animationend", ()=> el.remove());
     }
@@ -814,7 +859,7 @@
       if(now - lastClickTime < CLICK_COOLDOWN_MS) return;
       lastClickTime = now;
 
-      // 2) 1초에 20회 초과 => 핵 감지(계정 초기화)
+      // 2) 핵 감지
       clickTimes.push(now);
       const cutoff = now - HACK_WINDOW_MS;
       while(clickTimes.length && clickTimes[0] < cutoff) clickTimes.shift();
@@ -840,7 +885,13 @@
         x = r.left + r.width/2;
         y = r.top + r.height/2;
       }
-      spawnFloatText(x, y, clickValue);
+
+      const txt = "+" + clickValue;
+      let color = "#ffffff";
+      if(clickValue >= 32) color = "#ffd36e";
+      else if(clickValue >= 16) color = "#9dffb5";
+      else if(clickValue >= 8) color = "#9d7bff";
+      spawnFloatText(x, y, txt, color);
     }
 
     btn.addEventListener("click", clickAcorn);
@@ -855,13 +906,29 @@
     // =====================
     // 자동 수익 (다람쥐)
     // =====================
+    function spawnSquirrelFloat(times){
+      const r = squirrelDock.getBoundingClientRect();
+      const baseX = r.left + r.width/2;
+      const baseY = r.top + 8; // 이모지 위쪽 느낌
+
+      const t = Math.max(0, Math.min(5, times)); // 너무 많으면 최대 5개만
+      for(let i=0;i<t;i++){
+        const jitter = (i - (t-1)/2) * 10; // 살짝 옆으로 퍼지게
+        spawnFloatText(baseX + jitter, baseY, "+0.5", "#9dffb5");
+      }
+    }
+
     setInterval(()=>{
       if(!currentNick) return;
+      if(squirrels <= 0) return;
+
       const inc = squirrels * SQUIRREL_INCOME_PER_SEC;
-      if(inc <= 0) return;
       acorn += inc;
       render();
       saveCurrent();
+
+      // 얻을 때마다(1초마다) 다람쥐 위에 +0.5 표시
+      spawnSquirrelFloat(squirrels);
     }, 1000);
 
     // =====================
