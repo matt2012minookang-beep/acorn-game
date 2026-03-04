@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>도토리 게임</title>
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --panel: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.16);
+      --text:#ffffff;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+    body{
+      font-family: "Malgun Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(900px 500px at 50% 0%, rgba(122,44,255,.18), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      overflow:hidden;
+      user-select:none;
+    }
+
+    /* 상단바: 왼쪽 제목 / 오른쪽 도토리 수 */
+    .topbar{
+      position:fixed;
+      top:0; left:0; right:0;
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 18px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
+      z-index:10;
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:-0.5px;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .title .badge{
+      font-size:18px;
+      opacity:.9;
+    }
+
+    /* 운빨겜 크리스털 느낌: 오른쪽 위 칩 */
+    .counter-chip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: var(--panel);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:800;
+    }
+    .counter-chip .emoji{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+    }
+    .counter-chip .count{
+      font-size:18px;
+      min-width:72px;
+      text-align:right;
+      letter-spacing:0.2px;
+    }
+
+    /* 중앙 클릭 영역 */
+    .stage{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-top:72px;
+    }
+
+    .acorn-btn{
+      width:min(360px, 72vw);
+      height:min(360px, 72vw);
+      border-radius:28px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease;
+      outline:none;
+    }
+    .acorn-btn:active{
+      transform: scale(0.97);
+      background: rgba(255,255,255,.06);
+    }
+    .acorn{
+      font-size:min(160px, 30vw);
+      line-height:1;
+      filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
+    }
+
+    /* 클릭 피드백 텍스트 */
+    .hint{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      opacity:.72;
+      font-size:14px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="title">
+      <span class="badge">🌰</span>
+      <span>도토리 게임</span>
+    </div>
+
+    <div class="counter-chip" aria-label="도토리 수">
+      <span class="emoji">🌰</span>
+      <span id="count" class="count">0</span>
+    </div>
+  </div>
+
+  <div class="stage">
+    <button class="acorn-btn" id="acornBtn" aria-label="도토리 클릭">
+      <div class="acorn">🌰</div>
+    </button>
+  </div>
+
+  <div class="hint">도토리를 눌러서 모아봐 🌰 (+1)</div>
+
+  <script>
+    let acorn = 0;
+
+    const countEl = document.getElementById("count");
+    const btn = document.getElementById("acornBtn");
+
+    function render(){
+      countEl.textContent = acorn.toLocaleString("ko-KR");
+    }
+
+    function clickAcorn(){
+      acorn += 1;
+      render();
+    }
+
+    btn.addEventListener("click", clickAcorn);
+
+    // (선택) 스페이스/엔터로도 클릭 가능하게
+    btn.addEventListener("keydown", (e)=>{
+      if(e.key === " " || e.key === "Enter"){
+        e.preventDefault();
+        clickAcorn();
+      }
+    });
+
+    render();
+  </script>
+
+</body>
+</html>
