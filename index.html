@@ -341,16 +341,18 @@
       line-height:1.45;
     }
 
-    /* 게임 시작 전에는 클릭/상점 막기 */
-    .locked{
-      pointer-events:none;
-      filter: blur(0px);
-    }
-    .nick-chip{
+    /* 게임 잠금 */
+    .locked{ pointer-events:none; opacity:.75; }
+
+    /* 닉네임 칩 + 메뉴 */
+    .nick-wrap{
       position:fixed;
       top:84px;
       right:14px;
-      z-index:20;
+      z-index:40;
+      display:none;
+    }
+    .nick-chip{
       padding:9px 12px;
       border-radius:14px;
       background: rgba(255,255,255,.06);
@@ -358,8 +360,44 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 12px 30px rgba(0,0,0,.35);
       font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nick-chip:active{ transform: scale(0.98); }
+
+    .nick-menu{
+      position:absolute;
+      top:44px;
+      right:0;
+      width:220px;
+      border-radius:16px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:8px;
       display:none;
     }
+    .nick-menu.show{ display:block; }
+
+    .menu-btn{
+      width:100%;
+      text-align:left;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      cursor:pointer;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .menu-btn:last-child{ margin-bottom:0; }
+    .menu-btn.danger{
+      border-color: rgba(255,90,122,.25);
+      background: rgba(255,90,122,.10);
+    }
+    .menu-btn:active{ transform: scale(0.99); }
   </style>
 </head>
 
@@ -377,7 +415,14 @@
     </div>
   </div>
 
-  <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
+  <!-- 닉네임 영역(클릭 메뉴) -->
+  <div class="nick-wrap" id="nickWrap">
+    <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
+    <div class="nick-menu" id="nickMenu">
+      <button class="menu-btn" id="btnLogout">로그아웃</button>
+      <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
+    </div>
+  </div>
 
   <!-- 상점 버튼 -->
   <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
@@ -391,30 +436,17 @@
       <button class="close" id="shopClose">닫기</button>
     </div>
 
-    <!-- 업그레이드 1: +2 -->
-    <div class="item">
+    <!-- 업그레이드(한 칸만 보이게) -->
+    <div class="item" id="upgradeItem">
       <div class="item-top">
         <div>
-          <div class="item-name">클릭 수익 +1</div>
-          <div class="item-desc">구매 후: 클릭당 <b>+2</b></div>
+          <div class="item-name" id="upgName">클릭 수익 업그레이드</div>
+          <div class="item-desc" id="upgDesc">설명</div>
         </div>
-        <div class="price"><span>🌰</span><span id="upg1Price">20</span></div>
+        <div class="price"><span>🌰</span><span id="upgPrice">0</span></div>
       </div>
-      <button class="buy" id="buyUpg1">구매</button>
-      <div class="owned" id="upg1Hint">미구매</div>
-    </div>
-
-    <!-- 업그레이드 2: +4 (업그레이드 1 구매 후 열림) -->
-    <div class="item">
-      <div class="item-top">
-        <div>
-          <div class="item-name">클릭 수익 +2</div>
-          <div class="item-desc">업그레이드 1 구매 후 가능<br>구매 후: 클릭당 <b>+4</b></div>
-        </div>
-        <div class="price"><span>🌰</span><span id="upg2Price">100</span></div>
-      </div>
-      <button class="buy" id="buyUpg2">구매</button>
-      <div class="owned" id="upg2Hint">잠김</div>
+      <button class="buy" id="buyUpgrade">구매</button>
+      <div class="owned" id="upgHint"></div>
     </div>
   </div>
 
@@ -434,7 +466,6 @@
 
       <div class="grid">
 
-        <!-- 신규 닉네임 -->
         <div class="section">
           <div class="section-title">🆕 새로 시작하기</div>
           <div class="row">
@@ -445,7 +476,6 @@
           <div class="tiny">입력하면 아래에 <b>사용 가능한 닉네임</b> / <b>이미 사용중인 닉네임</b>이 표시됩니다.</div>
         </div>
 
-        <!-- 기존 닉네임 -->
         <div class="section">
           <div class="section-title">🔁 이미 사용중이신 닉네임이 있나요?</div>
           <div class="row">
@@ -462,9 +492,9 @@
 
   <script>
     // =====================
-    // 저장 구조
+    // 저장
     // =====================
-    const LS_KEY = "dotori_game_profiles_v1";
+    const LS_KEY = "dotori_game_profiles_v2";
 
     function loadProfiles(){
       try{
@@ -473,20 +503,15 @@
         const obj = JSON.parse(raw);
         if(obj && typeof obj === "object") return obj;
         return {};
-      }catch(e){
-        return {};
-      }
+      }catch(e){ return {}; }
     }
     function saveProfiles(profiles){
       localStorage.setItem(LS_KEY, JSON.stringify(profiles));
     }
-
     function sanitizeNick(n){
-      // 앞뒤 공백 제거 + 중간 연속 공백 정리
       return (n ?? "").trim().replace(/\s+/g, " ");
     }
     function isValidNick(n){
-      // 너무 빡빡하게 제한 안 하고: 1~20, 공백만 아니면 OK
       const s = sanitizeNick(n);
       return s.length >= 1 && s.length <= 20;
     }
@@ -499,12 +524,14 @@
 
     let acorn = 0;
     let clickValue = 1;
-    let upg1Owned = false; // +2
-    let upg2Owned = false; // +4
+    // tier: 0(+1), 1(+2), 2(+4), 3(+8)
+    let tier = 0;
 
-    // 상수
-    const UPG1_COST = 20;
-    const UPG2_COST = 100;
+    const UPGRADE_STEPS = [
+      { toTier: 1, toValue: 2, cost: 20,  name: "클릭 수익 +1", desc: "구매 후: 클릭당 <b>+2</b>" },
+      { toTier: 2, toValue: 4, cost: 100, name: "클릭 수익 +2", desc: "구매 후: 클릭당 <b>+4</b>" },
+      { toTier: 3, toValue: 8, cost: 250, name: "클릭 수익 +4", desc: "구매 후: 클릭당 <b>+8</b>" }
+    ];
 
     // DOM
     const countEl = document.getElementById("count");
@@ -514,14 +541,12 @@
     const shopPanel = document.getElementById("shopPanel");
     const shopClose = document.getElementById("shopClose");
 
-    const upg1PriceEl = document.getElementById("upg1Price");
-    const upg2PriceEl = document.getElementById("upg2Price");
-
-    const buyUpg1 = document.getElementById("buyUpg1");
-    const buyUpg2 = document.getElementById("buyUpg2");
-
-    const upg1Hint = document.getElementById("upg1Hint");
-    const upg2Hint = document.getElementById("upg2Hint");
+    const upgName = document.getElementById("upgName");
+    const upgDesc = document.getElementById("upgDesc");
+    const upgPrice = document.getElementById("upgPrice");
+    const buyUpgrade = document.getElementById("buyUpgrade");
+    const upgHint = document.getElementById("upgHint");
+    const upgradeItem = document.getElementById("upgradeItem");
 
     const overlay = document.getElementById("overlay");
     const newNick = document.getElementById("newNick");
@@ -532,8 +557,12 @@
     const oldEnter = document.getElementById("oldEnter");
     const oldMsg = document.getElementById("oldMsg");
 
+    const nickWrap = document.getElementById("nickWrap");
     const nickChip = document.getElementById("nickChip");
     const nickText = document.getElementById("nickText");
+    const nickMenu = document.getElementById("nickMenu");
+    const btnLogout = document.getElementById("btnLogout");
+    const btnResetNick = document.getElementById("btnResetNick");
 
     function setLocked(isLocked){
       const lockedEls = document.querySelectorAll(".locked");
@@ -545,13 +574,16 @@
 
     function saveCurrent(){
       if(!currentNick) return;
-      profiles[currentNick] = {
-        acorn,
-        clickValue,
-        upg1Owned,
-        upg2Owned
-      };
+      profiles[currentNick] = { acorn, clickValue, tier };
       saveProfiles(profiles);
+    }
+
+    function normalizeByTier(){
+      // tier 기준으로 clickValue 보정
+      if(tier <= 0){ tier = 0; clickValue = 1; }
+      else if(tier === 1){ clickValue = 2; }
+      else if(tier === 2){ clickValue = 4; }
+      else { tier = 3; clickValue = 8; }
     }
 
     function loadProfile(nick){
@@ -560,64 +592,91 @@
 
       currentNick = nick;
       acorn = Number(p.acorn ?? 0) || 0;
+      tier = Number(p.tier ?? 0) || 0;
       clickValue = Number(p.clickValue ?? 1) || 1;
-      upg1Owned = !!p.upg1Owned;
-      upg2Owned = !!p.upg2Owned;
 
-      // 클릭값이 이상하게 저장돼도 업그레이드 상태로 보정
-      if(upg2Owned) clickValue = 4;
-      else if(upg1Owned) clickValue = 2;
-      else clickValue = 1;
-
+      // 저장 값이 꼬였어도 tier 우선
+      normalizeByTier();
       return true;
     }
 
     function createProfile(nick){
       currentNick = nick;
       acorn = 0;
+      tier = 0;
       clickValue = 1;
-      upg1Owned = false;
-      upg2Owned = false;
       saveCurrent();
+    }
+
+    function resetCurrentNickProgress(){
+      if(!currentNick) return;
+      acorn = 0;
+      tier = 0;
+      clickValue = 1;
+      saveCurrent();
+    }
+
+    function logout(){
+      // 저장 후 나가기
+      saveCurrent();
+      currentNick = null;
+      closeShop();
+      closeNickMenu();
+
+      // 잠금 + 오버레이 다시
+      setLocked(true);
+      nickWrap.style.display = "none";
+      overlay.style.display = "flex";
+
+      // 입력칸 초기화/메시지 초기화/버튼 비활성
+      newNick.value = "";
+      oldNick.value = "";
+      setMsg(newMsg, "", null);
+      setMsg(oldMsg, "", null);
+      newStart.disabled = true;
+      oldEnter.disabled = true;
+
+      // 화면 카운트도 0처럼 보이게
+      countEl.textContent = "0";
+    }
+
+    function getNextUpgrade(){
+      // tier에 따라 다음 업그레이드 하나만 노출
+      // tier 0 -> steps[0], tier1 -> steps[1], tier2 -> steps[2], tier3 -> none
+      if(tier === 0) return UPGRADE_STEPS[0];
+      if(tier === 1) return UPGRADE_STEPS[1];
+      if(tier === 2) return UPGRADE_STEPS[2];
+      return null;
     }
 
     function render(){
       countEl.textContent = acorn.toLocaleString("ko-KR");
 
-      upg1PriceEl.textContent = UPG1_COST.toLocaleString("ko-KR");
-      upg2PriceEl.textContent = UPG2_COST.toLocaleString("ko-KR");
-
-      // 닉네임 표시
       if(currentNick){
-        nickChip.style.display = "block";
+        nickWrap.style.display = "block";
         nickText.textContent = currentNick;
       }
 
-      // 업그레이드 1 버튼 상태
-      if(upg1Owned){
-        buyUpg1.disabled = true;
-        buyUpg1.textContent = "구매 완료";
-        upg1Hint.textContent = "구매됨 (현재 클릭당 +" + clickValue + ")";
-      } else {
-        buyUpg1.disabled = acorn < UPG1_COST;
-        buyUpg1.textContent = "구매";
-        upg1Hint.textContent = "미구매 (현재 클릭당 +" + clickValue + ")";
+      const next = getNextUpgrade();
+      if(!next){
+        // 더 이상 업그레이드 없음
+        upgName.textContent = "업그레이드 완료";
+        upgDesc.innerHTML = "현재 클릭당 <b>+" + clickValue + "</b>";
+        upgPrice.textContent = "-";
+        buyUpgrade.disabled = true;
+        buyUpgrade.textContent = "완료";
+        upgHint.textContent = "더 이상 업그레이드가 없습니다.";
+        return;
       }
 
-      // 업그레이드 2 버튼 상태: 업그레이드 1이 있어야 열림
-      if(!upg1Owned){
-        buyUpg2.disabled = true;
-        buyUpg2.textContent = "잠김";
-        upg2Hint.textContent = "업그레이드 1을 먼저 구매해야 합니다.";
-      } else if(upg2Owned){
-        buyUpg2.disabled = true;
-        buyUpg2.textContent = "구매 완료";
-        upg2Hint.textContent = "구매됨 (현재 클릭당 +" + clickValue + ")";
-      } else {
-        buyUpg2.disabled = acorn < UPG2_COST;
-        buyUpg2.textContent = "구매";
-        upg2Hint.textContent = "구매 가능 (현재 클릭당 +" + clickValue + ")";
-      }
+      upgName.textContent = next.name;
+      upgDesc.innerHTML = next.desc;
+      upgPrice.textContent = next.cost.toLocaleString("ko-KR");
+
+      const canBuy = acorn >= next.cost;
+      buyUpgrade.disabled = !canBuy;
+      buyUpgrade.textContent = "구매";
+      upgHint.textContent = "현재 클릭당 +" + clickValue + " → 업그레이드 후 +" + next.toValue;
     }
 
     // =====================
@@ -629,7 +688,8 @@
       el.textContent = "+" + n;
       el.style.left = x + "px";
       el.style.top  = y + "px";
-      if(n >= 4) el.style.color = "#ffd36e";
+      if(n >= 8) el.style.color = "#ffd36e";
+      else if(n >= 4) el.style.color = "#9dffb5";
       else if(n >= 2) el.style.color = "#9d7bff";
       else el.style.color = "#ffffff";
       document.body.appendChild(el);
@@ -680,31 +740,54 @@
     });
     shopClose.addEventListener("click", closeShop);
 
-    // 업그레이드 1 구매: 클릭당 +2
-    buyUpg1.addEventListener("click", ()=>{
+    buyUpgrade.addEventListener("click", ()=>{
       if(!currentNick) return;
-      if(upg1Owned) return;
-      if(acorn < UPG1_COST) return;
+      const next = getNextUpgrade();
+      if(!next) return;
+      if(acorn < next.cost) return;
 
-      acorn -= UPG1_COST;
-      upg1Owned = true;
-      clickValue = 2;
+      acorn -= next.cost;
+      tier = next.toTier;
+      clickValue = next.toValue;
+      normalizeByTier();
+
       render();
       saveCurrent();
     });
 
-    // 업그레이드 2 구매: 클릭당 +4 (업그1 필요)
-    buyUpg2.addEventListener("click", ()=>{
-      if(!currentNick) return;
-      if(!upg1Owned) return;
-      if(upg2Owned) return;
-      if(acorn < UPG2_COST) return;
+    // =====================
+    // 닉네임 메뉴 (로그아웃/초기화)
+    // =====================
+    function openNickMenu(){ nickMenu.classList.add("show"); }
+    function closeNickMenu(){ nickMenu.classList.remove("show"); }
+    function toggleNickMenu(){
+      if(nickMenu.classList.contains("show")) closeNickMenu();
+      else openNickMenu();
+    }
 
-      acorn -= UPG2_COST;
-      upg2Owned = true;
-      clickValue = 4;
+    nickChip.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      toggleNickMenu();
+    });
+
+    document.addEventListener("click", ()=>{
+      // 바깥 클릭하면 메뉴 닫기
+      closeNickMenu();
+    });
+
+    btnLogout.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      logout();
+    });
+
+    btnResetNick.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      // 진행도 초기화
+      resetCurrentNickProgress();
       render();
       saveCurrent();
+      closeNickMenu();
+      closeShop();
     });
 
     // =====================
@@ -724,7 +807,6 @@
         return;
       }
       if(profiles[nick]){
-        // 이미 존재
         newStart.disabled = true;
         setMsg(newMsg, "이미 사용중인 닉네임", "bad");
       } else {
@@ -752,13 +834,10 @@
     newNick.addEventListener("input", updateNewNickUI);
     oldNick.addEventListener("input", updateOldNickUI);
 
-    // 새로 시작 버튼
     newStart.addEventListener("click", ()=>{
       const nick = sanitizeNick(newNick.value);
-
       if(!isValidNick(nick)) return;
 
-      // 혹시 버튼이 눌렸는데도 이미 존재하면 경고
       if(profiles[nick]){
         setMsg(newMsg, "이미 사용중인 닉네임", "bad");
         newStart.disabled = true;
@@ -768,10 +847,10 @@
       createProfile(nick);
       overlay.style.display = "none";
       setLocked(false);
+      nickWrap.style.display = "block";
       render();
     });
 
-    // 기존 닉네임 들어가기
     oldEnter.addEventListener("click", ()=>{
       const nick = sanitizeNick(oldNick.value);
       if(!isValidNick(nick)) return;
@@ -785,10 +864,10 @@
       loadProfile(nick);
       overlay.style.display = "none";
       setLocked(false);
+      nickWrap.style.display = "block";
       render();
     });
 
-    // 엔터키로도 실행
     newNick.addEventListener("keydown", (e)=>{
       if(e.key === "Enter" && !newStart.disabled) newStart.click();
     });
@@ -796,7 +875,7 @@
       if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
     });
 
-    // 시작은 잠금 + 오버레이
+    // 시작: 잠금 + 오버레이
     setLocked(true);
     render();
   </script>
