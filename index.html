@@ -1,1099 +1,258 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>도토리 게임</title>
-  <style>
-    :root{
-      --bg:#0b0b10;
-      --panel: rgba(255,255,255,.06);
-      --border: rgba(255,255,255,.16);
-      --text:#ffffff;
-      --accent:#7a2cff;
-      --danger:#ff5a7a;
-      --good:#2ecc71;
-    }
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; margin:0; }
-    body{
-      font-family: "Malgun Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(900px 500px at 50% 0%, rgba(122,44,255,.18), transparent 60%),
-                  var(--bg);
-      color: var(--text);
-      overflow:hidden;
-      user-select:none;
-    }
+<meta charset="UTF-8">
+<title>도토리 게임</title>
 
-    /* 상단바 */
-    .topbar{
-      position:fixed;
-      top:0; left:0; right:0;
-      height:72px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding:0 18px;
-      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
-      z-index:10;
-      pointer-events:none;
-    }
-    .title{
-      pointer-events:auto;
-      font-weight:800;
-      letter-spacing:-0.5px;
-      font-size:22px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .title .badge{ font-size:18px; opacity:.9; }
+<style>
+body{
+margin:0;
+background:#0b0b10;
+color:white;
+font-family:Arial;
+text-align:center;
+overflow:hidden;
+}
 
-    .counter-chip{
-      pointer-events:auto;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 14px;
-      border-radius:14px;
-      background: var(--panel);
-      border:1px solid var(--border);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-      font-weight:800;
-    }
-    .counter-chip .emoji{
-      font-size:22px;
-      line-height:1;
-      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
-    }
-    .counter-chip .count{
-      font-size:18px;
-      min-width:90px;
-      text-align:right;
-      letter-spacing:0.2px;
-    }
+#top{
+position:fixed;
+top:10px;
+left:10px;
+font-size:22px;
+font-weight:bold;
+}
 
-    /* 왼쪽 상점 버튼 */
-    .shop-btn{
-      position:fixed;
-      top:84px;
-      left:14px;
-      z-index:20;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 14px;
-      border-radius:14px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.16);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-      cursor:pointer;
-      font-weight:800;
-    }
-    .shop-btn:active{ transform: scale(0.98); }
+#count{
+position:fixed;
+top:10px;
+right:20px;
+font-size:22px;
+}
 
-    /* 상점 패널 */
-    .shop-panel{
-      position:fixed;
-      top:84px;
-      left:14px;
-      width:min(380px, 92vw);
-      z-index:30;
-      background: rgba(15,15,22,.78);
-      border:1px solid rgba(255,255,255,.16);
-      border-radius:18px;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 24px 80px rgba(0,0,0,.55);
-      padding:14px;
-      display:none;
-    }
-    .shop-panel.show{ display:block; }
+#acornBtn{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:120px;
+cursor:pointer;
+user-select:none;
+}
 
-    .shop-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .shop-title{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-weight:900;
-      font-size:16px;
-    }
-    .close{
-      cursor:pointer;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color:#fff;
-      font-weight:800;
-    }
+.float{
+position:absolute;
+font-weight:bold;
+animation:float 0.7s forwards;
+pointer-events:none;
+}
 
-    .item{
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:16px;
-      padding:12px;
-      margin-bottom:10px;
-    }
-    .item:last-child{ margin-bottom:0; }
+@keyframes float{
+0%{opacity:1;transform:translateY(0)}
+100%{opacity:0;transform:translateY(-40px)}
+}
 
-    .item-top{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .item-name{ font-weight:900; }
-    .item-desc{ opacity:.8; font-size:13px; line-height:1.4; margin-top:4px; }
-    .price{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      font-weight:900;
-      white-space:nowrap;
-    }
-    .buy{
-      width:100%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:none;
-      cursor:pointer;
-      font-weight:900;
-      background: var(--accent);
-      color:#fff;
-    }
-    .buy:disabled{
-      cursor:not-allowed;
-      opacity:.45;
-      background: rgba(122,44,255,.35);
-    }
-    .owned{
-      margin-top:10px;
-      font-size:12px;
-      opacity:.8;
-    }
+#shopBtn{
+position:fixed;
+left:10px;
+top:60px;
+cursor:pointer;
+}
 
-    /* 중앙 클릭 영역 */
-    .stage{
-      height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding-top:72px;
-    }
-    .acorn-btn{
-      width:min(360px, 72vw);
-      height:min(360px, 72vw);
-      border-radius:28px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow: 0 22px 70px rgba(0,0,0,.45);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      transition: transform .06s ease, background .15s ease;
-      outline:none;
-      position:relative;
-    }
-    .acorn-btn:active{
-      transform: scale(0.97);
-      background: rgba(255,255,255,.06);
-    }
-    .acorn{
-      font-size:min(160px, 30vw);
-      line-height:1;
-      filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
-    }
+#shop{
+position:fixed;
+left:10px;
+top:100px;
+background:#222;
+padding:10px;
+display:none;
+}
 
-    /* +n 떠오르는 텍스트 */
-    .float-text{
-      position:fixed;
-      z-index:50;
-      font-weight:1000;
-      font-size:18px;
-      pointer-events:none;
-      text-shadow: 0 6px 18px rgba(0,0,0,.45);
-      animation: floatUp 700ms ease-out forwards;
-      will-change: transform, opacity;
-    }
-    @keyframes floatUp{
-      0%   { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 0; }
-      10%  { opacity: 1; }
-      100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.05); opacity: 0; }
-    }
+#squirrelDock{
+position:fixed;
+bottom:40px;
+left:50%;
+transform:translateX(-50%);
+font-size:30px;
+}
 
-    /* 하단 힌트 */
-    .hint{
-      position:fixed;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      opacity:.72;
-      font-size:14px;
-      padding:10px 14px;
-      border-radius:999px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(8px);
-      z-index:5;
-    }
-
-    /* 닉네임 시작 모달 */
-    .overlay{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,.62);
-      backdrop-filter: blur(10px);
-      z-index:100;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-    }
-    .modal{
-      width:min(520px, 96vw);
-      border-radius:22px;
-      background: rgba(15,15,22,.86);
-      border:1px solid rgba(255,255,255,.16);
-      box-shadow: 0 28px 110px rgba(0,0,0,.6);
-      padding:18px;
-    }
-    .modal h2{
-      margin:0 0 6px;
-      font-size:20px;
-      letter-spacing:-.3px;
-    }
-    .modal .sub{
-      margin:0 0 14px;
-      opacity:.75;
-      font-size:13px;
-      line-height:1.5;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
-    .section{
-      padding:12px;
-      border-radius:18px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);
-    }
-    .section-title{
-      font-weight:900;
-      margin-bottom:8px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .row{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    input[type="text"]{
-      flex:1;
-      min-width: 200px;
-      padding:11px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.25);
-      color:#fff;
-      outline:none;
-    }
-    .btn{
-      padding:11px 12px;
-      border-radius:14px;
-      border:none;
-      cursor:pointer;
-      font-weight:900;
-      background: var(--accent);
-      color:#fff;
-      min-width: 110px;
-    }
-    .btn:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-      background: rgba(122,44,255,.35);
-    }
-    .msg{
-      margin-top:8px;
-      font-size:12px;
-      opacity:.85;
-    }
-    .msg.good{ color: rgba(46, 204, 113, .95); }
-    .msg.bad{ color: rgba(255, 90, 122, .95); }
-    .tiny{
-      margin-top:10px;
-      opacity:.6;
-      font-size:12px;
-      line-height:1.45;
-    }
-
-    /* 게임 잠금 */
-    .locked{ pointer-events:none; opacity:.75; }
-
-    /* 닉네임 칩 + 메뉴 */
-    .nick-wrap{
-      position:fixed;
-      top:84px;
-      right:14px;
-      z-index:40;
-      display:none;
-    }
-    .nick-chip{
-      padding:9px 12px;
-      border-radius:14px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.16);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-    }
-    .nick-chip:active{ transform: scale(0.98); }
-
-    .nick-menu{
-      position:absolute;
-      top:44px;
-      right:0;
-      width:220px;
-      border-radius:16px;
-      background: rgba(15,15,22,.86);
-      border:1px solid rgba(255,255,255,.16);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 24px 80px rgba(0,0,0,.55);
-      padding:8px;
-      display:none;
-    }
-    .nick-menu.show{ display:block; }
-
-    .menu-btn{
-      width:100%;
-      text-align:left;
-      padding:10px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color:#fff;
-      cursor:pointer;
-      font-weight:900;
-      margin-bottom:8px;
-    }
-    .menu-btn:last-child{ margin-bottom:0; }
-    .menu-btn.danger{
-      border-color: rgba(255,90,122,.25);
-      background: rgba(255,90,122,.10);
-    }
-    .menu-btn:active{ transform: scale(0.99); }
-
-    /* 토스트(경고) */
-    .toast{
-      position:fixed;
-      left:50%;
-      top:92px;
-      transform: translateX(-50%);
-      z-index:200;
-      min-width: min(420px, 92vw);
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid rgba(255,90,122,.35);
-      background: rgba(255,90,122,.14);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 24px 80px rgba(0,0,0,.55);
-      display:none;
-      font-weight:900;
-    }
-    .toast small{
-      display:block;
-      margin-top:4px;
-      opacity:.8;
-      font-weight:700;
-      font-size:12px;
-      line-height:1.4;
-    }
-
-    /* 하단 다람쥐 */
-    .squirrel-dock{
-      position:fixed;
-      left:50%;
-      bottom:78px;
-      transform: translateX(-50%);
-      z-index:25;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 14px;
-      border-radius:999px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
-      pointer-events:none;
-    }
-    .squirrel-dock .emo{
-      font-size:22px;
-      line-height:1;
-      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
-    }
-    .squirrel-dock .txt{
-      font-weight:900;
-      font-size:14px;
-      opacity:.9;
-      white-space:nowrap;
-    }
-  </style>
+</style>
 </head>
 
 <body>
 
-  <div class="topbar">
-    <div class="title">
-      <span class="badge">🌰</span>
-      <span>도토리 게임</span>
-    </div>
-
-    <div class="counter-chip" aria-label="도토리 수">
-      <span class="emoji">🌰</span>
-      <span id="count" class="count">0</span>
-    </div>
-  </div>
-
-  <div class="toast" id="toast">
-    ⚠️ 핵 감지: 계정이 초기화되었습니다.
-    <small>1초에 20회 초과 클릭이 감지되어, 진행 상황을 초기화했어요.</small>
-  </div>
-
-  <!-- 닉네임 영역(클릭 메뉴) -->
-  <div class="nick-wrap" id="nickWrap">
-    <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
-    <div class="nick-menu" id="nickMenu">
-      <button class="menu-btn" id="btnLogout">로그아웃</button>
-      <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
-    </div>
-  </div>
-
-  <!-- 하단 다람쥐 표시 -->
-  <div class="squirrel-dock" id="squirrelDock" aria-hidden="true">
-    <span class="emo">🐿️</span>
-    <span class="txt">x <span id="dockSq">0</span> · <span id="dockIncome">0</span>/s</span>
-  </div>
-
-  <!-- 상점 버튼 -->
-  <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
-    🛒 상점
-  </div>
-
-  <!-- 상점 패널 -->
-  <div class="shop-panel" id="shopPanel" aria-label="상점">
-    <div class="shop-header">
-      <div class="shop-title">🛒 상점</div>
-      <button class="close" id="shopClose">닫기</button>
-    </div>
-
-    <!-- 클릭 업그레이드(다음 1개만) -->
-    <div class="item">
-      <div class="item-top">
-        <div>
-          <div class="item-name" id="upgName">클릭 업그레이드</div>
-          <div class="item-desc" id="upgDesc">설명</div>
-        </div>
-        <div class="price"><span>🌰</span><span id="upgPrice">0</span></div>
-      </div>
-      <button class="buy" id="buyUpgrade">구매</button>
-      <div class="owned" id="upgHint"></div>
-    </div>
-
-    <!-- 다람쥐 -->
-    <div class="item">
-      <div class="item-top">
-        <div>
-          <div class="item-name">🐿️ 다람쥐 고용</div>
-          <div class="item-desc">
-            1마리당 <b>초당 +0.5</b> 도토리<br>
-            보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
-          </div>
-        </div>
-        <div class="price"><span>🌰</span><span id="sqPrice">10</span></div>
-      </div>
-      <button class="buy" id="buySquirrel">고용</button>
-      <div class="owned" id="sqHint"></div>
-    </div>
-  </div>
-
-  <div class="stage">
-    <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
-      <div class="acorn">🌰</div>
-    </button>
-  </div>
-
-  <div class="hint">도토리를 눌러서 모아봐 🌰</div>
-
-  <!-- 닉네임 오버레이 -->
-  <div class="overlay" id="overlay">
-    <div class="modal">
-      <h2>닉네임을 입력하세요!</h2>
-      <p class="sub">닉네임마다 진행 상황이 저장됩니다. (이 브라우저/기기 안에서만 저장)</p>
-
-      <div class="grid">
-        <div class="section">
-          <div class="section-title">🆕 새로 시작하기</div>
-          <div class="row">
-            <input id="newNick" type="text" placeholder="새 닉네임" maxlength="20" />
-            <button class="btn" id="newStart" disabled>시작</button>
-          </div>
-          <div class="msg" id="newMsg"></div>
-          <div class="tiny">입력하면 아래에 <b>사용 가능한 닉네임</b> / <b>이미 사용중인 닉네임</b>이 표시됩니다.</div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">🔁 이미 사용중이신 닉네임이 있나요?</div>
-          <div class="row">
-            <input id="oldNick" type="text" placeholder="기존 닉네임" maxlength="20" />
-            <button class="btn" id="oldEnter" disabled>들어가기</button>
-          </div>
-          <div class="msg" id="oldMsg"></div>
-          <div class="tiny">기존 닉네임이 맞으면 저장된 상태로 들어갑니다.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // =====================
-    // 저장
-    // =====================
-    const LS_KEY = "dotori_game_profiles_v5";
-
-    function loadProfiles(){
-      try{
-        const raw = localStorage.getItem(LS_KEY);
-        if(!raw) return {};
-        const obj = JSON.parse(raw);
-        if(obj && typeof obj === "object") return obj;
-        return {};
-      }catch(e){ return {}; }
-    }
-    function saveProfiles(profiles){
-      localStorage.setItem(LS_KEY, JSON.stringify(profiles));
-    }
-    function sanitizeNick(n){
-      return (n ?? "").trim().replace(/\s+/g, " ");
-    }
-    function isValidNick(n){
-      const s = sanitizeNick(n);
-      return s.length >= 1 && s.length <= 20;
-    }
-
-    // =====================
-    // 표시 포맷
-    // =====================
-    function fmtAcorn(n){
-      // 정수면 소수 없이, 아니면 소수 1자리
-      const isInt = Math.abs(n - Math.round(n)) < 1e-9;
-      return n.toLocaleString("ko-KR", {
-        minimumFractionDigits: isInt ? 0 : 1,
-        maximumFractionDigits: isInt ? 0 : 1
-      });
-    }
-
-    // =====================
-    // 게임 상태
-    // =====================
-    let profiles = loadProfiles();
-    let currentNick = null;
-
-    let acorn = 0;
-    let clickValue = 1;
-
-    // 클릭 업그레이드 tier: 0(+1),1(+2),2(+4),3(+8),4(+16),5(+32)
-    let tier = 0;
-
-    // 다람쥐
-    let squirrels = 0;
-    const SQUIRREL_INCOME_PER_SEC = 0.5;
-
-    const UPGRADE_STEPS = [
-      { toTier: 1, toValue: 2,  cost: 20,   name: "클릭 수익 +1",  desc: "구매 후: 클릭당 <b>+2</b>" },
-      { toTier: 2, toValue: 4,  cost: 100,  name: "클릭 수익 +2",  desc: "구매 후: 클릭당 <b>+4</b>" },
-      { toTier: 3, toValue: 8,  cost: 250,  name: "클릭 수익 +4",  desc: "구매 후: 클릭당 <b>+8</b>" },
-      { toTier: 4, toValue: 16, cost: 750,  name: "클릭 수익 +8",  desc: "구매 후: 클릭당 <b>+16</b>" },
-      { toTier: 5, toValue: 32, cost: 1500, name: "클릭 수익 +16", desc: "구매 후: 클릭당 <b>+32</b>" }
-    ];
-
-    // =====================
-    // 오토 방지/감지
-    // =====================
-    const CLICK_COOLDOWN_MS = 10;    // 0.01초
-    const HACK_WINDOW_MS = 1000;     // 1초
-    const HACK_THRESHOLD = 20;       // 1초 20회 초과 => 핵
-
-    let lastClickTime = 0;
-    let clickTimes = [];
-
-    // =====================
-    // 다람쥐 가격
-    // =====================
-    const SQ_COSTS_1_TO_8 = [10, 11, 13, 20, 30, 50, 100, 150];
-    function getNextSquirrelCost(nextIndex){
-      if(nextIndex <= 8) return SQ_COSTS_1_TO_8[nextIndex - 1];
-      return 150 + (nextIndex - 8) * 50; // 9=200,10=250...
-    }
-
-    // DOM
-    const countEl = document.getElementById("count");
-    const btn = document.getElementById("acornBtn");
-
-    const shopBtn = document.getElementById("shopBtn");
-    const shopPanel = document.getElementById("shopPanel");
-    const shopClose = document.getElementById("shopClose");
-
-    const upgName = document.getElementById("upgName");
-    const upgDesc = document.getElementById("upgDesc");
-    const upgPrice = document.getElementById("upgPrice");
-    const buyUpgrade = document.getElementById("buyUpgrade");
-    const upgHint = document.getElementById("upgHint");
-
-    const sqCountEl = document.getElementById("sqCount");
-    const sqIncomeEl = document.getElementById("sqIncome");
-    const sqPriceEl = document.getElementById("sqPrice");
-    const buySquirrel = document.getElementById("buySquirrel");
-    const sqHint = document.getElementById("sqHint");
-
-    const overlay = document.getElementById("overlay");
-    const newNick = document.getElementById("newNick");
-    const newStart = document.getElementById("newStart");
-    const newMsg = document.getElementById("newMsg");
-
-    const oldNick = document.getElementById("oldNick");
-    const oldEnter = document.getElementById("oldEnter");
-    const oldMsg = document.getElementById("oldMsg");
-
-    const nickWrap = document.getElementById("nickWrap");
-    const nickChip = document.getElementById("nickChip");
-    const nickText = document.getElementById("nickText");
-    const nickMenu = document.getElementById("nickMenu");
-    const btnLogout = document.getElementById("btnLogout");
-    const btnResetNick = document.getElementById("btnResetNick");
-
-    const toast = document.getElementById("toast");
-    let toastTimer = null;
-
-    const squirrelDock = document.getElementById("squirrelDock");
-    const dockSq = document.getElementById("dockSq");
-    const dockIncome = document.getElementById("dockIncome");
-
-    function showToast(){
-      toast.style.display = "block";
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2400);
-    }
-
-    function setLocked(isLocked){
-      const lockedEls = document.querySelectorAll(".locked");
-      lockedEls.forEach(el=>{
-        el.style.pointerEvents = isLocked ? "none" : "auto";
-        el.style.opacity = isLocked ? "0.75" : "1";
-      });
-    }
-
-    function saveCurrent(){
-      if(!currentNick) return;
-      profiles[currentNick] = { acorn, clickValue, tier, squirrels };
-      saveProfiles(profiles);
-    }
-
-    function normalizeByTier(){
-      const map = [1,2,4,8,16,32];
-      if(tier < 0) tier = 0;
-      if(tier > 5) tier = 5;
-      clickValue = map[tier] ?? 1;
-    }
-
-    function loadProfile(nick){
-      const p = profiles[nick];
-      if(!p) return false;
-
-      currentNick = nick;
-      acorn = Number(p.acorn ?? 0) || 0;
-      tier = Number(p.tier ?? 0) || 0;
-      squirrels = Number(p.squirrels ?? 0) || 0;
-      clickValue = Number(p.clickValue ?? 1) || 1;
-
-      normalizeByTier();
-      lastClickTime = 0;
-      clickTimes = [];
-      return true;
-    }
-
-    function createProfile(nick){
-      currentNick = nick;
-      acorn = 0;
-      tier = 0;
-      squirrels = 0;
-      normalizeByTier();
-      lastClickTime = 0;
-      clickTimes = [];
-      saveCurrent();
-    }
-
-    function resetCurrentNickProgress(){
-      if(!currentNick) return;
-      acorn = 0;
-      tier = 0;
-      squirrels = 0;
-      normalizeByTier();
-      lastClickTime = 0;
-      clickTimes = [];
-      saveCurrent();
-    }
-
-    function logout(){
-      saveCurrent();
-      currentNick = null;
-      closeShop();
-      closeNickMenu();
-
-      setLocked(true);
-      nickWrap.style.display = "none";
-      overlay.style.display = "flex";
-
-      newNick.value = "";
-      oldNick.value = "";
-      setMsg(newMsg, "", null);
-      setMsg(oldMsg, "", null);
-      newStart.disabled = true;
-      oldEnter.disabled = true;
-
-      countEl.textContent = "0";
-    }
-
-    function getNextUpgrade(){
-      if(tier >= 5) return null;
-      return UPGRADE_STEPS[tier];
-    }
-
-    function render(){
-      countEl.textContent = fmtAcorn(acorn);
-
-      if(currentNick){
-        nickWrap.style.display = "block";
-        nickText.textContent = currentNick;
-      }
-
-      // 클릭 업그레이드
-      const next = getNextUpgrade();
-      if(!next){
-        upgName.textContent = "클릭 업그레이드 완료";
-        upgDesc.innerHTML = "현재 클릭당 <b>+" + clickValue + "</b>";
-        upgPrice.textContent = "-";
-        buyUpgrade.disabled = true;
-        buyUpgrade.textContent = "완료";
-        upgHint.textContent = "더 이상 업그레이드가 없습니다.";
-      } else {
-        upgName.textContent = next.name;
-        upgDesc.innerHTML = next.desc;
-        upgPrice.textContent = next.cost.toLocaleString("ko-KR");
-        buyUpgrade.disabled = acorn < next.cost;
-        buyUpgrade.textContent = "구매";
-        upgHint.textContent = "현재 클릭당 +" + clickValue + " → 업그레이드 후 +" + next.toValue;
-      }
-
-      // 다람쥐
-      const income = squirrels * SQUIRREL_INCOME_PER_SEC;
-      sqCountEl.textContent = squirrels.toLocaleString("ko-KR");
-      sqIncomeEl.textContent = fmtAcorn(income);
-
-      dockSq.textContent = squirrels.toLocaleString("ko-KR");
-      dockIncome.textContent = fmtAcorn(income);
-
-      const nextSqIndex = squirrels + 1;
-      const nextSqCost = getNextSquirrelCost(nextSqIndex);
-      sqPriceEl.textContent = nextSqCost.toLocaleString("ko-KR");
-      buySquirrel.disabled = acorn < nextSqCost;
-
-      sqHint.textContent = "다음 가격: " + nextSqCost.toLocaleString("ko-KR") +
-        " (구매 후 수익 " + fmtAcorn((squirrels+1)*SQUIRREL_INCOME_PER_SEC) + "/s)";
-    }
-
-    // =====================
-    // +n 뜨는 효과
-    // =====================
-    function spawnFloatText(x, y, text, color){
-      const el = document.createElement("div");
-      el.className = "float-text";
-      el.textContent = text;
-      el.style.left = x + "px";
-      el.style.top  = y + "px";
-      el.style.color = color || "#ffffff";
-      document.body.appendChild(el);
-      el.addEventListener("animationend", ()=> el.remove());
-    }
-
-    function handleHackDetected(){
-      resetCurrentNickProgress();
-      render();
-      closeShop();
-      closeNickMenu();
-      showToast();
-    }
-
-    function clickAcorn(e){
-      if(!currentNick) return;
-
-      const now = performance.now();
-
-      // 1) 쿨다운
-      if(now - lastClickTime < CLICK_COOLDOWN_MS) return;
-      lastClickTime = now;
-
-      // 2) 핵 감지
-      clickTimes.push(now);
-      const cutoff = now - HACK_WINDOW_MS;
-      while(clickTimes.length && clickTimes[0] < cutoff) clickTimes.shift();
-      if(clickTimes.length > HACK_THRESHOLD){
-        handleHackDetected();
-        return;
-      }
-
-      // 정상 클릭 처리
-      acorn += clickValue;
-      render();
-      saveCurrent();
-
-      let x, y;
-      if (e && e.touches && e.touches[0]){
-        x = e.touches[0].clientX;
-        y = e.touches[0].clientY;
-      } else if (e){
-        x = e.clientX;
-        y = e.clientY;
-      } else {
-        const r = btn.getBoundingClientRect();
-        x = r.left + r.width/2;
-        y = r.top + r.height/2;
-      }
-
-      const txt = "+" + clickValue;
-      let color = "#ffffff";
-      if(clickValue >= 32) color = "#ffd36e";
-      else if(clickValue >= 16) color = "#9dffb5";
-      else if(clickValue >= 8) color = "#9d7bff";
-      spawnFloatText(x, y, txt, color);
-    }
-
-    btn.addEventListener("click", clickAcorn);
-    btn.addEventListener("touchstart", (e)=>{ clickAcorn(e); }, {passive:true});
-    btn.addEventListener("keydown", (e)=>{
-      if(e.key === " " || e.key === "Enter"){
-        e.preventDefault();
-        clickAcorn(null);
-      }
-    });
-
-    // =====================
-    // 자동 수익 (다람쥐)
-    // =====================
-    function spawnSquirrelFloat(times){
-      const r = squirrelDock.getBoundingClientRect();
-      const baseX = r.left + r.width/2;
-      const baseY = r.top + 8; // 이모지 위쪽 느낌
-
-      const t = Math.max(0, Math.min(5, times)); // 너무 많으면 최대 5개만
-      for(let i=0;i<t;i++){
-        const jitter = (i - (t-1)/2) * 10; // 살짝 옆으로 퍼지게
-        spawnFloatText(baseX + jitter, baseY, "+0.5", "#9dffb5");
-      }
-    }
-
-    setInterval(()=>{
-      if(!currentNick) return;
-      if(squirrels <= 0) return;
-
-      const inc = squirrels * SQUIRREL_INCOME_PER_SEC;
-      acorn += inc;
-      render();
-      saveCurrent();
-
-      // 얻을 때마다(1초마다) 다람쥐 위에 +0.5 표시
-      spawnSquirrelFloat(squirrels);
-    }, 1000);
-
-    // =====================
-    // 상점 열기/닫기
-    // =====================
-    function openShop(){ shopPanel.classList.add("show"); }
-    function closeShop(){ shopPanel.classList.remove("show"); }
-
-    shopBtn.addEventListener("click", ()=>{
-      if(!currentNick) return;
-      if (shopPanel.classList.contains("show")) closeShop();
-      else openShop();
-    });
-    shopClose.addEventListener("click", closeShop);
-
-    // 클릭 업그레이드 구매
-    buyUpgrade.addEventListener("click", ()=>{
-      if(!currentNick) return;
-      const next = getNextUpgrade();
-      if(!next) return;
-      if(acorn < next.cost) return;
-
-      acorn -= next.cost;
-      tier = next.toTier;
-      normalizeByTier();
-
-      render();
-      saveCurrent();
-    });
-
-    // 다람쥐 구매
-    buySquirrel.addEventListener("click", ()=>{
-      if(!currentNick) return;
-      const nextSqIndex = squirrels + 1;
-      const cost = getNextSquirrelCost(nextSqIndex);
-      if(acorn < cost) return;
-
-      acorn -= cost;
-      squirrels += 1;
-
-      render();
-      saveCurrent();
-    });
-
-    // =====================
-    // 닉네임 메뉴
-    // =====================
-    function openNickMenu(){ nickMenu.classList.add("show"); }
-    function closeNickMenu(){ nickMenu.classList.remove("show"); }
-    function toggleNickMenu(){
-      if(nickMenu.classList.contains("show")) closeNickMenu();
-      else openNickMenu();
-    }
-
-    nickChip.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      toggleNickMenu();
-    });
-
-    document.addEventListener("click", ()=>{
-      closeNickMenu();
-    });
-
-    btnLogout.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      logout();
-    });
-
-    btnResetNick.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      resetCurrentNickProgress();
-      render();
-      closeNickMenu();
-      closeShop();
-    });
-
-    // =====================
-    // 닉네임 UI
-    // =====================
-    function setMsg(el, text, kind){
-      el.textContent = text || "";
-      el.classList.remove("good","bad");
-      if(kind) el.classList.add(kind);
-    }
-
-    function updateNewNickUI(){
-      const nick = sanitizeNick(newNick.value);
-      if(!isValidNick(nick)){
-        newStart.disabled = true;
-        setMsg(newMsg, "", null);
-        return;
-      }
-      if(profiles[nick]){
-        newStart.disabled = true;
-        setMsg(newMsg, "이미 사용중인 닉네임", "bad");
-      } else {
-        newStart.disabled = false;
-        setMsg(newMsg, "사용 가능한 닉네임", "good");
-      }
-    }
-
-    function updateOldNickUI(){
-      const nick = sanitizeNick(oldNick.value);
-      if(!isValidNick(nick)){
-        oldEnter.disabled = true;
-        setMsg(oldMsg, "", null);
-        return;
-      }
-      if(profiles[nick]){
-        oldEnter.disabled = false;
-        setMsg(oldMsg, "이미 사용중인 닉네임", "good");
-      } else {
-        oldEnter.disabled = true;
-        setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
-      }
-    }
-
-    newNick.addEventListener("input", updateNewNickUI);
-    oldNick.addEventListener("input", updateOldNickUI);
-
-    newStart.addEventListener("click", ()=>{
-      const nick = sanitizeNick(newNick.value);
-      if(!isValidNick(nick)) return;
-
-      if(profiles[nick]){
-        setMsg(newMsg, "이미 사용중인 닉네임", "bad");
-        newStart.disabled = true;
-        return;
-      }
-
-      createProfile(nick);
-      overlay.style.display = "none";
-      setLocked(false);
-      nickWrap.style.display = "block";
-      render();
-    });
-
-    oldEnter.addEventListener("click", ()=>{
-      const nick = sanitizeNick(oldNick.value);
-      if(!isValidNick(nick)) return;
-
-      if(!profiles[nick]){
-        setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
-        oldEnter.disabled = true;
-        return;
-      }
-
-      loadProfile(nick);
-      overlay.style.display = "none";
-      setLocked(false);
-      nickWrap.style.display = "block";
-      render();
-    });
-
-    newNick.addEventListener("keydown", (e)=>{
-      if(e.key === "Enter" && !newStart.disabled) newStart.click();
-    });
-    oldNick.addEventListener("keydown", (e)=>{
-      if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
-    });
-
-    // 시작: 잠금 + 오버레이
-    setLocked(true);
-    render();
-  </script>
+<div id="top">🌰 도토리 게임</div>
+<div id="count">0</div>
+
+<div id="shopBtn">🛒 상점</div>
+
+<div id="shop">
+
+<div>
+클릭 업그레이드<br>
+<button id="upgradeBtn">구매</button>
+<span id="upgradePrice"></span>
+</div>
+
+<br>
+
+<div>
+🐿 다람쥐 고용<br>
+<button id="squirrelBtn">고용</button>
+<span id="squirrelPrice"></span>
+</div>
+
+</div>
+
+<div id="acornBtn">🌰</div>
+
+<div id="squirrelDock">🐿 x <span id="sqCount">0</span></div>
+
+<script>
+
+let acorn=0
+let clickValue=1
+let tier=0
+let squirrels=0
+
+const countEl=document.getElementById("count")
+const acornBtn=document.getElementById("acornBtn")
+
+const shopBtn=document.getElementById("shopBtn")
+const shop=document.getElementById("shop")
+
+const upgradeBtn=document.getElementById("upgradeBtn")
+const upgradePriceEl=document.getElementById("upgradePrice")
+
+const squirrelBtn=document.getElementById("squirrelBtn")
+const squirrelPriceEl=document.getElementById("squirrelPrice")
+
+const sqCount=document.getElementById("sqCount")
+
+const upgrades=[
+{v:2,c:20},
+{v:4,c:100},
+{v:8,c:250},
+{v:16,c:750},
+{v:32,c:1500},
+{v:64,c:5000}
+]
+
+const squirrelCosts=[10,11,13,20,30,50,100,150]
+
+function nextSquirrelCost(){
+let n=squirrels+1
+if(n<=8)return squirrelCosts[n-1]
+return 150+(n-8)*50
+}
+
+function updateUI(){
+countEl.innerText=acorn.toFixed(1)
+
+sqCount.innerText=squirrels
+
+if(tier<upgrades.length){
+upgradePriceEl.innerText=" "+upgrades[tier].c
+}else{
+upgradeBtn.disabled=true
+upgradePriceEl.innerText=" 완료"
+}
+
+squirrelPriceEl.innerText=" "+nextSquirrelCost()
+}
+
+function floatText(x,y,text){
+let el=document.createElement("div")
+el.className="float"
+el.innerText=text
+el.style.left=x+"px"
+el.style.top=y+"px"
+document.body.appendChild(el)
+setTimeout(()=>el.remove(),700)
+}
+
+let lastClick=0
+let clicks=[]
+
+function clickAcorn(e){
+
+let now=performance.now()
+
+if(now-lastClick<10)return
+lastClick=now
+
+clicks.push(now)
+clicks=clicks.filter(t=>now-t<1000)
+
+if(clicks.length>20){
+alert("핵 감지 계정 초기화")
+acorn=0
+tier=0
+clickValue=1
+squirrels=0
+updateUI()
+return
+}
+
+acorn+=clickValue
+updateUI()
+
+floatText(e.clientX,e.clientY,"+"+clickValue)
+
+}
+
+acornBtn.addEventListener("pointerdown",clickAcorn)
+
+shopBtn.onclick=()=>{
+shop.style.display=shop.style.display==="none"?"block":"none"
+}
+
+upgradeBtn.onclick=()=>{
+
+let up=upgrades[tier]
+
+if(!up)return
+
+if(acorn<up.c)return
+
+acorn-=up.c
+clickValue=up.v
+tier++
+
+updateUI()
+
+}
+
+squirrelBtn.onclick=()=>{
+
+let cost=nextSquirrelCost()
+
+if(acorn<cost)return
+
+acorn-=cost
+squirrels++
+
+updateUI()
+
+let r=document.getElementById("squirrelDock").getBoundingClientRect()
+
+floatText(r.left+r.width/2,r.top,"+0.5")
+
+}
+
+setInterval(()=>{
+
+if(squirrels>0){
+
+acorn+=squirrels*0.5
+updateUI()
+
+}
+
+},1000)
+
+updateUI()
+
+</script>
 
 </body>
 </html>
