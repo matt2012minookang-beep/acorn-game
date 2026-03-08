@@ -470,7 +470,7 @@
 
   <div class="toast" id="toast">
     ⚠️ 핵 감지: 계정이 초기화되었습니다.
-    <small>1초에 20회 초과 클릭이 감지되어, 진행 상황을 초기화했어요.</small>
+    <small id="toastDetail">비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.</small>
   </div>
 
   <div class="nick-wrap" id="nickWrap">
@@ -562,7 +562,7 @@
   </div>
 
   <script>
-    const LS_KEY = "dotori_game_profiles_v8";
+    const LS_KEY = "dotori_game_profiles_v9";
 
     function loadProfiles(){
       try{
@@ -608,11 +608,17 @@
       { toTier: 7, toValue: 128, cost: 15000, name: "클릭 수익 +64",  desc: "구매 후: 클릭당 <b>+128</b>" }
     ];
 
+    // 안티 오토클릭
     const CLICK_COOLDOWN_MS = 10;
-    const HACK_WINDOW_MS = 1000;
-    const HACK_THRESHOLD = 20;
+    const CLICK_HISTORY_WINDOW_MS = 5000;
+    const HARD_CPS_WINDOW_MS = 1000;
+    const HARD_CPS_LIMIT = 24; // 즉시 차단은 손클릭이 거의 안 나오는 쪽으로 높임
+
     let lastClickTime = 0;
     let clickTimes = [];
+    let clickIntervals = [];
+    let suspiciousScore = 0;
+    let lastSuspiciousDecay = 0;
 
     const SQ_COSTS_1_TO_8 = [10, 11, 13, 20, 30, 50, 100, 150];
     function getNextSquirrelCost(nextIndex){
@@ -656,16 +662,18 @@
     const btnResetNick = document.getElementById("btnResetNick");
 
     const toast = document.getElementById("toast");
+    const toastDetail = document.getElementById("toastDetail");
     let toastTimer = null;
 
     const squirrelDock = document.getElementById("squirrelDock");
     const dockSq = document.getElementById("dockSq");
     const dockIncome = document.getElementById("dockIncome");
 
-    function showToast(){
+    function showToast(detail){
+      toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
       toast.style.display = "block";
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2400);
+      toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2600);
     }
 
     function setLocked(isLocked){
@@ -711,15 +719,21 @@
       squirrelNextPayouts = remainings.map(ms => now + Math.max(0, Number(ms) || 0));
     }
 
+    function resetAutoState(){
+      lastClickTime = 0;
+      clickTimes = [];
+      clickIntervals = [];
+      suspiciousScore = 0;
+      lastSuspiciousDecay = performance.now();
+    }
+
     function loadProfile(nick){
       const p = profiles[nick];
       if(!p) return false;
 
       currentNick = nick;
       applyLoadedProfile(p);
-
-      lastClickTime = 0;
-      clickTimes = [];
+      resetAutoState();
       return true;
     }
 
@@ -730,8 +744,7 @@
       clickValue = 1;
       squirrelNextPayouts = [];
       normalizeByTier();
-      lastClickTime = 0;
-      clickTimes = [];
+      resetAutoState();
       saveCurrent();
     }
 
@@ -742,8 +755,7 @@
       clickValue = 1;
       squirrelNextPayouts = [];
       normalizeByTier();
-      lastClickTime = 0;
-      clickTimes = [];
+      resetAutoState();
       saveCurrent();
     }
 
@@ -848,26 +860,122 @@
       spawnFloatText(x, y, "+1", "#9dffb5");
     }
 
-    function handleHackDetected(){
-      resetCurrentNickProgress();
-      render();
-      closeShop();
-      closeNickMenu();
-      showToast();
+    function mean(arr){
+      if(!arr.length) return 0;
+      return arr.reduce((a,b)=>a+b,0)/arr.length;
     }
 
-    function processHackCheck(now){
-      if(now - lastClickTime < CLICK_COOLDOWN_MS) return false;
-      lastClickTime = now;
+    function stddev(arr){
+      if(arr.length < 2) return 9999;
+      const m = mean(arr);
+      const v = arr.reduce((a,b)=>a+((b-m)*(b-m)),0)/arr.length;
+      return Math.sqrt(v);
+    }
 
-      clickTimes.push(now);
-      const cutoff = now - HACK_WINDOW_MS;
-      while(clickTimes.length && clickTimes[0] < cutoff) clickTimes.shift();
-      if(clickTimes.length > HACK_THRESHOLD){
-        handleHackDetected();
+    function dominantRoundedCount(arr){
+      const counts = new Map();
+      for(const n of arr){
+        const r = Math.round(n);
+        counts.set(r, (counts.get(r)||0)+1);
+      }
+      let max = 0;
+      for(const v of counts.values()){
+        if(v > max) max = v;
+      }
+      return max;
+    }
+
+    function addSuspicion(points, reason){
+      suspiciousScore += points;
+      if(suspiciousScore >= 4){
+        resetCurrentNickProgress();
+        render();
+        closeShop();
+        closeNickMenu();
+        showToast(reason);
         return false;
       }
       return true;
+    }
+
+    function decaySuspicion(now){
+      if(!lastSuspiciousDecay) lastSuspiciousDecay = now;
+      const elapsed = now - lastSuspiciousDecay;
+      if(elapsed >= 1500 && suspiciousScore > 0){
+        const dec = Math.floor(elapsed / 1500);
+        suspiciousScore = Math.max(0, suspiciousScore - dec);
+        lastSuspiciousDecay = now;
+      }
+    }
+
+    function runAutoChecks(now){
+      // 5초 윈도우 유지
+      const clickCutoff = now - CLICK_HISTORY_WINDOW_MS;
+      while(clickTimes.length && clickTimes[0] < clickCutoff) clickTimes.shift();
+
+      const intervalLimit = 40;
+      while(clickIntervals.length > intervalLimit) clickIntervals.shift();
+
+      // 하드 캡: 1초에 너무 많은 클릭
+      const oneSecCount = clickTimes.filter(t => now - t <= HARD_CPS_WINDOW_MS).length;
+      if(oneSecCount > HARD_CPS_LIMIT){
+        return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
+      }
+
+      // 최근 16개 간격이 너무 일정하고 빠름
+      if(clickIntervals.length >= 16){
+        const last16 = clickIntervals.slice(-16);
+        const avg16 = mean(last16);
+        const std16 = stddev(last16);
+        if(avg16 < 120 && std16 < 3.2){
+          return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.");
+        }
+      }
+
+      // 최근 20개 간격 중 같은 ms 간격이 지나치게 많음
+      if(clickIntervals.length >= 20){
+        const last20 = clickIntervals.slice(-20);
+        const avg20 = mean(last20);
+        const dom = dominantRoundedCount(last20);
+        if(avg20 < 130 && dom >= 15){
+          return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.");
+        }
+      }
+
+      // 5초간 평균 cps가 높고 표준편차가 지나치게 작음
+      if(clickTimes.length >= 35 && clickIntervals.length >= 30){
+        const recent = clickIntervals.slice(-30);
+        const avg = mean(recent);
+        const std = stddev(recent);
+        const cps = 1000 / Math.max(avg, 1);
+        if(cps > 11.5 && std < 5){
+          return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.");
+        }
+      }
+
+      // 매우 빠른 클릭이 과도하게 반복
+      if(clickIntervals.length >= 12){
+        const last12 = clickIntervals.slice(-12);
+        const tooFast = last12.filter(v => v < 45).length;
+        if(tooFast >= 10){
+          return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.");
+        }
+      }
+
+      return true;
+    }
+
+    function processHackCheck(now){
+      decaySuspicion(now);
+
+      const interval = lastClickTime ? (now - lastClickTime) : null;
+      if(interval !== null && interval < CLICK_COOLDOWN_MS) return false;
+
+      lastClickTime = now;
+      clickTimes.push(now);
+      if(interval !== null) clickIntervals.push(interval);
+
+      return runAutoChecks(now);
     }
 
     function clickAcornFromPointer(e){
@@ -962,7 +1070,6 @@
 
       render();
       saveCurrent();
-
       spawnSquirrelFloat();
     });
 
