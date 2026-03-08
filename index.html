@@ -483,7 +483,7 @@
     </div>
 
     <div class="counter-chip" id="counterChip" aria-label="도토리 수">
-      <span class="emoji" id="counterEmoji">🌰</span>
+      <span class="emoji">🌰</span>
       <span id="count" class="count">0</span>
     </div>
   </div>
@@ -546,7 +546,7 @@
 
   <div class="stage">
     <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
-      <div class="acorn" id="mainAcorn">🌰</div>
+      <div class="acorn">🌰</div>
     </button>
   </div>
 
@@ -582,7 +582,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v11";
+const LS_KEY = "dotori_game_profiles_v12";
 
 function loadProfiles(){
   try{
@@ -619,7 +619,9 @@ const SQUIRREL_INCOME_PER_TICK = 1;
 const SQUIRREL_TICK_MS = 1000;
 
 let goldenReady = false;
-const GOLDEN_CHANCE = 0.01; // 1%
+let goldenStartedAt = 0;
+const GOLDEN_CHANCE = 0.03;        // 3%
+const GOLDEN_MIN_HOLD_MS = 100;    // 0.1초
 
 const UPGRADE_STEPS = [
   { toTier: 1, toValue: 2,    cost: 20,     name: "클릭 수익 +1",    desc: "구매 후: 클릭당 <b>+2</b>" },
@@ -735,7 +737,8 @@ function buildSaveData(){
     clickValue,
     tier,
     squirrelRemainingMs,
-    goldenReady
+    goldenReady,
+    goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (now - goldenStartedAt))) : 0
   };
 }
 
@@ -755,6 +758,10 @@ function applyLoadedProfile(p){
 
   const remainings = Array.isArray(p.squirrelRemainingMs) ? p.squirrelRemainingMs : [];
   squirrelNextPayouts = remainings.map(ms => now + Math.max(0, Number(ms) || 0));
+
+  const goldenRemainingMs = Number(p.goldenRemainingMs ?? 0) || 0;
+  goldenStartedAt = now - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
+
   updateGoldenUI();
 }
 
@@ -783,6 +790,7 @@ function createProfile(nick){
   clickValue = 1;
   squirrelNextPayouts = [];
   goldenReady = false;
+  goldenStartedAt = 0;
   normalizeByTier();
   updateGoldenUI();
   resetAutoState();
@@ -796,6 +804,7 @@ function resetCurrentNickProgress(){
   clickValue = 1;
   squirrelNextPayouts = [];
   goldenReady = false;
+  goldenStartedAt = 0;
   normalizeByTier();
   updateGoldenUI();
   resetAutoState();
@@ -1018,13 +1027,22 @@ function processHackCheck(now){
   return runAutoChecks(now);
 }
 
-function tryTriggerGolden(){
+function triggerGolden(now){
+  goldenReady = true;
+  goldenStartedAt = now;
+  render();
+  saveCurrent();
+}
+
+function tryTriggerGolden(now){
   if(goldenReady) return;
   if(Math.random() < GOLDEN_CHANCE){
-    goldenReady = true;
-    render();
-    saveCurrent();
+    triggerGolden(now);
   }
+}
+
+function canConsumeGolden(now){
+  return goldenReady && (now - goldenStartedAt >= GOLDEN_MIN_HOLD_MS);
 }
 
 function clickAcornFromPointer(e){
@@ -1035,12 +1053,13 @@ function clickAcornFromPointer(e){
   let gain = clickValue;
   let isGoldenClick = false;
 
-  if(goldenReady){
+  if(canConsumeGolden(now)){
     gain = clickValue * 5;
     goldenReady = false;
+    goldenStartedAt = 0;
     isGoldenClick = true;
-  } else {
-    tryTriggerGolden();
+  } else if(!goldenReady) {
+    tryTriggerGolden(now);
   }
 
   acorn += gain;
@@ -1066,12 +1085,13 @@ acornBtn.addEventListener("keydown", (e)=>{
     let gain = clickValue;
     let isGoldenClick = false;
 
-    if(goldenReady){
+    if(canConsumeGolden(now)){
       gain = clickValue * 5;
       goldenReady = false;
+      goldenStartedAt = 0;
       isGoldenClick = true;
-    } else {
-      tryTriggerGolden();
+    } else if(!goldenReady) {
+      tryTriggerGolden(now);
     }
 
     acorn += gain;
