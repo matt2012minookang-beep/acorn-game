@@ -14,6 +14,9 @@
       --danger:#ff5a7a;
       --good:#2ecc71;
       --gold:#ffd84d;
+      --intro-bg-1:#f3d8cf;
+      --intro-bg-2:#d4b9ff;
+      --intro-glow:#fff1c6;
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; }
@@ -231,12 +234,6 @@
       transform: scale(0.97);
       background: rgba(255,255,255,.06);
     }
-    .acorn{
-      font-size:min(160px, 30vw);
-      line-height:1;
-      filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
-      transition: color .15s ease, text-shadow .15s ease, filter .15s ease;
-    }
     .acorn-svg{
       width:min(190px, 34vw);
       height:min(190px, 34vw);
@@ -248,11 +245,6 @@
     .acorn-btn.golden{
       border-color: rgba(255,216,77,.8);
       box-shadow: 0 22px 70px rgba(0,0,0,.45), 0 0 26px rgba(255,216,77,.22);
-    }
-    .acorn-btn.golden .acorn{
-      color: var(--gold);
-      text-shadow: 0 0 14px rgba(255,216,77,.95), 0 0 28px rgba(255,216,77,.45);
-      filter: drop-shadow(0 0 12px rgba(255,216,77,.7));
     }
     .acorn-btn.golden .acorn-svg{
       filter:
@@ -297,7 +289,7 @@
       background: rgba(0,0,0,.62);
       backdrop-filter: blur(10px);
       z-index:100;
-      display:flex;
+      display:none;
       align-items:center;
       justify-content:center;
       padding:18px;
@@ -507,6 +499,180 @@
       opacity:.45;
     }
 
+    /* 오프닝 */
+    .intro{
+      position:fixed;
+      inset:0;
+      z-index:500;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,241,198,.98), rgba(255,241,198,.72) 16%, rgba(255,241,198,.18) 38%, transparent 62%),
+        radial-gradient(circle at 50% 100%, rgba(255,255,255,.12), transparent 45%),
+        linear-gradient(180deg, var(--intro-bg-1), var(--intro-bg-2));
+      transition: opacity .6s ease, visibility .6s ease;
+    }
+    .intro.hidden{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+    .intro::before{
+      content:"";
+      position:absolute;
+      inset:-15%;
+      background:
+        radial-gradient(circle, rgba(255,255,255,.18) 0 2px, transparent 3px) 0 0/52px 52px,
+        radial-gradient(circle, rgba(255,255,255,.14) 0 1.5px, transparent 2.5px) 18px 12px/42px 42px;
+      opacity:.45;
+      animation: introSparkle 8s linear infinite;
+    }
+    .intro::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,.82), rgba(255,255,255,.2) 20%, transparent 52%);
+      opacity:0;
+      animation: introBrighten 5s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes introSparkle{
+      from{ transform:translateY(0); }
+      to{ transform:translateY(30px); }
+    }
+    @keyframes introBrighten{
+      0%{ opacity:.05; }
+      28%{ opacity:.28; }
+      58%{ opacity:.5; }
+      100%{ opacity:.68; }
+    }
+
+    .intro-core{
+      position:relative;
+      width:min(760px, 94vw);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:26px;
+      transform:translateY(-12px);
+      z-index:2;
+    }
+
+    .intro-logo-wrap{
+      width:min(270px, 52vw);
+      height:min(270px, 52vw);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      animation:introLogoFloat 2.5s ease-in-out infinite;
+    }
+    @keyframes introLogoFloat{
+      0%,100%{ transform:translateY(0); }
+      50%{ transform:translateY(-6px); }
+    }
+
+    .intro-burst{
+      position:absolute;
+      width:min(520px, 90vw);
+      height:min(520px, 90vw);
+      border-radius:50%;
+      background:
+        repeating-conic-gradient(
+          from 0deg,
+          rgba(255,247,214,.52) 0deg 10deg,
+          rgba(255,247,214,0) 10deg 24deg
+        );
+      filter: blur(1px);
+      opacity:.42;
+      transform:scale(.72);
+      animation:introBurst 5s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes introBurst{
+      0%{ opacity:.08; transform:scale(.45) rotate(0deg); }
+      30%{ opacity:.24; }
+      65%{ opacity:.4; }
+      100%{ opacity:.52; transform:scale(1.03) rotate(22deg); }
+    }
+
+    .intro-logo{
+      width:100%;
+      height:100%;
+      display:block;
+      filter:
+        drop-shadow(0 18px 32px rgba(126,63,18,.18))
+        drop-shadow(0 4px 0 rgba(255,255,255,.22));
+      opacity:0;
+      transform:scale(.85);
+      animation:introLogoAppear 1.15s ease forwards;
+    }
+    @keyframes introLogoAppear{
+      0%{ opacity:0; transform:scale(.72); }
+      45%{ opacity:.78; }
+      100%{ opacity:1; transform:scale(1); }
+    }
+
+    .intro-progress-wrap{
+      width:min(760px, 82vw);
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:10px;
+      margin-top:-8px;
+      opacity:0;
+      animation:introBarAppear .8s ease .35s forwards;
+    }
+    @keyframes introBarAppear{
+      to{ opacity:1; }
+    }
+
+    .intro-progress{
+      width:100%;
+      height:30px;
+      border-radius:999px;
+      padding:4px;
+      background: rgba(255,239,228,.55);
+      border:1px solid rgba(255,255,255,.48);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.45),
+        0 6px 20px rgba(154,113,189,.16);
+      overflow:hidden;
+    }
+    .intro-progress-fill{
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background:
+        linear-gradient(90deg, #d34cff 0%, #8a50ff 35%, #5a74ff 70%, #34c8ff 100%);
+      box-shadow:
+        inset 0 0 8px rgba(255,255,255,.32),
+        0 0 16px rgba(136,83,255,.38);
+      position:relative;
+      transition: width .22s ease;
+    }
+    .intro-progress-fill::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,0));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+
+    .intro-version{
+      font-weight:900;
+      font-size:20px;
+      color:rgba(255,255,255,.95);
+      text-shadow:0 4px 18px rgba(0,0,0,.12);
+      letter-spacing:.3px;
+      margin-right:8px;
+    }
+
     @media (max-width: 480px){
       .squirrel-dock{
         gap:12px;
@@ -518,10 +684,83 @@
       .shop-panel{
         width:min(380px, calc(100vw - 28px));
       }
+      .intro-progress{
+        height:26px;
+      }
+      .intro-version{
+        font-size:18px;
+      }
     }
   </style>
 </head>
 <body>
+
+  <div class="intro" id="introScreen" aria-hidden="true">
+    <div class="intro-core">
+      <div class="intro-logo-wrap">
+        <div class="intro-burst"></div>
+        <svg class="intro-logo" viewBox="0 0 512 512" aria-hidden="true">
+          <defs>
+            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f3af55"/>
+              <stop offset="60%" stop-color="#d98a33"/>
+              <stop offset="100%" stop-color="#bf6421"/>
+            </linearGradient>
+            <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6d392b"/>
+              <stop offset="55%" stop-color="#4d261e"/>
+              <stop offset="100%" stop-color="#2f1612"/>
+            </linearGradient>
+          </defs>
+
+          <path d="M256 182
+                   C176 182, 116 242, 116 322
+                   C116 414, 183 470, 256 470
+                   C329 470, 396 414, 396 322
+                   C396 242, 336 182, 256 182Z"
+                fill="url(#bodyGrad)"/>
+
+          <path d="M210 214
+                   C172 240, 150 284, 154 330
+                   C158 372, 182 405, 214 426"
+                fill="none"
+                stroke="rgba(255,248,214,.5)"
+                stroke-width="18"
+                stroke-linecap="round"/>
+
+          <path d="M140 218
+                   C152 145, 209 105, 256 105
+                   C303 105, 360 145, 372 218
+                   C334 242, 292 254, 256 254
+                   C220 254, 178 242, 140 218Z"
+                fill="url(#capGrad)"/>
+
+          <path d="M188 146 L256 210 L324 146" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="24"/>
+          <path d="M162 184 L228 240" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>
+          <path d="M350 184 L284 240" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>
+
+          <path d="M259 102 C258 68, 273 43, 301 21"
+                fill="none"
+                stroke="#533028"
+                stroke-width="22"
+                stroke-linecap="round"/>
+
+          <path d="M305 23
+                   C348 23, 381 49, 386 88
+                   C349 94, 316 76, 296 43Z"
+                fill="#6e5d2d"
+                opacity=".0"/>
+        </svg>
+      </div>
+
+      <div class="intro-progress-wrap">
+        <div class="intro-progress" aria-label="로딩 게이지">
+          <div class="intro-progress-fill" id="introProgressFill"></div>
+        </div>
+        <div class="intro-version">v1.15</div>
+      </div>
+    </div>
+  </div>
 
   <div class="topbar">
     <div class="title">
@@ -633,14 +872,12 @@
               stroke="rgba(255,255,255,.18)"
               stroke-width="10"
               stroke-linecap="round"/>
-
         <path d="M72 114
                  C78 78, 106 58, 128 58
                  C150 58, 178 78, 184 114
                  C166 126, 146 132, 128 132
                  C110 132, 90 126, 72 114Z"
               fill="#6c3f1f"/>
-
         <circle cx="92" cy="92" r="5" fill="#8a5229"/>
         <circle cx="110" cy="80" r="5" fill="#8a5229"/>
         <circle cx="128" cy="74" r="5" fill="#8a5229"/>
@@ -649,18 +886,12 @@
         <circle cx="102" cy="104" r="5" fill="#8a5229"/>
         <circle cx="128" cy="100" r="5" fill="#8a5229"/>
         <circle cx="154" cy="104" r="5" fill="#8a5229"/>
-
         <path d="M129 57
                  C128 42, 135 30, 147 22"
               fill="none"
               stroke="#5f8f3a"
               stroke-width="10"
               stroke-linecap="round"/>
-
-        <path d="M148 24
-                 C166 24, 178 35, 180 50
-                 C165 52, 151 45, 144 33Z"
-              fill="#78a94b"/>
       </svg>
     </button>
   </div>
@@ -697,7 +928,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v14";
+const LS_KEY = "dotori_game_profiles_v15";
 
 function loadProfiles(){
   try{
@@ -743,15 +974,15 @@ const GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
 
 const UPGRADE_STEPS = [
-  { toTier: 1, toValue: 2,    cost: 20,     name: "클릭 수익 +1",    desc: "구매 후: 클릭당 <b>+2</b>" },
-  { toTier: 2, toValue: 4,    cost: 100,    name: "클릭 수익 +2",    desc: "구매 후: 클릭당 <b>+4</b>" },
-  { toTier: 3, toValue: 8,    cost: 250,    name: "클릭 수익 +4",    desc: "구매 후: 클릭당 <b>+8</b>" },
-  { toTier: 4, toValue: 16,   cost: 750,    name: "클릭 수익 +8",    desc: "구매 후: 클릭당 <b>+16</b>" },
-  { toTier: 5, toValue: 32,   cost: 1500,   name: "클릭 수익 +16",   desc: "구매 후: 클릭당 <b>+32</b>" },
-  { toTier: 6, toValue: 64,   cost: 5000,   name: "클릭 수익 +32",   desc: "구매 후: 클릭당 <b>+64</b>" },
-  { toTier: 7, toValue: 128,  cost: 15000,  name: "클릭 수익 +64",   desc: "구매 후: 클릭당 <b>+128</b>" },
-  { toTier: 8, toValue: 256,  cost: 35000,  name: "클릭 수익 +128",  desc: "구매 후: 클릭당 <b>+256</b>" },
-  { toTier: 9, toValue: 512,  cost: 100000, name: "클릭 수익 +256",  desc: "구매 후: 클릭당 <b>+512</b>" },
+  { toTier: 1, toValue: 2, cost: 20, name: "클릭 수익 +1", desc: "구매 후: 클릭당 <b>+2</b>" },
+  { toTier: 2, toValue: 4, cost: 100, name: "클릭 수익 +2", desc: "구매 후: 클릭당 <b>+4</b>" },
+  { toTier: 3, toValue: 8, cost: 250, name: "클릭 수익 +4", desc: "구매 후: 클릭당 <b>+8</b>" },
+  { toTier: 4, toValue: 16, cost: 750, name: "클릭 수익 +8", desc: "구매 후: 클릭당 <b>+16</b>" },
+  { toTier: 5, toValue: 32, cost: 1500, name: "클릭 수익 +16", desc: "구매 후: 클릭당 <b>+32</b>" },
+  { toTier: 6, toValue: 64, cost: 5000, name: "클릭 수익 +32", desc: "구매 후: 클릭당 <b>+64</b>" },
+  { toTier: 7, toValue: 128, cost: 15000, name: "클릭 수익 +64", desc: "구매 후: 클릭당 <b>+128</b>" },
+  { toTier: 8, toValue: 256, cost: 35000, name: "클릭 수익 +128", desc: "구매 후: 클릭당 <b>+256</b>" },
+  { toTier: 9, toValue: 512, cost: 100000, name: "클릭 수익 +256", desc: "구매 후: 클릭당 <b>+512</b>" },
   { toTier: 10, toValue: 1000, cost: 200000, name: "클릭 수익 +512", desc: "구매 후: 클릭당 <b>+1000</b>" }
 ];
 
@@ -821,12 +1052,16 @@ const toast = document.getElementById("toast");
 const toastDetail = document.getElementById("toastDetail");
 let toastTimer = null;
 
-const squirrelDock = document.getElementById("squirrelDock");
 const dockSq = document.getElementById("dockSq");
 const dockCs = document.getElementById("dockCs");
 const dockIncome = document.getElementById("dockIncome");
 const sqDockEmoji = document.getElementById("sqDockEmoji");
 const csDockEmoji = document.getElementById("csDockEmoji");
+
+const introScreen = document.getElementById("introScreen");
+const introProgressFill = document.getElementById("introProgressFill");
+
+let introFinished = false;
 
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
@@ -912,7 +1147,6 @@ function resetAutoState(){
 function loadProfile(nick){
   const p = profiles[nick];
   if(!p) return false;
-
   currentNick = nick;
   applyLoadedProfile(p);
   resetAutoState();
@@ -949,24 +1183,25 @@ function resetCurrentNickProgress(){
   saveCurrent();
 }
 
-function logout(){
-  saveCurrent();
-  currentNick = null;
-  closeShop();
-  closeNickMenu();
-
+function showNicknameOverlay(){
+  overlay.style.display = "flex";
   setLocked(true);
   nickWrap.style.display = "none";
-  overlay.style.display = "flex";
-
   newNick.value = "";
   oldNick.value = "";
   setMsg(newMsg, "", null);
   setMsg(oldMsg, "", null);
   newStart.disabled = true;
   oldEnter.disabled = true;
-
   countEl.textContent = "0";
+}
+
+function logout(){
+  saveCurrent();
+  currentNick = null;
+  closeShop();
+  closeNickMenu();
+  showNicknameOverlay();
 }
 
 function getNextUpgrade(){
@@ -1016,7 +1251,6 @@ function render(){
 
   const sqCount = getSquirrelCount();
   const sqIncome = getSquirrelIncomePerSec();
-
   sqCountEl.textContent = sqCount.toLocaleString("ko-KR");
   sqIncomeEl.textContent = sqIncome.toLocaleString("ko-KR");
 
@@ -1030,7 +1264,6 @@ function render(){
 
   const csCount = getChipmunkCount();
   const csIncome = getChipmunkIncomePerSec();
-
   csCountEl.textContent = csCount.toLocaleString("ko-KR");
   csIncomeEl.textContent = csIncome.toLocaleString("ko-KR");
 
@@ -1183,7 +1416,6 @@ function runAutoChecks(now){
 
 function processHackCheck(now){
   decaySuspicion(now);
-
   const interval = lastClickTime ? (now - lastClickTime) : null;
   if(interval !== null && interval < CLICK_COOLDOWN_MS) return false;
 
@@ -1465,8 +1697,59 @@ oldNick.addEventListener("keydown", (e)=>{
   if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
 });
 
+function buildIrregularLoadingFrames(totalMs=5000){
+  const frames = [];
+  let elapsed = 0;
+  let progress = 0;
+
+  while(elapsed < totalMs){
+    const remainingTime = totalMs - elapsed;
+    const stepMs = Math.min(
+      remainingTime,
+      90 + Math.floor(Math.random() * 330)
+    );
+
+    let stepProgress;
+    if(progress < 18){
+      stepProgress = 3 + Math.random() * 8;
+    }else if(progress < 48){
+      stepProgress = 2 + Math.random() * 7;
+    }else if(progress < 78){
+      stepProgress = 1.5 + Math.random() * 6;
+    }else{
+      stepProgress = 0.8 + Math.random() * 4;
+    }
+
+    progress = Math.min(98.5, progress + stepProgress);
+    elapsed += stepMs;
+    frames.push({ t: elapsed, p: progress });
+  }
+
+  frames.push({ t: totalMs, p: 100 });
+  return frames;
+}
+
+function runOpening(){
+  const frames = buildIrregularLoadingFrames(5000);
+
+  frames.forEach(frame=>{
+    setTimeout(()=>{
+      introProgressFill.style.width = frame.p + "%";
+    }, frame.t);
+  });
+
+  setTimeout(()=>{
+    introFinished = true;
+    introScreen.classList.add("hidden");
+    setTimeout(()=>{
+      showNicknameOverlay();
+    }, 550);
+  }, 5000);
+}
+
 setLocked(true);
 render();
+runOpening();
 </script>
 </body>
 </html>
