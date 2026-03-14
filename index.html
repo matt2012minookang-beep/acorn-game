@@ -499,7 +499,6 @@
       opacity:.45;
     }
 
-    /* 오프닝 */
     .intro{
       position:fixed;
       inset:0;
@@ -653,7 +652,8 @@
         inset 0 0 8px rgba(255,255,255,.32),
         0 0 16px rgba(136,83,255,.38);
       position:relative;
-      transition: width .22s ease;
+      transition: width .08s linear;
+      will-change: width;
     }
     .intro-progress-fill::after{
       content:"";
@@ -744,12 +744,6 @@
                 stroke="#533028"
                 stroke-width="22"
                 stroke-linecap="round"/>
-
-          <path d="M305 23
-                   C348 23, 381 49, 386 88
-                   C349 94, 316 76, 296 43Z"
-                fill="#6e5d2d"
-                opacity=".0"/>
         </svg>
       </div>
 
@@ -1060,8 +1054,6 @@ const csDockEmoji = document.getElementById("csDockEmoji");
 
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
-
-let introFinished = false;
 
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
@@ -1697,54 +1689,80 @@ oldNick.addEventListener("keydown", (e)=>{
   if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
 });
 
-function buildIrregularLoadingFrames(totalMs=5000){
-  const frames = [];
+function createIrregularStops(totalMs = 5000){
+  const stops = [];
   let elapsed = 0;
   let progress = 0;
 
   while(elapsed < totalMs){
-    const remainingTime = totalMs - elapsed;
-    const stepMs = Math.min(
-      remainingTime,
-      90 + Math.floor(Math.random() * 330)
-    );
+    const remain = totalMs - elapsed;
+    const dur = Math.min(remain, 180 + Math.random() * 520);
 
-    let stepProgress;
-    if(progress < 18){
-      stepProgress = 3 + Math.random() * 8;
-    }else if(progress < 48){
-      stepProgress = 2 + Math.random() * 7;
-    }else if(progress < 78){
-      stepProgress = 1.5 + Math.random() * 6;
+    let jump;
+    if(progress < 12){
+      jump = 4 + Math.random() * 7;
+    }else if(progress < 35){
+      jump = 3 + Math.random() * 6;
+    }else if(progress < 65){
+      jump = 2 + Math.random() * 5;
+    }else if(progress < 88){
+      jump = 1 + Math.random() * 3.2;
     }else{
-      stepProgress = 0.8 + Math.random() * 4;
+      jump = 0.4 + Math.random() * 1.4;
     }
 
-    progress = Math.min(98.5, progress + stepProgress);
-    elapsed += stepMs;
-    frames.push({ t: elapsed, p: progress });
+    progress = Math.min(99, progress + jump);
+    elapsed += dur;
+    stops.push({ time: elapsed, progress });
   }
 
-  frames.push({ t: totalMs, p: 100 });
-  return frames;
+  stops.push({ time: totalMs, progress: 100 });
+  return stops;
 }
 
 function runOpening(){
-  const frames = buildIrregularLoadingFrames(5000);
+  const totalMs = 5000;
+  const stops = createIrregularStops(totalMs);
 
-  frames.forEach(frame=>{
-    setTimeout(()=>{
-      introProgressFill.style.width = frame.p + "%";
-    }, frame.t);
-  });
+  const start = performance.now();
+  let visualProgress = 0;
+  let stopIndex = 0;
+  let targetProgress = 0;
 
-  setTimeout(()=>{
-    introFinished = true;
-    introScreen.classList.add("hidden");
+  function tick(now){
+    const elapsed = now - start;
+
+    while(stopIndex < stops.length && elapsed >= stops[stopIndex].time){
+      targetProgress = stops[stopIndex].progress;
+      stopIndex++;
+    }
+
+    const diff = targetProgress - visualProgress;
+    const smoothing = diff > 10 ? 0.16 : 0.1;
+    visualProgress += diff * smoothing;
+
+    if(Math.abs(diff) < 0.08 && targetProgress > visualProgress){
+      visualProgress = targetProgress;
+    }
+
+    introProgressFill.style.width = Math.min(100, visualProgress) + "%";
+
+    if(elapsed < totalMs || visualProgress < 99.95){
+      requestAnimationFrame(tick);
+      return;
+    }
+
+    introProgressFill.style.width = "100%";
+
     setTimeout(()=>{
-      showNicknameOverlay();
-    }, 550);
-  }, 5000);
+      introScreen.classList.add("hidden");
+      setTimeout(()=>{
+        showNicknameOverlay();
+      }, 550);
+    }, 120);
+  }
+
+  requestAnimationFrame(tick);
 }
 
 setLocked(true);
