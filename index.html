@@ -1,418 +1,1379 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>도토리 게임</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>도토리 게임</title>
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --panel: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.16);
+      --text:#ffffff;
+      --accent:#7a2cff;
+      --danger:#ff5a7a;
+      --good:#2ecc71;
+      --gold:#ffd84d;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
 
-<style>
-:root{
---bg:#0b0b10;
---panel:rgba(255,255,255,.06);
---border:rgba(255,255,255,.16);
---accent:#7a2cff;
---gold:#ffd84d;
-}
+    body{
+      font-family: "Malgun Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 500px at 50% 0%, rgba(122,44,255,.18), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      overflow:hidden;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
 
-*{box-sizing:border-box}
-body{
-margin:0;
-font-family:system-ui;
-background:radial-gradient(900px 500px at 50% 0%, rgba(122,44,255,.18), transparent 60%),var(--bg);
-color:#fff;
-overflow:hidden;
-}
+    .topbar{
+      position:fixed;
+      top:0; left:0; right:0;
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 18px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
+      z-index:10;
+      pointer-events:none;
+    }
+    .title{
+      pointer-events:auto;
+      font-weight:800;
+      letter-spacing:-0.5px;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .title .badge{ font-size:18px; opacity:.9; }
 
-.topbar{
-position:fixed;
-top:0;
-left:0;
-right:0;
-height:70px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:0 20px;
-z-index:10;
-}
+    .counter-chip{
+      pointer-events:auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: var(--panel);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:800;
+    }
+    .counter-chip .emoji{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+      transition: color .15s ease, text-shadow .15s ease, filter .15s ease;
+    }
+    .counter-chip .count{
+      font-size:18px;
+      min-width:110px;
+      text-align:right;
+      letter-spacing:0.2px;
+    }
+    .counter-chip.golden .emoji{
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255,216,77,.85), 0 0 22px rgba(255,216,77,.5);
+      filter: drop-shadow(0 0 8px rgba(255,216,77,.65));
+    }
 
-.title{
-font-size:22px;
-font-weight:800;
-display:flex;
-gap:10px;
-}
+    .shop-btn{
+      position:fixed;
+      top:84px;
+      left:14px;
+      z-index:20;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      font-weight:800;
+    }
+    .shop-btn:active{ transform: scale(0.98); }
 
-.counter-chip{
-display:flex;
-gap:10px;
-align-items:center;
-background:var(--panel);
-border:1px solid var(--border);
-padding:10px 14px;
-border-radius:14px;
-font-weight:900;
-}
+    .shop-panel{
+      position:fixed;
+      top:84px;
+      left:14px;
+      width:min(380px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      display:none;
+    }
+    .shop-panel.show{ display:block; }
 
-.counter-chip.golden{
-box-shadow:0 0 20px rgba(255,216,77,.5);
-}
+    .shop-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      position:relative;
+      z-index:2;
+    }
+    .shop-title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:900;
+      font-size:16px;
+      min-width:0;
+      flex:1 1 auto;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      z-index:1;
+    }
+    .close{
+      cursor:pointer;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:800;
+      position:relative;
+      z-index:3;
+      flex:0 0 auto;
+    }
 
-.shop-btn{
-position:fixed;
-top:84px;
-left:14px;
-background:var(--panel);
-border:1px solid var(--border);
-padding:10px 14px;
-border-radius:14px;
-cursor:pointer;
-z-index:20;
-}
+    .item{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .item:last-child{ margin-bottom:0; }
 
-.shop-panel{
-position:fixed;
-top:84px;
-left:14px;
-width:360px;
-max-width:90vw;
-background:rgba(15,15,22,.9);
-border:1px solid var(--border);
-border-radius:18px;
-padding:14px;
-display:none;
-z-index:30;
-}
+    .item-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .item-name{ font-weight:900; }
+    .item-desc{
+      opacity:.8;
+      font-size:13px;
+      line-height:1.4;
+      margin-top:4px;
+    }
+    .price{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:900;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .buy{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+    }
+    .buy:disabled{
+      cursor:not-allowed;
+      opacity:.45;
+      background: rgba(122,44,255,.35);
+    }
+    .owned{
+      margin-top:10px;
+      font-size:12px;
+      opacity:.8;
+    }
 
-.shop-panel.show{display:block}
+    .stage{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-top:72px;
+    }
+    .acorn-btn{
+      width:min(360px, 72vw);
+      height:min(360px, 72vw);
+      border-radius:28px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      outline:none;
+      position:relative;
+    }
+    .acorn-btn:active{
+      transform: scale(0.97);
+      background: rgba(255,255,255,.06);
+    }
+    .acorn{
+      font-size:min(160px, 30vw);
+      line-height:1;
+      filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
+      transition: color .15s ease, text-shadow .15s ease, filter .15s ease;
+    }
+    .acorn-btn.golden{
+      border-color: rgba(255,216,77,.8);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45), 0 0 26px rgba(255,216,77,.22);
+    }
+    .acorn-btn.golden .acorn{
+      color: var(--gold);
+      text-shadow: 0 0 14px rgba(255,216,77,.95), 0 0 28px rgba(255,216,77,.45);
+      filter: drop-shadow(0 0 12px rgba(255,216,77,.7));
+    }
 
-.shop-header{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:10px;
-}
+    .float-text{
+      position:fixed;
+      z-index:50;
+      font-weight:1000;
+      font-size:18px;
+      pointer-events:none;
+      text-shadow: 0 6px 18px rgba(0,0,0,.45);
+      animation: floatUp 700ms ease-out forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes floatUp{
+      0%   { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.05); opacity: 0; }
+    }
 
-.close{
-padding:6px 10px;
-background:var(--panel);
-border:1px solid var(--border);
-border-radius:10px;
-cursor:pointer;
-}
+    .hint{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      opacity:.72;
+      font-size:14px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(8px);
+      z-index:5;
+    }
 
-.item{
-background:var(--panel);
-border:1px solid var(--border);
-border-radius:14px;
-padding:12px;
-margin-bottom:10px;
-}
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(10px);
+      z-index:100;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(520px, 96vw);
+      border-radius:22px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 28px 110px rgba(0,0,0,.6);
+      padding:18px;
+    }
+    .modal h2{
+      margin:0 0 6px;
+      font-size:20px;
+      letter-spacing:-.3px;
+    }
+    .modal .sub{
+      margin:0 0 14px;
+      opacity:.75;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .section{
+      padding:12px;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .section-title{
+      font-weight:900;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    input[type="text"]{
+      flex:1;
+      min-width:200px;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      color:#fff;
+      outline:none;
+    }
+    .btn{
+      padding:11px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+      min-width:110px;
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background: rgba(122,44,255,.35);
+    }
+    .msg{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.85;
+    }
+    .msg.good{ color: rgba(46, 204, 113, .95); }
+    .msg.bad{ color: rgba(255, 90, 122, .95); }
+    .tiny{
+      margin-top:10px;
+      opacity:.6;
+      font-size:12px;
+      line-height:1.45;
+    }
 
-.buy{
-width:100%;
-margin-top:10px;
-background:var(--accent);
-border:none;
-color:#fff;
-padding:10px;
-border-radius:12px;
-font-weight:900;
-cursor:pointer;
-}
+    .locked{ pointer-events:none; opacity:.75; }
 
-.stage{
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-}
+    .nick-wrap{
+      position:fixed;
+      top:84px;
+      right:14px;
+      z-index:20;
+      display:none;
+    }
+    .nick-chip{
+      padding:9px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nick-chip:active{ transform: scale(0.98); }
 
-.acorn-btn{
-width:300px;
-height:300px;
-border-radius:30px;
-border:1px solid var(--border);
-background:rgba(255,255,255,.05);
-display:flex;
-align-items:center;
-justify-content:center;
-cursor:pointer;
-}
+    .nick-menu{
+      position:absolute;
+      top:44px;
+      right:0;
+      width:220px;
+      border-radius:16px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+    }
+    .nick-menu.show{ display:block; }
 
-.acorn{
-font-size:140px;
-}
+    .menu-btn{
+      width:100%;
+      text-align:left;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      cursor:pointer;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .menu-btn:last-child{ margin-bottom:0; }
+    .menu-btn.danger{
+      border-color: rgba(255,90,122,.25);
+      background: rgba(255,90,122,.10);
+    }
+    .menu-btn:active{ transform: scale(0.99); }
 
-.acorn-btn.golden{
-box-shadow:0 0 25px rgba(255,216,77,.7);
-}
+    .toast{
+      position:fixed;
+      left:50%;
+      top:92px;
+      transform: translateX(-50%);
+      z-index:200;
+      min-width:min(420px, 92vw);
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,90,122,.35);
+      background: rgba(255,90,122,.14);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      display:none;
+      font-weight:900;
+    }
+    .toast small{
+      display:block;
+      margin-top:4px;
+      opacity:.8;
+      font-weight:700;
+      font-size:12px;
+      line-height:1.4;
+    }
 
-.float-text{
-position:fixed;
-font-weight:900;
-animation:floatUp .7s forwards;
-}
-
-@keyframes floatUp{
-0%{opacity:0;transform:translateY(0)}
-10%{opacity:1}
-100%{opacity:0;transform:translateY(-40px)}
-}
-
-.squirrel-dock{
-position:fixed;
-bottom:70px;
-left:50%;
-transform:translateX(-50%);
-background:var(--panel);
-border:1px solid var(--border);
-padding:10px 14px;
-border-radius:999px;
-font-weight:900;
-display:flex;
-gap:10px;
-}
-
-.overlay{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.6);
-display:flex;
-align-items:center;
-justify-content:center;
-z-index:100;
-}
-
-.modal{
-background:#151520;
-border:1px solid var(--border);
-border-radius:20px;
-padding:20px;
-width:420px;
-max-width:95vw;
-}
-
-input{
-width:100%;
-padding:10px;
-border-radius:12px;
-border:1px solid var(--border);
-background:#000;
-color:#fff;
-margin-top:8px;
-}
-
-.btn{
-margin-top:10px;
-width:100%;
-padding:10px;
-background:var(--accent);
-border:none;
-border-radius:12px;
-color:#fff;
-font-weight:900;
-cursor:pointer;
-}
-
-.msg{font-size:12px;margin-top:6px}
-
-.nick-wrap{
-position:fixed;
-top:84px;
-right:14px;
-
-/* 핵심 수정 */
-z-index:20;
-}
-
-.nick-chip{
-background:var(--panel);
-border:1px solid var(--border);
-padding:10px 14px;
-border-radius:14px;
-cursor:pointer;
-font-weight:900;
-}
-
-.nick-menu{
-position:absolute;
-top:44px;
-right:0;
-background:#151520;
-border:1px solid var(--border);
-border-radius:14px;
-padding:6px;
-display:none;
-width:180px;
-}
-
-.nick-menu.show{display:block}
-
-.menu-btn{
-width:100%;
-padding:10px;
-margin-bottom:6px;
-border:none;
-border-radius:10px;
-background:var(--panel);
-color:#fff;
-font-weight:900;
-cursor:pointer;
-}
-</style>
+    .squirrel-dock{
+      position:fixed;
+      left:50%;
+      bottom:78px;
+      transform: translateX(-50%);
+      z-index:25;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      pointer-events:none;
+    }
+    .squirrel-dock .emo{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+    }
+    .squirrel-dock .txt{
+      font-weight:900;
+      font-size:14px;
+      opacity:.9;
+      white-space:nowrap;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="topbar">
-<div class="title">🌰 도토리 게임</div>
-<div class="counter-chip" id="counterChip">
-<span>🌰</span>
-<span id="count">0</span>
-</div>
-</div>
+  <div class="topbar">
+    <div class="title">
+      <span class="badge">🌰</span>
+      <span>도토리 게임</span>
+    </div>
 
-<div class="shop-btn" id="shopBtn">🛒 상점</div>
+    <div class="counter-chip" id="counterChip" aria-label="도토리 수">
+      <span class="emoji">🌰</span>
+      <span id="count" class="count">0</span>
+    </div>
+  </div>
 
-<div class="shop-panel" id="shopPanel">
+  <div class="toast" id="toast">
+    ⚠️ 핵 감지: 계정이 초기화되었습니다.
+    <small id="toastDetail">비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.</small>
+  </div>
 
-<div class="shop-header">
-<div>상점</div>
-<button class="close" id="shopClose">닫기</button>
-</div>
+  <div class="nick-wrap" id="nickWrap">
+    <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
+    <div class="nick-menu" id="nickMenu">
+      <button class="menu-btn" id="btnLogout">로그아웃</button>
+      <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
+    </div>
+  </div>
 
-<div class="item">
-<div>🐿 다람쥐 (1/s)</div>
-<div>보유: <span id="sqCount">0</span></div>
-<div>가격: <span id="sqPrice">10</span></div>
-<button class="buy" id="buySquirrel">구매</button>
-</div>
+  <div class="squirrel-dock" id="squirrelDock" aria-hidden="true">
+    <span class="emo">🐿️</span>
+    <span class="txt">x <span id="dockSq">0</span> · 🌲 <span id="dockCs">0</span> · <span id="dockIncome">0</span>/s</span>
+  </div>
 
-<div class="item">
-<div>🌲 청솔모 (10/s)</div>
-<div>보유: <span id="csCount">0</span></div>
-<div>가격: <span id="csPrice">5000</span></div>
-<button class="buy" id="buyChipmunk">구매</button>
-</div>
+  <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
+    🛒 상점
+  </div>
 
-</div>
+  <div class="shop-panel" id="shopPanel" aria-label="상점">
+    <div class="shop-header">
+      <div class="shop-title">🛒 상점</div>
+      <button class="close" id="shopClose">닫기</button>
+    </div>
 
-<div class="stage">
-<div class="acorn-btn" id="acornBtn">
-<div class="acorn">🌰</div>
-</div>
-</div>
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name" id="upgName">클릭 업그레이드</div>
+          <div class="item-desc" id="upgDesc">설명</div>
+        </div>
+        <div class="price"><span>🌰</span><span id="upgPrice">0</span></div>
+      </div>
+      <button class="buy" id="buyUpgrade">구매</button>
+      <div class="owned" id="upgHint"></div>
+    </div>
 
-<div class="squirrel-dock">
-🐿 <span id="dockSq">0</span>  
-🌲 <span id="dockCs">0</span>  
-<span id="dockIncome">0</span>/s
-</div>
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🐿️ 다람쥐 고용</div>
+          <div class="item-desc">
+            1마리당 <b>1초마다 +1</b> 도토리<br>
+            보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="sqPrice">10</span></div>
+      </div>
+      <button class="buy" id="buySquirrel">고용</button>
+      <div class="owned" id="sqHint"></div>
+    </div>
 
-<div class="nick-wrap" id="nickWrap">
-<div class="nick-chip" id="nickChip">
-👤 <span id="nickText"></span>
-</div>
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🌲 청솔모 고용</div>
+          <div class="item-desc">
+            1마리당 <b>1초마다 +10</b> 도토리<br>
+            보유: <b><span id="csCount">0</span>마리</b> · 현재 수익: <b><span id="csIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="csPrice">5000</span></div>
+      </div>
+      <button class="buy" id="buyChipmunk">고용</button>
+      <div class="owned" id="csHint"></div>
+    </div>
+  </div>
 
-<div class="nick-menu" id="nickMenu">
-<button class="menu-btn" id="btnLogout">로그아웃</button>
-<button class="menu-btn" id="btnResetNick">닉네임 초기화</button>
-</div>
-</div>
+  <div class="stage">
+    <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
+      <div class="acorn">🌰</div>
+    </button>
+  </div>
+
+  <div class="hint">도토리를 눌러서 모아봐 🌰</div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>닉네임을 입력하세요!</h2>
+      <p class="sub">닉네임마다 진행 상황이 저장됩니다. (이 브라우저/기기 안에서만 저장)</p>
+
+      <div class="grid">
+        <div class="section">
+          <div class="section-title">🆕 새로 시작하기</div>
+          <div class="row">
+            <input id="newNick" type="text" placeholder="새 닉네임" maxlength="20" />
+            <button class="btn" id="newStart" disabled>시작</button>
+          </div>
+          <div class="msg" id="newMsg"></div>
+          <div class="tiny">입력하면 아래에 <b>사용 가능한 닉네임</b> / <b>이미 사용중인 닉네임</b>이 표시됩니다.</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">🔁 이미 사용중이신 닉네임이 있나요?</div>
+          <div class="row">
+            <input id="oldNick" type="text" placeholder="기존 닉네임" maxlength="20" />
+            <button class="btn" id="oldEnter" disabled>들어가기</button>
+          </div>
+          <div class="msg" id="oldMsg"></div>
+          <div class="tiny">기존 닉네임이 맞으면 저장된 상태로 들어갑니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
+const LS_KEY = "dotori_game_profiles_v14";
 
-let acorn=0
-let squirrels=0
-let chipmunks=0
+function loadProfiles(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return {};
+    const obj = JSON.parse(raw);
+    if(obj && typeof obj === "object") return obj;
+    return {};
+  }catch(e){ return {}; }
+}
+function saveProfiles(profiles){
+  localStorage.setItem(LS_KEY, JSON.stringify(profiles));
+}
+function sanitizeNick(n){
+  return (n ?? "").trim().replace(/\s+/g, " ");
+}
+function isValidNick(n){
+  const s = sanitizeNick(n);
+  return s.length >= 1 && s.length <= 20;
+}
+function fmtAcorn(n){
+  return Math.floor(n).toLocaleString("ko-KR");
+}
 
-const countEl=document.getElementById("count")
-const acornBtn=document.getElementById("acornBtn")
+let profiles = loadProfiles();
+let currentNick = null;
 
-const sqCount=document.getElementById("sqCount")
-const csCount=document.getElementById("csCount")
+let acorn = 0;
+let clickValue = 1;
+let tier = 0;
 
-const dockSq=document.getElementById("dockSq")
-const dockCs=document.getElementById("dockCs")
-const dockIncome=document.getElementById("dockIncome")
+let squirrelNextPayouts = [];
+const SQUIRREL_INCOME_PER_TICK = 1;
+const SQUIRREL_TICK_MS = 1000;
 
-const shopBtn=document.getElementById("shopBtn")
-const shopPanel=document.getElementById("shopPanel")
-const shopClose=document.getElementById("shopClose")
+let chipmunkNextPayouts = [];
+const CHIPMUNK_INCOME_PER_TICK = 10;
+const CHIPMUNK_TICK_MS = 1000;
 
-const buySquirrel=document.getElementById("buySquirrel")
-const buyChipmunk=document.getElementById("buyChipmunk")
+let goldenReady = false;
+let goldenStartedAt = 0;
+const GOLDEN_CHANCE = 0.03;
+const GOLDEN_MIN_HOLD_MS = 100;
 
-const sqPrice=document.getElementById("sqPrice")
-const csPrice=document.getElementById("csPrice")
+const UPGRADE_STEPS = [
+  { toTier: 1, toValue: 2,    cost: 20,     name: "클릭 수익 +1",    desc: "구매 후: 클릭당 <b>+2</b>" },
+  { toTier: 2, toValue: 4,    cost: 100,    name: "클릭 수익 +2",    desc: "구매 후: 클릭당 <b>+4</b>" },
+  { toTier: 3, toValue: 8,    cost: 250,    name: "클릭 수익 +4",    desc: "구매 후: 클릭당 <b>+8</b>" },
+  { toTier: 4, toValue: 16,   cost: 750,    name: "클릭 수익 +8",    desc: "구매 후: 클릭당 <b>+16</b>" },
+  { toTier: 5, toValue: 32,   cost: 1500,   name: "클릭 수익 +16",   desc: "구매 후: 클릭당 <b>+32</b>" },
+  { toTier: 6, toValue: 64,   cost: 5000,   name: "클릭 수익 +32",   desc: "구매 후: 클릭당 <b>+64</b>" },
+  { toTier: 7, toValue: 128,  cost: 15000,  name: "클릭 수익 +64",   desc: "구매 후: 클릭당 <b>+128</b>" },
+  { toTier: 8, toValue: 256,  cost: 35000,  name: "클릭 수익 +128",  desc: "구매 후: 클릭당 <b>+256</b>" },
+  { toTier: 9, toValue: 512,  cost: 100000, name: "클릭 수익 +256",  desc: "구매 후: 클릭당 <b>+512</b>" },
+  { toTier: 10, toValue: 1000, cost: 200000, name: "클릭 수익 +512", desc: "구매 후: 클릭당 <b>+1000</b>" }
+];
 
-let sqCost=10
-let csCost=5000
+const CLICK_COOLDOWN_MS = 10;
+const CLICK_HISTORY_WINDOW_MS = 5000;
+const HARD_CPS_WINDOW_MS = 1000;
+const HARD_CPS_LIMIT = 24;
+
+let lastClickTime = 0;
+let clickTimes = [];
+let clickIntervals = [];
+let suspiciousScore = 0;
+let lastSuspiciousDecay = 0;
+
+const SQ_COSTS_1_TO_8 = [10, 11, 13, 20, 30, 50, 100, 150];
+function getNextSquirrelCost(nextIndex){
+  if(nextIndex <= 8) return SQ_COSTS_1_TO_8[nextIndex - 1];
+  return 150 + (nextIndex - 8) * 50;
+}
+function getNextChipmunkCost(nextIndex){
+  return 5000 + (nextIndex - 1) * 500;
+}
+
+const countEl = document.getElementById("count");
+const acornBtn = document.getElementById("acornBtn");
+const counterChip = document.getElementById("counterChip");
+
+const shopBtn = document.getElementById("shopBtn");
+const shopPanel = document.getElementById("shopPanel");
+const shopClose = document.getElementById("shopClose");
+
+const upgName = document.getElementById("upgName");
+const upgDesc = document.getElementById("upgDesc");
+const upgPrice = document.getElementById("upgPrice");
+const buyUpgrade = document.getElementById("buyUpgrade");
+const upgHint = document.getElementById("upgHint");
+
+const sqCountEl = document.getElementById("sqCount");
+const sqIncomeEl = document.getElementById("sqIncome");
+const sqPriceEl = document.getElementById("sqPrice");
+const buySquirrel = document.getElementById("buySquirrel");
+const sqHint = document.getElementById("sqHint");
+
+const csCountEl = document.getElementById("csCount");
+const csIncomeEl = document.getElementById("csIncome");
+const csPriceEl = document.getElementById("csPrice");
+const buyChipmunk = document.getElementById("buyChipmunk");
+const csHint = document.getElementById("csHint");
+
+const overlay = document.getElementById("overlay");
+const newNick = document.getElementById("newNick");
+const newStart = document.getElementById("newStart");
+const newMsg = document.getElementById("newMsg");
+
+const oldNick = document.getElementById("oldNick");
+const oldEnter = document.getElementById("oldEnter");
+const oldMsg = document.getElementById("oldMsg");
+
+const nickWrap = document.getElementById("nickWrap");
+const nickChip = document.getElementById("nickChip");
+const nickText = document.getElementById("nickText");
+const nickMenu = document.getElementById("nickMenu");
+const btnLogout = document.getElementById("btnLogout");
+const btnResetNick = document.getElementById("btnResetNick");
+
+const toast = document.getElementById("toast");
+const toastDetail = document.getElementById("toastDetail");
+let toastTimer = null;
+
+const squirrelDock = document.getElementById("squirrelDock");
+const dockSq = document.getElementById("dockSq");
+const dockCs = document.getElementById("dockCs");
+const dockIncome = document.getElementById("dockIncome");
+
+function showToast(detail){
+  toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
+  toast.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2600);
+}
+
+function updateGoldenUI(){
+  if(goldenReady){
+    acornBtn.classList.add("golden");
+    counterChip.classList.add("golden");
+  }else{
+    acornBtn.classList.remove("golden");
+    counterChip.classList.remove("golden");
+  }
+}
+
+function setLocked(isLocked){
+  const lockedEls = document.querySelectorAll(".locked");
+  lockedEls.forEach(el=>{
+    el.style.pointerEvents = isLocked ? "none" : "auto";
+    el.style.opacity = isLocked ? "0.75" : "1";
+  });
+}
+
+function normalizeByTier(){
+  const map = [1,2,4,8,16,32,64,128,256,512,1000];
+  if(tier < 0) tier = 0;
+  if(tier > 10) tier = 10;
+  clickValue = map[tier] ?? 1;
+}
+
+function buildSaveData(){
+  const now = performance.now();
+  const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - now)));
+  const chipmunkRemainingMs = chipmunkNextPayouts.map(t => Math.max(0, Math.round(t - now)));
+  return {
+    acorn,
+    clickValue,
+    tier,
+    squirrelRemainingMs,
+    chipmunkRemainingMs,
+    goldenReady,
+    goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (now - goldenStartedAt))) : 0
+  };
+}
+
+function saveCurrent(){
+  if(!currentNick) return;
+  profiles[currentNick] = buildSaveData();
+  saveProfiles(profiles);
+}
+
+function applyLoadedProfile(p){
+  const now = performance.now();
+  acorn = Number(p.acorn ?? 0) || 0;
+  tier = Number(p.tier ?? 0) || 0;
+  clickValue = Number(p.clickValue ?? 1) || 1;
+  goldenReady = !!p.goldenReady;
+  normalizeByTier();
+
+  const sqRemainings = Array.isArray(p.squirrelRemainingMs) ? p.squirrelRemainingMs : [];
+  squirrelNextPayouts = sqRemainings.map(ms => now + Math.max(0, Number(ms) || 0));
+
+  const csRemainings = Array.isArray(p.chipmunkRemainingMs) ? p.chipmunkRemainingMs : [];
+  chipmunkNextPayouts = csRemainings.map(ms => now + Math.max(0, Number(ms) || 0));
+
+  const goldenRemainingMs = Number(p.goldenRemainingMs ?? 0) || 0;
+  goldenStartedAt = now - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
+
+  updateGoldenUI();
+}
+
+function resetAutoState(){
+  lastClickTime = 0;
+  clickTimes = [];
+  clickIntervals = [];
+  suspiciousScore = 0;
+  lastSuspiciousDecay = performance.now();
+}
+
+function loadProfile(nick){
+  const p = profiles[nick];
+  if(!p) return false;
+
+  currentNick = nick;
+  applyLoadedProfile(p);
+  resetAutoState();
+  return true;
+}
+
+function createProfile(nick){
+  currentNick = nick;
+  acorn = 0;
+  tier = 0;
+  clickValue = 1;
+  squirrelNextPayouts = [];
+  chipmunkNextPayouts = [];
+  goldenReady = false;
+  goldenStartedAt = 0;
+  normalizeByTier();
+  updateGoldenUI();
+  resetAutoState();
+  saveCurrent();
+}
+
+function resetCurrentNickProgress(){
+  if(!currentNick) return;
+  acorn = 0;
+  tier = 0;
+  clickValue = 1;
+  squirrelNextPayouts = [];
+  chipmunkNextPayouts = [];
+  goldenReady = false;
+  goldenStartedAt = 0;
+  normalizeByTier();
+  updateGoldenUI();
+  resetAutoState();
+  saveCurrent();
+}
+
+function logout(){
+  saveCurrent();
+  currentNick = null;
+  closeShop();
+  closeNickMenu();
+
+  setLocked(true);
+  nickWrap.style.display = "none";
+  overlay.style.display = "flex";
+
+  newNick.value = "";
+  oldNick.value = "";
+  setMsg(newMsg, "", null);
+  setMsg(oldMsg, "", null);
+  newStart.disabled = true;
+  oldEnter.disabled = true;
+
+  countEl.textContent = "0";
+}
+
+function getNextUpgrade(){
+  if(tier >= 10) return null;
+  return UPGRADE_STEPS[tier];
+}
+
+function getSquirrelCount(){
+  return squirrelNextPayouts.length;
+}
+function getChipmunkCount(){
+  return chipmunkNextPayouts.length;
+}
+
+function getSquirrelIncomePerSec(){
+  return getSquirrelCount() * SQUIRREL_INCOME_PER_TICK;
+}
+function getChipmunkIncomePerSec(){
+  return getChipmunkCount() * CHIPMUNK_INCOME_PER_TICK;
+}
 
 function render(){
-countEl.textContent=Math.floor(acorn)
-sqCount.textContent=squirrels
-csCount.textContent=chipmunks
+  countEl.textContent = fmtAcorn(acorn);
+  updateGoldenUI();
 
-dockSq.textContent=squirrels
-dockCs.textContent=chipmunks
+  if(currentNick){
+    nickWrap.style.display = "block";
+    nickText.textContent = currentNick;
+  }
 
-dockIncome.textContent=squirrels+chipmunks*10
+  const next = getNextUpgrade();
+  if(!next){
+    upgName.textContent = "클릭 업그레이드 완료";
+    upgDesc.innerHTML = "현재 클릭당 <b>+" + clickValue + "</b>";
+    upgPrice.textContent = "-";
+    buyUpgrade.disabled = true;
+    buyUpgrade.textContent = "완료";
+    upgHint.textContent = "더 이상 업그레이드가 없습니다.";
+  } else {
+    upgName.textContent = next.name;
+    upgDesc.innerHTML = next.desc;
+    upgPrice.textContent = next.cost.toLocaleString("ko-KR");
+    buyUpgrade.disabled = acorn < next.cost;
+    buyUpgrade.textContent = "구매";
+    upgHint.textContent = "현재 클릭당 +" + clickValue + " → 업그레이드 후 +" + next.toValue;
+  }
 
-sqPrice.textContent=sqCost
-csPrice.textContent=csCost
+  const sqCount = getSquirrelCount();
+  const sqIncome = getSquirrelIncomePerSec();
+
+  sqCountEl.textContent = sqCount.toLocaleString("ko-KR");
+  sqIncomeEl.textContent = sqIncome.toLocaleString("ko-KR");
+
+  const nextSqIndex = sqCount + 1;
+  const nextSqCost = getNextSquirrelCost(nextSqIndex);
+  sqPriceEl.textContent = nextSqCost.toLocaleString("ko-KR");
+  buySquirrel.disabled = acorn < nextSqCost;
+  sqHint.textContent =
+    "다음 가격: " + nextSqCost.toLocaleString("ko-KR") +
+    " (구매 후 수익 " + ((sqCount + 1) * SQUIRREL_INCOME_PER_TICK).toLocaleString("ko-KR") + "/s)";
+
+  const csCount = getChipmunkCount();
+  const csIncome = getChipmunkIncomePerSec();
+
+  csCountEl.textContent = csCount.toLocaleString("ko-KR");
+  csIncomeEl.textContent = csIncome.toLocaleString("ko-KR");
+
+  const nextCsIndex = csCount + 1;
+  const nextCsCost = getNextChipmunkCost(nextCsIndex);
+  csPriceEl.textContent = nextCsCost.toLocaleString("ko-KR");
+  buyChipmunk.disabled = acorn < nextCsCost;
+  csHint.textContent =
+    "다음 가격: " + nextCsCost.toLocaleString("ko-KR") +
+    " (구매 후 수익 " + ((csCount + 1) * CHIPMUNK_INCOME_PER_TICK).toLocaleString("ko-KR") + "/s)";
+
+  dockSq.textContent = sqCount.toLocaleString("ko-KR");
+  dockCs.textContent = csCount.toLocaleString("ko-KR");
+  dockIncome.textContent = (sqIncome + csIncome).toLocaleString("ko-KR");
 }
 
-acornBtn.onclick=e=>{
-acorn++
-spawn("+1",e.clientX,e.clientY)
-render()
+function spawnFloatText(x, y, text, color){
+  const el = document.createElement("div");
+  el.className = "float-text";
+  el.textContent = text;
+  el.style.left = x + "px";
+  el.style.top  = y + "px";
+  el.style.color = color || "#ffffff";
+  document.body.appendChild(el);
+  el.addEventListener("animationend", ()=> el.remove());
 }
 
-function spawn(t,x,y){
-const el=document.createElement("div")
-el.className="float-text"
-el.textContent=t
-el.style.left=x+"px"
-el.style.top=y+"px"
-document.body.appendChild(el)
-setTimeout(()=>el.remove(),700)
+function spawnClickFloat(x, y, value, isGolden=false){
+  let color = "#ffffff";
+  if(isGolden) color = "#ffd84d";
+  else if(value >= 1000) color = "#ffd84d";
+  else if(value >= 512) color = "#ffd36e";
+  else if(value >= 256) color = "#9dffb5";
+  else if(value >= 128) color = "#9d7bff";
+  spawnFloatText(x, y, "+" + value, color);
 }
 
-buySquirrel.onclick=()=>{
-if(acorn<sqCost)return
-acorn-=sqCost
-squirrels++
-sqCost+=Math.floor(sqCost*0.1)
-render()
+function spawnSquirrelFloat(){
+  const r = squirrelDock.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top + 8;
+  spawnFloatText(x, y, "+1", "#9dffb5");
 }
 
-buyChipmunk.onclick=()=>{
-if(acorn<csCost)return
-acorn-=csCost
-chipmunks++
-csCost+=500
-render()
+function spawnChipmunkFloat(){
+  const r = squirrelDock.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top + 8;
+  spawnFloatText(x, y, "+10", "#7bdfff");
 }
+
+function mean(arr){
+  if(!arr.length) return 0;
+  return arr.reduce((a,b)=>a+b,0)/arr.length;
+}
+
+function stddev(arr){
+  if(arr.length < 2) return 9999;
+  const m = mean(arr);
+  const v = arr.reduce((a,b)=>a+((b-m)*(b-m)),0)/arr.length;
+  return Math.sqrt(v);
+}
+
+function dominantRoundedCount(arr){
+  const counts = new Map();
+  for(const n of arr){
+    const r = Math.round(n);
+    counts.set(r, (counts.get(r)||0)+1);
+  }
+  let max = 0;
+  for(const v of counts.values()){
+    if(v > max) max = v;
+  }
+  return max;
+}
+
+function addSuspicion(points, reason){
+  suspiciousScore += points;
+  if(suspiciousScore >= 4){
+    resetCurrentNickProgress();
+    render();
+    closeShop();
+    closeNickMenu();
+    showToast(reason);
+    return false;
+  }
+  return true;
+}
+
+function decaySuspicion(now){
+  if(!lastSuspiciousDecay) lastSuspiciousDecay = now;
+  const elapsed = now - lastSuspiciousDecay;
+  if(elapsed >= 1500 && suspiciousScore > 0){
+    const dec = Math.floor(elapsed / 1500);
+    suspiciousScore = Math.max(0, suspiciousScore - dec);
+    lastSuspiciousDecay = now;
+  }
+}
+
+function runAutoChecks(now){
+  const clickCutoff = now - CLICK_HISTORY_WINDOW_MS;
+  while(clickTimes.length && clickTimes[0] < clickCutoff) clickTimes.shift();
+
+  const intervalLimit = 40;
+  while(clickIntervals.length > intervalLimit) clickIntervals.shift();
+
+  const oneSecCount = clickTimes.filter(t => now - t <= HARD_CPS_WINDOW_MS).length;
+  if(oneSecCount > HARD_CPS_LIMIT){
+    return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
+  }
+
+  if(clickIntervals.length >= 16){
+    const last16 = clickIntervals.slice(-16);
+    const avg16 = mean(last16);
+    const std16 = stddev(last16);
+    if(avg16 < 120 && std16 < 3.2){
+      return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.");
+    }
+  }
+
+  if(clickIntervals.length >= 20){
+    const last20 = clickIntervals.slice(-20);
+    const avg20 = mean(last20);
+    const dom = dominantRoundedCount(last20);
+    if(avg20 < 130 && dom >= 15){
+      return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.");
+    }
+  }
+
+  if(clickTimes.length >= 35 && clickIntervals.length >= 30){
+    const recent = clickIntervals.slice(-30);
+    const avg = mean(recent);
+    const std = stddev(recent);
+    const cps = 1000 / Math.max(avg, 1);
+    if(cps > 11.5 && std < 5){
+      return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.");
+    }
+  }
+
+  if(clickIntervals.length >= 12){
+    const last12 = clickIntervals.slice(-12);
+    const tooFast = last12.filter(v => v < 45).length;
+    if(tooFast >= 10){
+      return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.");
+    }
+  }
+
+  return true;
+}
+
+function processHackCheck(now){
+  decaySuspicion(now);
+
+  const interval = lastClickTime ? (now - lastClickTime) : null;
+  if(interval !== null && interval < CLICK_COOLDOWN_MS) return false;
+
+  lastClickTime = now;
+  clickTimes.push(now);
+  if(interval !== null) clickIntervals.push(interval);
+
+  return runAutoChecks(now);
+}
+
+function triggerGolden(now){
+  goldenReady = true;
+  goldenStartedAt = now;
+  render();
+  saveCurrent();
+}
+
+function tryTriggerGolden(now){
+  if(goldenReady) return;
+  if(Math.random() < GOLDEN_CHANCE){
+    triggerGolden(now);
+  }
+}
+
+function canConsumeGolden(now){
+  return goldenReady && (now - goldenStartedAt >= GOLDEN_MIN_HOLD_MS);
+}
+
+function clickAcornFromPointer(e){
+  if(!currentNick) return;
+  const now = performance.now();
+  if(!processHackCheck(now)) return;
+
+  let gain = clickValue;
+  let isGoldenClick = false;
+
+  if(canConsumeGolden(now)){
+    gain = clickValue * 5;
+    goldenReady = false;
+    goldenStartedAt = 0;
+    isGoldenClick = true;
+  } else if(!goldenReady) {
+    tryTriggerGolden(now);
+  }
+
+  acorn += gain;
+  render();
+  saveCurrent();
+
+  spawnClickFloat(e.clientX, e.clientY, gain, isGoldenClick);
+}
+
+acornBtn.addEventListener("pointerdown", (e)=>{
+  e.preventDefault();
+  clickAcornFromPointer(e);
+});
+
+acornBtn.addEventListener("keydown", (e)=>{
+  if(e.key === " " || e.key === "Enter"){
+    e.preventDefault();
+    if(!currentNick) return;
+
+    const now = performance.now();
+    if(!processHackCheck(now)) return;
+
+    let gain = clickValue;
+    let isGoldenClick = false;
+
+    if(canConsumeGolden(now)){
+      gain = clickValue * 5;
+      goldenReady = false;
+      goldenStartedAt = 0;
+      isGoldenClick = true;
+    } else if(!goldenReady) {
+      tryTriggerGolden(now);
+    }
+
+    acorn += gain;
+    render();
+    saveCurrent();
+
+    const r = acornBtn.getBoundingClientRect();
+    spawnClickFloat(r.left + r.width/2, r.top + r.height/2, gain, isGoldenClick);
+  }
+});
 
 setInterval(()=>{
-acorn+=squirrels
-acorn+=chipmunks*10
-render()
-},1000)
+  if(!currentNick) return;
 
-shopBtn.onclick=()=>{
-shopPanel.classList.toggle("show")
+  const now = performance.now();
+  let changed = false;
+
+  for(let i = 0; i < squirrelNextPayouts.length; i++){
+    if(now >= squirrelNextPayouts[i]){
+      squirrelNextPayouts[i] += SQUIRREL_TICK_MS;
+      acorn += SQUIRREL_INCOME_PER_TICK;
+      spawnSquirrelFloat();
+      changed = true;
+    }
+  }
+
+  for(let i = 0; i < chipmunkNextPayouts.length; i++){
+    if(now >= chipmunkNextPayouts[i]){
+      chipmunkNextPayouts[i] += CHIPMUNK_TICK_MS;
+      acorn += CHIPMUNK_INCOME_PER_TICK;
+      spawnChipmunkFloat();
+      changed = true;
+    }
+  }
+
+  if(changed){
+    render();
+    saveCurrent();
+  }
+}, 50);
+
+function openShop(){ shopPanel.classList.add("show"); }
+function closeShop(){ shopPanel.classList.remove("show"); }
+
+shopBtn.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(shopPanel.classList.contains("show")) closeShop();
+  else openShop();
+});
+shopClose.addEventListener("click", closeShop);
+
+buyUpgrade.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  const next = getNextUpgrade();
+  if(!next) return;
+  if(acorn < next.cost) return;
+
+  acorn -= next.cost;
+  tier = next.toTier;
+  normalizeByTier();
+
+  render();
+  saveCurrent();
+});
+
+buySquirrel.addEventListener("click", ()=>{
+  if(!currentNick) return;
+
+  const sqCount = getSquirrelCount();
+  const cost = getNextSquirrelCost(sqCount + 1);
+  if(acorn < cost) return;
+
+  acorn -= cost;
+  squirrelNextPayouts.push(performance.now() + SQUIRREL_TICK_MS);
+
+  render();
+  saveCurrent();
+  spawnSquirrelFloat();
+});
+
+buyChipmunk.addEventListener("click", ()=>{
+  if(!currentNick) return;
+
+  const csCount = getChipmunkCount();
+  const cost = getNextChipmunkCost(csCount + 1);
+  if(acorn < cost) return;
+
+  acorn -= cost;
+  chipmunkNextPayouts.push(performance.now() + CHIPMUNK_TICK_MS);
+
+  render();
+  saveCurrent();
+  spawnChipmunkFloat();
+});
+
+function openNickMenu(){ nickMenu.classList.add("show"); }
+function closeNickMenu(){ nickMenu.classList.remove("show"); }
+function toggleNickMenu(){
+  if(nickMenu.classList.contains("show")) closeNickMenu();
+  else openNickMenu();
 }
 
-shopClose.onclick=()=>{
-shopPanel.classList.remove("show")
+nickChip.addEventListener("click", (e)=>{
+  e.stopPropagation();
+  toggleNickMenu();
+});
+
+document.addEventListener("click", ()=>{
+  closeNickMenu();
+});
+
+btnLogout.addEventListener("click", (e)=>{
+  e.stopPropagation();
+  logout();
+});
+
+btnResetNick.addEventListener("click", (e)=>{
+  e.stopPropagation();
+  resetCurrentNickProgress();
+  render();
+  closeNickMenu();
+  closeShop();
+});
+
+function setMsg(el, text, kind){
+  el.textContent = text || "";
+  el.classList.remove("good","bad");
+  if(kind) el.classList.add(kind);
 }
 
-render()
+function updateNewNickUI(){
+  const nick = sanitizeNick(newNick.value);
+  if(!isValidNick(nick)){
+    newStart.disabled = true;
+    setMsg(newMsg, "", null);
+    return;
+  }
+  if(profiles[nick]){
+    newStart.disabled = true;
+    setMsg(newMsg, "이미 사용중인 닉네임", "bad");
+  } else {
+    newStart.disabled = false;
+    setMsg(newMsg, "사용 가능한 닉네임", "good");
+  }
+}
 
+function updateOldNickUI(){
+  const nick = sanitizeNick(oldNick.value);
+  if(!isValidNick(nick)){
+    oldEnter.disabled = true;
+    setMsg(oldMsg, "", null);
+    return;
+  }
+  if(profiles[nick]){
+    oldEnter.disabled = false;
+    setMsg(oldMsg, "이미 사용중인 닉네임", "good");
+  } else {
+    oldEnter.disabled = true;
+    setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
+  }
+}
+
+newNick.addEventListener("input", updateNewNickUI);
+oldNick.addEventListener("input", updateOldNickUI);
+
+newStart.addEventListener("click", ()=>{
+  const nick = sanitizeNick(newNick.value);
+  if(!isValidNick(nick)) return;
+
+  if(profiles[nick]){
+    setMsg(newMsg, "이미 사용중인 닉네임", "bad");
+    newStart.disabled = true;
+    return;
+  }
+
+  createProfile(nick);
+  overlay.style.display = "none";
+  setLocked(false);
+  nickWrap.style.display = "block";
+  render();
+});
+
+oldEnter.addEventListener("click", ()=>{
+  const nick = sanitizeNick(oldNick.value);
+  if(!isValidNick(nick)) return;
+
+  if(!profiles[nick]){
+    setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
+    oldEnter.disabled = true;
+    return;
+  }
+
+  loadProfile(nick);
+  overlay.style.display = "none";
+  setLocked(false);
+  nickWrap.style.display = "block";
+  render();
+});
+
+newNick.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter" && !newStart.disabled) newStart.click();
+});
+oldNick.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
+});
+
+setLocked(true);
+render();
 </script>
-
 </body>
 </html>
