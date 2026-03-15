@@ -73,6 +73,11 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 12px 30px rgba(0,0,0,.35);
       font-weight:900;
+      cursor:pointer;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .trophy-chip:active{
+      transform: scale(0.98);
     }
     .trophy-chip .emoji{
       font-size:19px;
@@ -129,11 +134,47 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.35);
       cursor:pointer;
       font-weight:800;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
     .shop-btn{ top:84px; }
     .achieve-btn{ top:136px; }
     .shop-btn:active,
     .achieve-btn:active{ transform: scale(0.98); }
+
+    .achieve-btn.alert{
+      border-color: rgba(255,216,77,.78);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 18px rgba(255,216,77,.22),
+        0 0 36px rgba(255,216,77,.12);
+      animation: buttonGlow 1.15s ease-in-out infinite alternate;
+    }
+
+    .trophy-chip.alert{
+      border-color: rgba(255,216,77,.72);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 16px rgba(255,216,77,.18),
+        0 0 28px rgba(255,216,77,.10);
+    }
+
+    @keyframes buttonGlow{
+      from{
+        box-shadow:
+          0 12px 30px rgba(0,0,0,.35),
+          0 0 10px rgba(255,216,77,.14),
+          0 0 20px rgba(255,216,77,.08);
+      }
+      to{
+        box-shadow:
+          0 12px 30px rgba(0,0,0,.35),
+          0 0 18px rgba(255,216,77,.28),
+          0 0 42px rgba(255,216,77,.16);
+      }
+    }
 
     .shop-panel{
       position:fixed;
@@ -171,15 +212,36 @@
     }
     .achieve-panel.show{ display:block; }
 
+    .trophy-panel{
+      position:fixed;
+      top:84px;
+      right:14px;
+      width:min(360px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
+    }
+    .trophy-panel.show{ display:block; }
+
     .shop-header,
-    .achieve-header{
+    .achieve-header,
+    .trophy-header{
       display:block;
       position:relative;
       margin-bottom:10px;
       z-index:2;
     }
     .shop-title,
-    .achieve-title{
+    .achieve-title,
+    .trophy-title{
       display:block;
       font-weight:900;
       font-size:16px;
@@ -301,6 +363,92 @@
       font-size:13px;
       opacity:.78;
       margin-bottom:12px;
+    }
+
+    .trophy-summary{
+      background: linear-gradient(180deg, rgba(255,216,77,.12), rgba(255,255,255,.04));
+      border:1px solid rgba(255,216,77,.26);
+    }
+    .trophy-big{
+      font-size:28px;
+      font-weight:1000;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .trophy-sub{
+      font-size:14px;
+      opacity:.88;
+      line-height:1.55;
+    }
+    .trophy-next{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.85;
+    }
+
+    .rank-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .rank-row{
+      border-radius:14px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .rank-row.cleared{
+      border-color: rgba(46,204,113,.42);
+      background: linear-gradient(180deg, rgba(46,204,113,.12), rgba(255,255,255,.04));
+    }
+    .rank-row.current{
+      border-color: rgba(255,216,77,.72);
+      background: linear-gradient(180deg, rgba(255,216,77,.14), rgba(255,255,255,.05));
+      box-shadow: 0 0 18px rgba(255,216,77,.12);
+    }
+    .rank-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+      font-weight:900;
+    }
+    .rank-name{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:15px;
+    }
+    .rank-stars{
+      opacity:.95;
+      letter-spacing:.5px;
+    }
+    .rank-need{
+      font-size:13px;
+      opacity:.78;
+    }
+    .rank-state{
+      font-size:12px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      white-space:nowrap;
+    }
+    .rank-row.cleared .rank-state{
+      border-color: rgba(46,204,113,.35);
+      background: rgba(46,204,113,.14);
+      color: #baffd1;
+    }
+    .rank-row.current .rank-state{
+      border-color: rgba(255,216,77,.38);
+      background: rgba(255,216,77,.14);
+      color: #ffe78b;
     }
 
     .stage{
@@ -793,7 +941,8 @@
         font-size:13px;
       }
       .shop-panel,
-      .achieve-panel{
+      .achieve-panel,
+      .trophy-panel{
         width:min(380px, calc(100vw - 28px));
       }
       .intro-progress{
@@ -803,6 +952,10 @@
         font-size:18px;
       }
       .achieve-btn{ top:134px; }
+      .trophy-panel{
+        top:84px;
+        right:14px;
+      }
     }
   </style>
 </head>
@@ -876,7 +1029,7 @@
     </div>
 
     <div class="top-right">
-      <div class="trophy-chip" id="trophyChip" aria-label="업적 수">
+      <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
         <span class="emoji">🏆</span>
         <span id="achievementCountTop" class="count">0</span>
       </div>
@@ -995,6 +1148,28 @@
       <button class="buy" id="claimAchievementSquirrel" disabled>받기</button>
       <div class="owned" id="achievementHintSquirrel">다람쥐를 더 모아야 해.</div>
     </div>
+  </div>
+
+  <div class="trophy-panel" id="trophyPanel" aria-label="트로피 현황">
+    <div class="trophy-header">
+      <div class="trophy-title">🏆 트로피 현황</div>
+      <button class="close" id="trophyClose">닫기</button>
+    </div>
+
+    <div class="item trophy-summary">
+      <div class="trophy-big">
+        <span>🏆</span>
+        <span id="trophyRankName">무등급</span>
+      </div>
+      <div class="trophy-sub" id="trophySummaryText">
+        현재 트로피: 0
+      </div>
+      <div class="trophy-next" id="trophyNextText">
+        다음 등급까지 20 필요
+      </div>
+    </div>
+
+    <div class="rank-list" id="trophyRankList"></div>
   </div>
 
   <div class="stage">
@@ -1119,6 +1294,18 @@ const GOLDEN_MIN_HOLD_MS = 100;
 
 const ACHIEVEMENT_REWARD_ACORN = 10;
 
+const TROPHY_RANKS = [
+  { name: "브론즈 1", stars: "★", need: 20, medal: "🥉" },
+  { name: "브론즈 2", stars: "★★", need: 50, medal: "🥉" },
+  { name: "브론즈 3", stars: "★★★", need: 70, medal: "🥉" },
+  { name: "실버 1", stars: "★", need: 120, medal: "🥈" },
+  { name: "실버 2", stars: "★★", need: 170, medal: "🥈" },
+  { name: "실버 3", stars: "★★★", need: 230, medal: "🥈" },
+  { name: "골드 1", stars: "★", need: 320, medal: "🥇" },
+  { name: "골드 2", stars: "★★", need: 450, medal: "🥇" },
+  { name: "골드 3", stars: "★★★", need: 600, medal: "🥇" }
+];
+
 const UPGRADE_STEPS = [
   { toTier: 1, toValue: 2, cost: 20, name: "클릭 수익 +1", desc: "구매 후: 클릭당 <b>+2</b>" },
   { toTier: 2, toValue: 4, cost: 100, name: "클릭 수익 +2", desc: "구매 후: 클릭당 <b>+4</b>" },
@@ -1163,7 +1350,14 @@ const countEl = document.getElementById("count");
 const acornBtn = document.getElementById("acornBtn");
 const counterChip = document.getElementById("counterChip");
 
+const trophyChip = document.getElementById("trophyChip");
 const trophyCountTop = document.getElementById("achievementCountTop");
+const trophyPanel = document.getElementById("trophyPanel");
+const trophyClose = document.getElementById("trophyClose");
+const trophyRankName = document.getElementById("trophyRankName");
+const trophySummaryText = document.getElementById("trophySummaryText");
+const trophyNextText = document.getElementById("trophyNextText");
+const trophyRankList = document.getElementById("trophyRankList");
 
 const shopBtn = document.getElementById("shopBtn");
 const shopPanel = document.getElementById("shopPanel");
@@ -1384,6 +1578,7 @@ function logout(){
   closeShop();
   closeNickMenu();
   closeAchieve();
+  closeTrophy();
   showNicknameOverlay();
 }
 
@@ -1411,6 +1606,68 @@ function canClaimAcornAchievement(){
 }
 function canClaimSquirrelAchievement(){
   return getSquirrelCount() >= getSquirrelAchievementTarget();
+}
+function canClaimAnyAchievement(){
+  return canClaimAcornAchievement() || canClaimSquirrelAchievement();
+}
+
+function getCurrentTrophyRank(){
+  let current = null;
+  for(const rank of TROPHY_RANKS){
+    if(achievementCount >= rank.need) current = rank;
+  }
+  return current;
+}
+function getNextTrophyRank(){
+  for(const rank of TROPHY_RANKS){
+    if(achievementCount < rank.need) return rank;
+  }
+  return null;
+}
+
+function renderTrophyPanel(){
+  const current = getCurrentTrophyRank();
+  const next = getNextTrophyRank();
+
+  if(current){
+    trophyRankName.textContent = current.medal + " " + current.name + " " + current.stars;
+  }else{
+    trophyRankName.textContent = "무등급";
+  }
+
+  trophySummaryText.innerHTML =
+    "현재 트로피: <b>" + achievementCount.toLocaleString("ko-KR") + "</b>" +
+    "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>";
+
+  if(next){
+    trophyNextText.textContent =
+      "다음 등급: " + next.name + " " + next.stars + " · 앞으로 " +
+      (next.need - achievementCount).toLocaleString("ko-KR") + " 필요";
+  }else{
+    trophyNextText.textContent = "최고 등급 달성 완료!";
+  }
+
+  trophyRankList.innerHTML = TROPHY_RANKS.map(rank=>{
+    const cleared = achievementCount >= rank.need;
+    const isCurrent = current && current.need === rank.need;
+    return `
+      <div class="rank-row ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""}">
+        <div class="rank-top">
+          <div class="rank-name">
+            <span>${rank.medal}</span>
+            <span>${rank.name}</span>
+            <span class="rank-stars">${rank.stars}</span>
+          </div>
+          <div class="rank-state">${
+            isCurrent ? "현재 등급" :
+            cleared ? "달성 완료" :
+            "미달성"
+          }</div>
+        </div>
+        <div class="rank-need">필요 트로피: ${rank.need.toLocaleString("ko-KR")}</div>
+      </div>
+    `;
+  }).join("");
 }
 
 function renderAchievements(){
@@ -1451,7 +1708,11 @@ function render(){
   countEl.textContent = fmtAcorn(acorn);
   trophyCountTop.textContent = achievementCount.toLocaleString("ko-KR");
   renderAchievements();
+  renderTrophyPanel();
   updateGoldenUI();
+
+  achieveBtn.classList.toggle("alert", canClaimAnyAchievement());
+  trophyChip.classList.toggle("alert", canClaimAnyAchievement());
 
   if(currentNick){
     nickWrap.style.display = "block";
@@ -1574,6 +1835,7 @@ function addSuspicion(points, reason){
     closeShop();
     closeNickMenu();
     closeAchieve();
+    closeTrophy();
     showToast(reason);
     return false;
   }
@@ -1761,6 +2023,7 @@ setInterval(()=>{
 
 function openShop(){
   closeAchieve();
+  closeTrophy();
   shopPanel.classList.add("show");
 }
 function closeShop(){
@@ -1768,10 +2031,19 @@ function closeShop(){
 }
 function openAchieve(){
   closeShop();
+  closeTrophy();
   achievePanel.classList.add("show");
 }
 function closeAchieve(){
   achievePanel.classList.remove("show");
+}
+function openTrophy(){
+  closeShop();
+  closeAchieve();
+  trophyPanel.classList.add("show");
+}
+function closeTrophy(){
+  trophyPanel.classList.remove("show");
 }
 
 shopBtn.addEventListener("click", ()=>{
@@ -1787,6 +2059,13 @@ achieveBtn.addEventListener("click", ()=>{
   else openAchieve();
 });
 achieveClose.addEventListener("click", closeAchieve);
+
+trophyChip.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(trophyPanel.classList.contains("show")) closeTrophy();
+  else openTrophy();
+});
+trophyClose.addEventListener("click", closeTrophy);
 
 claimAchievementAcorn.addEventListener("click", ()=>{
   if(!currentNick) return;
@@ -1882,6 +2161,7 @@ btnResetNick.addEventListener("click", (e)=>{
   closeNickMenu();
   closeShop();
   closeAchieve();
+  closeTrophy();
 });
 
 function setMsg(el, text, kind){
