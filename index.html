@@ -166,6 +166,8 @@
       padding:14px;
       padding-top:54px;
       display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
     }
     .achieve-panel.show{ display:block; }
 
@@ -254,6 +256,35 @@
       margin-top:10px;
       font-size:12px;
       opacity:.8;
+    }
+
+    .achievement-card{
+      transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .achievement-card.ready{
+      border-color: rgba(255,216,77,.75);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 0 0 1px rgba(255,216,77,.22) inset,
+        0 0 18px rgba(255,216,77,.25),
+        0 0 34px rgba(255,216,77,.12);
+      animation: achievementGlow 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes achievementGlow{
+      from{
+        box-shadow:
+          0 0 0 1px rgba(255,216,77,.18) inset,
+          0 0 10px rgba(255,216,77,.18),
+          0 0 20px rgba(255,216,77,.08);
+      }
+      to{
+        box-shadow:
+          0 0 0 1px rgba(255,216,77,.3) inset,
+          0 0 18px rgba(255,216,77,.34),
+          0 0 42px rgba(255,216,77,.16);
+      }
     }
 
     .achievement-card-title{
@@ -949,12 +980,20 @@
       <button class="close" id="achieveClose">닫기</button>
     </div>
 
-    <div class="item">
-      <div class="achievement-card-title" id="achievementTitle">도토리 1,000개 모으기</div>
-      <div class="achievement-progress" id="achievementProgress">진행도: 0 / 1,000</div>
+    <div class="item achievement-card" id="achievementCardAcorn">
+      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 1,000개 모으기</div>
+      <div class="achievement-progress" id="achievementProgressAcorn">진행도: 0 / 1,000</div>
       <div class="achievement-reward">보상: 트로피 +10</div>
-      <button class="buy" id="claimAchievement" disabled>받기</button>
-      <div class="owned" id="achievementHint">도토리를 더 모아야 해.</div>
+      <button class="buy" id="claimAchievementAcorn" disabled>받기</button>
+      <div class="owned" id="achievementHintAcorn">도토리를 더 모아야 해.</div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardSquirrel">
+      <div class="achievement-card-title" id="achievementTitleSquirrel">다람쥐 10마리 모으기</div>
+      <div class="achievement-progress" id="achievementProgressSquirrel">진행도: 0 / 10</div>
+      <div class="achievement-reward" id="achievementRewardSquirrel">보상: 트로피 +10</div>
+      <button class="buy" id="claimAchievementSquirrel" disabled>받기</button>
+      <div class="owned" id="achievementHintSquirrel">다람쥐를 더 모아야 해.</div>
     </div>
   </div>
 
@@ -1063,6 +1102,7 @@ let clickValue = 1;
 let tier = 0;
 let achievementCount = 0;
 let achievementTarget = 1000;
+let squirrelAchievementStep = 1;
 
 let squirrelNextPayouts = [];
 const SQUIRREL_INCOME_PER_TICK = 1;
@@ -1077,7 +1117,7 @@ let goldenStartedAt = 0;
 const GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
 
-const ACHIEVEMENT_REWARD = 10;
+const ACHIEVEMENT_REWARD_ACORN = 10;
 
 const UPGRADE_STEPS = [
   { toTier: 1, toValue: 2, cost: 20, name: "클릭 수익 +1", desc: "구매 후: 클릭당 <b>+2</b>" },
@@ -1112,6 +1152,13 @@ function getNextChipmunkCost(nextIndex){
   return 5000 + (nextIndex - 1) * 500;
 }
 
+function getSquirrelAchievementTarget(){
+  return squirrelAchievementStep * 10;
+}
+function getSquirrelAchievementReward(){
+  return 9 + squirrelAchievementStep;
+}
+
 const countEl = document.getElementById("count");
 const acornBtn = document.getElementById("acornBtn");
 const counterChip = document.getElementById("counterChip");
@@ -1125,10 +1172,19 @@ const shopClose = document.getElementById("shopClose");
 const achieveBtn = document.getElementById("achieveBtn");
 const achievePanel = document.getElementById("achievePanel");
 const achieveClose = document.getElementById("achieveClose");
-const achievementTitle = document.getElementById("achievementTitle");
-const achievementProgress = document.getElementById("achievementProgress");
-const claimAchievement = document.getElementById("claimAchievement");
-const achievementHint = document.getElementById("achievementHint");
+
+const achievementCardAcorn = document.getElementById("achievementCardAcorn");
+const achievementTitleAcorn = document.getElementById("achievementTitleAcorn");
+const achievementProgressAcorn = document.getElementById("achievementProgressAcorn");
+const claimAchievementAcorn = document.getElementById("claimAchievementAcorn");
+const achievementHintAcorn = document.getElementById("achievementHintAcorn");
+
+const achievementCardSquirrel = document.getElementById("achievementCardSquirrel");
+const achievementTitleSquirrel = document.getElementById("achievementTitleSquirrel");
+const achievementProgressSquirrel = document.getElementById("achievementProgressSquirrel");
+const achievementRewardSquirrel = document.getElementById("achievementRewardSquirrel");
+const claimAchievementSquirrel = document.getElementById("claimAchievementSquirrel");
+const achievementHintSquirrel = document.getElementById("achievementHintSquirrel");
 
 const upgName = document.getElementById("upgName");
 const upgDesc = document.getElementById("upgDesc");
@@ -1219,6 +1275,7 @@ function buildSaveData(){
     tier,
     achievementCount,
     achievementTarget,
+    squirrelAchievementStep,
     squirrelRemainingMs,
     chipmunkRemainingMs,
     goldenReady,
@@ -1239,6 +1296,7 @@ function applyLoadedProfile(p){
   clickValue = Number(p.clickValue ?? 1) || 1;
   achievementCount = Number(p.achievementCount ?? 0) || 0;
   achievementTarget = Number(p.achievementTarget ?? 1000) || 1000;
+  squirrelAchievementStep = Number(p.squirrelAchievementStep ?? 1) || 1;
   goldenReady = !!p.goldenReady;
   normalizeByTier();
 
@@ -1278,6 +1336,7 @@ function createProfile(nick){
   clickValue = 1;
   achievementCount = 0;
   achievementTarget = 1000;
+  squirrelAchievementStep = 1;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   goldenReady = false;
@@ -1295,6 +1354,7 @@ function resetCurrentNickProgress(){
   clickValue = 1;
   achievementCount = 0;
   achievementTarget = 1000;
+  squirrelAchievementStep = 1;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   goldenReady = false;
@@ -1346,29 +1406,51 @@ function getChipmunkIncomePerSec(){
   return getChipmunkCount() * CHIPMUNK_INCOME_PER_TICK;
 }
 
-function canClaimAchievement(){
+function canClaimAcornAchievement(){
   return acorn >= achievementTarget;
 }
+function canClaimSquirrelAchievement(){
+  return getSquirrelCount() >= getSquirrelAchievementTarget();
+}
 
-function renderAchievement(){
-  achievementTitle.textContent = "도토리 " + achievementTarget.toLocaleString("ko-KR") + "개 모으기";
-  achievementProgress.textContent =
+function renderAchievements(){
+  achievementTitleAcorn.textContent = "도토리 " + achievementTarget.toLocaleString("ko-KR") + "개 모으기";
+  achievementProgressAcorn.textContent =
     "진행도: " +
     Math.min(Math.floor(acorn), achievementTarget).toLocaleString("ko-KR") +
     " / " +
     achievementTarget.toLocaleString("ko-KR");
 
-  const ready = canClaimAchievement();
-  claimAchievement.disabled = !ready;
-  achievementHint.textContent = ready
+  const acornReady = canClaimAcornAchievement();
+  claimAchievementAcorn.disabled = !acornReady;
+  achievementHintAcorn.textContent = acornReady
     ? "업적 달성! 받기를 눌러 트로피 +10을 받자."
     : "도토리를 더 모아야 해.";
+  achievementCardAcorn.classList.toggle("ready", acornReady);
+
+  const squirrelTarget = getSquirrelAchievementTarget();
+  const squirrelReward = getSquirrelAchievementReward();
+  const squirrelCount = getSquirrelCount();
+  const squirrelReady = canClaimSquirrelAchievement();
+
+  achievementTitleSquirrel.textContent = "다람쥐 " + squirrelTarget.toLocaleString("ko-KR") + "마리 모으기";
+  achievementProgressSquirrel.textContent =
+    "진행도: " +
+    Math.min(squirrelCount, squirrelTarget).toLocaleString("ko-KR") +
+    " / " +
+    squirrelTarget.toLocaleString("ko-KR");
+  achievementRewardSquirrel.textContent = "보상: 트로피 +" + squirrelReward.toLocaleString("ko-KR");
+  claimAchievementSquirrel.disabled = !squirrelReady;
+  achievementHintSquirrel.textContent = squirrelReady
+    ? "업적 달성! 받기를 눌러 트로피 +" + squirrelReward.toLocaleString("ko-KR") + "을 받자."
+    : "다람쥐를 더 모아야 해.";
+  achievementCardSquirrel.classList.toggle("ready", squirrelReady);
 }
 
 function render(){
   countEl.textContent = fmtAcorn(acorn);
   trophyCountTop.textContent = achievementCount.toLocaleString("ko-KR");
-  renderAchievement();
+  renderAchievements();
   updateGoldenUI();
 
   if(currentNick){
@@ -1706,12 +1788,23 @@ achieveBtn.addEventListener("click", ()=>{
 });
 achieveClose.addEventListener("click", closeAchieve);
 
-claimAchievement.addEventListener("click", ()=>{
+claimAchievementAcorn.addEventListener("click", ()=>{
   if(!currentNick) return;
-  if(!canClaimAchievement()) return;
+  if(!canClaimAcornAchievement()) return;
 
-  achievementCount += ACHIEVEMENT_REWARD;
+  achievementCount += ACHIEVEMENT_REWARD_ACORN;
   achievementTarget *= 10;
+
+  render();
+  saveCurrent();
+});
+
+claimAchievementSquirrel.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(!canClaimSquirrelAchievement()) return;
+
+  achievementCount += getSquirrelAchievementReward();
+  squirrelAchievementStep += 1;
 
   render();
   saveCurrent();
