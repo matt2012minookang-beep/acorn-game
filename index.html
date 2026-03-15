@@ -296,20 +296,22 @@
       transform: scale(0.97);
       background: rgba(255,255,255,.06);
     }
-    .acorn{
-      font-size:min(160px, 30vw);
-      line-height:1;
+    .acorn-svg{
+      width:min(190px, 34vw);
+      height:min(190px, 34vw);
+      display:block;
       filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
-      transition: color .15s ease, text-shadow .15s ease, filter .15s ease;
+      transition: filter .15s ease, transform .15s ease;
+      pointer-events:none;
     }
     .acorn-btn.golden{
       border-color: rgba(255,216,77,.8);
       box-shadow: 0 22px 70px rgba(0,0,0,.45), 0 0 26px rgba(255,216,77,.22);
     }
-    .acorn-btn.golden .acorn{
-      color: var(--gold);
-      text-shadow: 0 0 14px rgba(255,216,77,.95), 0 0 28px rgba(255,216,77,.45);
-      filter: drop-shadow(0 0 12px rgba(255,216,77,.7));
+    .acorn-btn.golden .acorn-svg{
+      filter:
+        drop-shadow(0 0 12px rgba(255,216,77,.7))
+        drop-shadow(0 10px 0 rgba(0,0,0,.35));
     }
 
     .float-text{
@@ -956,7 +958,41 @@
 
   <div class="stage">
     <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
-      <div class="acorn">🌰</div>
+      <svg class="acorn-svg" viewBox="0 0 256 256" aria-hidden="true">
+        <path d="M128 92
+                 C88 92, 58 122, 58 162
+                 C58 208, 92 236, 128 236
+                 C164 236, 198 208, 198 162
+                 C198 122, 168 92, 128 92Z"
+              fill="#a85f2a"/>
+        <path d="M101 118
+                 C82 131, 72 152, 74 174
+                 C76 194, 88 210, 102 220"
+              fill="none"
+              stroke="rgba(255,255,255,.18)"
+              stroke-width="10"
+              stroke-linecap="round"/>
+        <path d="M72 114
+                 C78 78, 106 58, 128 58
+                 C150 58, 178 78, 184 114
+                 C166 126, 146 132, 128 132
+                 C110 132, 90 126, 72 114Z"
+              fill="#6c3f1f"/>
+        <circle cx="92" cy="92" r="5" fill="#8a5229"/>
+        <circle cx="110" cy="80" r="5" fill="#8a5229"/>
+        <circle cx="128" cy="74" r="5" fill="#8a5229"/>
+        <circle cx="146" cy="80" r="5" fill="#8a5229"/>
+        <circle cx="164" cy="92" r="5" fill="#8a5229"/>
+        <circle cx="102" cy="104" r="5" fill="#8a5229"/>
+        <circle cx="128" cy="100" r="5" fill="#8a5229"/>
+        <circle cx="154" cy="104" r="5" fill="#8a5229"/>
+        <path d="M129 57
+                 C128 42, 135 30, 147 22"
+              fill="none"
+              stroke="#5f8f3a"
+              stroke-width="10"
+              stroke-linecap="round"/>
+      </svg>
     </button>
   </div>
 
