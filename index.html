@@ -14,6 +14,8 @@
       --danger:#ff5a7a;
       --good:#2ecc71;
       --gold:#ffd84d;
+      --silver:#dbe4ff;
+      --bronze:#d6945d;
       --intro-bg-1:#f3d8cf;
       --intro-bg-2:#d4b9ff;
     }
@@ -35,14 +37,15 @@
     .topbar{
       position:fixed;
       top:0; left:0; right:0;
-      height:72px;
+      min-height:72px;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      padding:0 18px;
-      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
+      padding:10px 18px 0 18px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.58), rgba(0,0,0,0));
       z-index:10;
       pointer-events:none;
+      gap:14px;
     }
     .title{
       pointer-events:auto;
@@ -52,11 +55,20 @@
       display:flex;
       align-items:center;
       gap:10px;
+      padding-top:8px;
     }
     .title .badge{ font-size:18px; opacity:.9; }
 
     .top-right{
       pointer-events:auto;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:8px;
+      min-width:min(470px, 66vw);
+    }
+
+    .top-main-row{
       display:flex;
       align-items:center;
       gap:10px;
@@ -118,6 +130,72 @@
       filter: drop-shadow(0 0 8px rgba(255,216,77,.65));
     }
 
+    .trophy-bar-wrap{
+      width:min(470px, 66vw);
+      padding:10px 12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.15);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .trophy-bar-wrap:active{
+      transform: scale(0.99);
+    }
+    .trophy-bar-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .trophy-bar-title{
+      font-weight:1000;
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .trophy-bar-title .rank-text{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      opacity:.95;
+    }
+    .trophy-bar-meta{
+      font-size:12px;
+      opacity:.85;
+      white-space:nowrap;
+      font-weight:800;
+    }
+    .trophy-bar{
+      width:100%;
+      height:12px;
+      border-radius:999px;
+      overflow:hidden;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.28);
+    }
+    .trophy-bar-fill{
+      width:0%;
+      height:100%;
+      border-radius:inherit;
+      background: linear-gradient(90deg, #d28d5b 0%, #dbe4ff 48%, #ffd84d 100%);
+      box-shadow: 0 0 14px rgba(255,216,77,.18);
+      transition: width .24s ease;
+    }
+    .trophy-bar-sub{
+      margin-top:7px;
+      font-size:12px;
+      opacity:.78;
+      font-weight:800;
+      text-align:right;
+    }
+
     .shop-btn,
     .achieve-btn{
       position:fixed;
@@ -136,8 +214,8 @@
       font-weight:800;
       transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
-    .shop-btn{ top:84px; }
-    .achieve-btn{ top:136px; }
+    .shop-btn{ top:118px; }
+    .achieve-btn{ top:170px; }
     .shop-btn:active,
     .achieve-btn:active{ transform: scale(0.98); }
 
@@ -161,6 +239,13 @@
         0 0 28px rgba(255,216,77,.10);
     }
 
+    .trophy-bar-wrap.alert{
+      border-color: rgba(255,216,77,.4);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 16px rgba(255,216,77,.10);
+    }
+
     @keyframes buttonGlow{
       from{
         box-shadow:
@@ -178,7 +263,7 @@
 
     .shop-panel{
       position:fixed;
-      top:84px;
+      top:118px;
       left:14px;
       width:min(380px, 92vw);
       z-index:30;
@@ -195,7 +280,7 @@
 
     .achieve-panel{
       position:fixed;
-      top:136px;
+      top:170px;
       left:14px;
       width:min(380px, 92vw);
       z-index:30;
@@ -207,22 +292,22 @@
       padding:14px;
       padding-top:54px;
       display:none;
-      max-height:min(78vh, 760px);
+      max-height:min(70vh, 760px);
       overflow:auto;
     }
     .achieve-panel.show{ display:block; }
 
     .trophy-panel{
       position:fixed;
-      top:84px;
+      top:118px;
       right:14px;
-      width:min(360px, 92vw);
+      width:min(390px, 92vw);
       z-index:30;
-      background: rgba(15,15,22,.78);
+      background: rgba(15,15,22,.82);
       border:1px solid rgba(255,255,255,.16);
-      border-radius:18px;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      border-radius:20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 24px 90px rgba(0,0,0,.58);
       padding:14px;
       padding-top:54px;
       display:none;
@@ -243,7 +328,7 @@
     .achieve-title,
     .trophy-title{
       display:block;
-      font-weight:900;
+      font-weight:1000;
       font-size:16px;
       padding-right:72px;
       overflow:hidden;
@@ -366,8 +451,11 @@
     }
 
     .trophy-summary{
-      background: linear-gradient(180deg, rgba(255,216,77,.12), rgba(255,255,255,.04));
-      border:1px solid rgba(255,216,77,.26);
+      background:
+        radial-gradient(circle at top right, rgba(255,216,77,.18), transparent 35%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.16);
+      overflow:hidden;
     }
     .trophy-big{
       font-size:28px;
@@ -379,13 +467,54 @@
     }
     .trophy-sub{
       font-size:14px;
-      opacity:.88;
-      line-height:1.55;
+      opacity:.9;
+      line-height:1.6;
     }
     .trophy-next{
       margin-top:10px;
       font-size:13px;
-      opacity:.85;
+      opacity:.86;
+    }
+
+    .trophy-panel-progress{
+      margin-top:12px;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.11);
+    }
+    .trophy-panel-progress-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .trophy-panel-progress-bar{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      overflow:hidden;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.28);
+    }
+    .trophy-panel-progress-fill{
+      width:0%;
+      height:100%;
+      border-radius:inherit;
+      background: linear-gradient(90deg, #d28d5b 0%, #dbe4ff 48%, #ffd84d 100%);
+      transition: width .24s ease;
+      box-shadow: 0 0 14px rgba(255,216,77,.15);
+    }
+    .trophy-panel-progress-sub{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.8;
+      text-align:right;
+      font-weight:800;
     }
 
     .rank-list{
@@ -394,21 +523,45 @@
       gap:10px;
     }
     .rank-row{
-      border-radius:14px;
-      padding:12px;
+      border-radius:16px;
+      padding:13px;
       border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
-      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
     }
     .rank-row.cleared{
-      border-color: rgba(46,204,113,.42);
-      background: linear-gradient(180deg, rgba(46,204,113,.12), rgba(255,255,255,.04));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
     }
     .rank-row.current{
-      border-color: rgba(255,216,77,.72);
-      background: linear-gradient(180deg, rgba(255,216,77,.14), rgba(255,255,255,.05));
-      box-shadow: 0 0 18px rgba(255,216,77,.12);
+      transform: translateY(-1px);
+      box-shadow: 0 0 22px rgba(255,216,77,.09);
     }
+    .rank-row.bronze{
+      background: linear-gradient(180deg, rgba(214,148,93,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.silver{
+      background: linear-gradient(180deg, rgba(219,228,255,.14), rgba(255,255,255,.04));
+    }
+    .rank-row.gold{
+      background: linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.cleared.bronze{ border-color: rgba(214,148,93,.48); }
+    .rank-row.cleared.silver{ border-color: rgba(219,228,255,.46); }
+    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.46); }
+
+    .rank-row.current.bronze{
+      border-color: rgba(214,148,93,.88);
+      box-shadow: 0 0 22px rgba(214,148,93,.14);
+    }
+    .rank-row.current.silver{
+      border-color: rgba(219,228,255,.9);
+      box-shadow: 0 0 22px rgba(219,228,255,.12);
+    }
+    .rank-row.current.gold{
+      border-color: rgba(255,216,77,.9);
+      box-shadow: 0 0 24px rgba(255,216,77,.14);
+    }
+
     .rank-top{
       display:flex;
       align-items:center;
@@ -429,7 +582,7 @@
     }
     .rank-need{
       font-size:13px;
-      opacity:.78;
+      opacity:.82;
     }
     .rank-state{
       font-size:12px;
@@ -456,7 +609,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding-top:72px;
+      padding-top:110px;
     }
     .acorn-btn{
       width:min(360px, 72vw);
@@ -623,7 +776,7 @@
 
     .nick-wrap{
       position:fixed;
-      top:84px;
+      top:118px;
       right:14px;
       z-index:20;
       display:none;
@@ -678,7 +831,7 @@
     .toast{
       position:fixed;
       left:50%;
-      top:92px;
+      top:126px;
       transform: translateX(-50%);
       z-index:200;
       min-width:min(420px, 92vw);
@@ -916,8 +1069,32 @@
       margin-right:8px;
     }
 
-    @media (max-width: 560px){
+    @media (max-width: 760px){
+      .topbar{
+        padding:10px 12px 0 12px;
+      }
       .top-right{
+        min-width:min(360px, 72vw);
+      }
+      .trophy-bar-wrap{
+        width:min(360px, 72vw);
+      }
+      .counter-chip .count{
+        min-width:82px;
+      }
+    }
+
+    @media (max-width: 560px){
+      .topbar{
+        gap:10px;
+      }
+      .title{
+        font-size:18px;
+      }
+      .top-right{
+        min-width:min(280px, 72vw);
+      }
+      .top-main-row{
         gap:8px;
       }
       .trophy-chip{
@@ -927,8 +1104,17 @@
         padding:10px 11px;
       }
       .counter-chip .count{
-        min-width:82px;
-        font-size:16px;
+        min-width:72px;
+        font-size:15px;
+      }
+      .trophy-bar-wrap{
+        width:min(280px, 72vw);
+      }
+      .trophy-bar-title{
+        font-size:12px;
+      }
+      .trophy-bar-meta{
+        font-size:11px;
       }
     }
 
@@ -951,11 +1137,14 @@
       .intro-version{
         font-size:18px;
       }
-      .achieve-btn{ top:134px; }
-      .trophy-panel{
-        top:84px;
-        right:14px;
-      }
+      .shop-btn{ top:126px; }
+      .achieve-btn{ top:178px; }
+      .nick-wrap{ top:126px; }
+      .toast{ top:134px; }
+      .stage{ padding-top:126px; }
+      .shop-panel{ top:126px; }
+      .achieve-panel{ top:178px; }
+      .trophy-panel{ top:126px; }
     }
   </style>
 </head>
@@ -1017,7 +1206,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.16</div>
+        <div class="intro-version">v1.18</div>
       </div>
     </div>
   </div>
@@ -1029,14 +1218,30 @@
     </div>
 
     <div class="top-right">
-      <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
-        <span class="emoji">🏆</span>
-        <span id="achievementCountTop" class="count">0</span>
+      <div class="top-main-row">
+        <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
+          <span class="emoji">🏆</span>
+          <span id="achievementCountTop" class="count">0</span>
+        </div>
+
+        <div class="counter-chip" id="counterChip" aria-label="도토리 수">
+          <span class="emoji">🌰</span>
+          <span id="count" class="count">0</span>
+        </div>
       </div>
 
-      <div class="counter-chip" id="counterChip" aria-label="도토리 수">
-        <span class="emoji">🌰</span>
-        <span id="count" class="count">0</span>
+      <div class="trophy-bar-wrap" id="trophyBarWrap" aria-label="트로피 진행 바">
+        <div class="trophy-bar-top">
+          <div class="trophy-bar-title">
+            <span>🏅</span>
+            <span class="rank-text" id="topTrophyRankText">무등급</span>
+          </div>
+          <div class="trophy-bar-meta" id="topTrophyMeta">0 / 20</div>
+        </div>
+        <div class="trophy-bar">
+          <div class="trophy-bar-fill" id="topTrophyBarFill"></div>
+        </div>
+        <div class="trophy-bar-sub" id="topTrophySub">다음 등급까지 20 필요</div>
       </div>
     </div>
   </div>
@@ -1167,6 +1372,17 @@
       <div class="trophy-next" id="trophyNextText">
         다음 등급까지 20 필요
       </div>
+
+      <div class="trophy-panel-progress">
+        <div class="trophy-panel-progress-top">
+          <span id="panelProgressLabel">다음 등급 진행도</span>
+          <span id="panelProgressMeta">0 / 20</span>
+        </div>
+        <div class="trophy-panel-progress-bar">
+          <div class="trophy-panel-progress-fill" id="panelTrophyBarFill"></div>
+        </div>
+        <div class="trophy-panel-progress-sub" id="panelProgressSub">0%</div>
+      </div>
     </div>
 
     <div class="rank-list" id="trophyRankList"></div>
@@ -1244,7 +1460,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v16";
+const LS_KEY = "dotori_game_profiles_v18";
 
 function loadProfiles(){
   try{
@@ -1295,15 +1511,15 @@ const GOLDEN_MIN_HOLD_MS = 100;
 const ACHIEVEMENT_REWARD_ACORN = 10;
 
 const TROPHY_RANKS = [
-  { name: "브론즈 1", stars: "★", need: 20, medal: "🥉" },
-  { name: "브론즈 2", stars: "★★", need: 50, medal: "🥉" },
-  { name: "브론즈 3", stars: "★★★", need: 70, medal: "🥉" },
-  { name: "실버 1", stars: "★", need: 120, medal: "🥈" },
-  { name: "실버 2", stars: "★★", need: 170, medal: "🥈" },
-  { name: "실버 3", stars: "★★★", need: 230, medal: "🥈" },
-  { name: "골드 1", stars: "★", need: 320, medal: "🥇" },
-  { name: "골드 2", stars: "★★", need: 450, medal: "🥇" },
-  { name: "골드 3", stars: "★★★", need: 600, medal: "🥇" }
+  { name: "브론즈 1", stars: "★", need: 20, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 2", stars: "★★", need: 50, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 3", stars: "★★★", need: 70, medal: "🥉", kind: "bronze" },
+  { name: "실버 1", stars: "★", need: 120, medal: "🥈", kind: "silver" },
+  { name: "실버 2", stars: "★★", need: 170, medal: "🥈", kind: "silver" },
+  { name: "실버 3", stars: "★★★", need: 230, medal: "🥈", kind: "silver" },
+  { name: "골드 1", stars: "★", need: 320, medal: "🥇", kind: "gold" },
+  { name: "골드 2", stars: "★★", need: 450, medal: "🥇", kind: "gold" },
+  { name: "골드 3", stars: "★★★", need: 600, medal: "🥇", kind: "gold" }
 ];
 
 const UPGRADE_STEPS = [
@@ -1358,6 +1574,17 @@ const trophyRankName = document.getElementById("trophyRankName");
 const trophySummaryText = document.getElementById("trophySummaryText");
 const trophyNextText = document.getElementById("trophyNextText");
 const trophyRankList = document.getElementById("trophyRankList");
+
+const trophyBarWrap = document.getElementById("trophyBarWrap");
+const topTrophyRankText = document.getElementById("topTrophyRankText");
+const topTrophyMeta = document.getElementById("topTrophyMeta");
+const topTrophyBarFill = document.getElementById("topTrophyBarFill");
+const topTrophySub = document.getElementById("topTrophySub");
+
+const panelProgressLabel = document.getElementById("panelProgressLabel");
+const panelProgressMeta = document.getElementById("panelProgressMeta");
+const panelTrophyBarFill = document.getElementById("panelTrophyBarFill");
+const panelProgressSub = document.getElementById("panelProgressSub");
 
 const shopBtn = document.getElementById("shopBtn");
 const shopPanel = document.getElementById("shopPanel");
@@ -1625,9 +1852,73 @@ function getNextTrophyRank(){
   return null;
 }
 
+function getTrophyProgressInfo(){
+  const current = getCurrentTrophyRank();
+  const next = getNextTrophyRank();
+
+  if(!current && next){
+    const currentValue = achievementCount;
+    const maxValue = next.need;
+    const pct = Math.max(0, Math.min(100, (currentValue / maxValue) * 100));
+    return {
+      currentRankText: "무등급",
+      nextRankText: next.name + " " + next.stars,
+      currentValue,
+      maxValue,
+      pct,
+      remain: next.need - achievementCount
+    };
+  }
+
+  if(current && next){
+    const base = current.need;
+    const max = next.need;
+    const currentValue = achievementCount - base;
+    const maxValue = max - base;
+    const pct = Math.max(0, Math.min(100, (currentValue / maxValue) * 100));
+    return {
+      currentRankText: current.name + " " + current.stars,
+      nextRankText: next.name + " " + next.stars,
+      currentValue,
+      maxValue,
+      pct,
+      remain: next.need - achievementCount
+    };
+  }
+
+  return {
+    currentRankText: current ? (current.name + " " + current.stars) : "무등급",
+    nextRankText: "최고 등급",
+    currentValue: 1,
+    maxValue: 1,
+    pct: 100,
+    remain: 0
+  };
+}
+
+function renderTopTrophyBar(){
+  const current = getCurrentTrophyRank();
+  const info = getTrophyProgressInfo();
+
+  topTrophyRankText.textContent = current
+    ? current.medal + " " + current.name + " " + current.stars
+    : "무등급";
+
+  if(info.remain > 0){
+    topTrophyMeta.textContent = info.currentValue.toLocaleString("ko-KR") + " / " + info.maxValue.toLocaleString("ko-KR");
+    topTrophySub.textContent = "다음 등급까지 " + info.remain.toLocaleString("ko-KR") + " 필요";
+  }else{
+    topTrophyMeta.textContent = "MAX";
+    topTrophySub.textContent = "최고 등급 달성 완료!";
+  }
+
+  topTrophyBarFill.style.width = info.pct + "%";
+}
+
 function renderTrophyPanel(){
   const current = getCurrentTrophyRank();
   const next = getNextTrophyRank();
+  const info = getTrophyProgressInfo();
 
   if(current){
     trophyRankName.textContent = current.medal + " " + current.name + " " + current.stars;
@@ -1647,11 +1938,22 @@ function renderTrophyPanel(){
     trophyNextText.textContent = "최고 등급 달성 완료!";
   }
 
+  if(info.remain > 0){
+    panelProgressLabel.textContent = info.currentRankText + " → " + info.nextRankText;
+    panelProgressMeta.textContent = info.currentValue.toLocaleString("ko-KR") + " / " + info.maxValue.toLocaleString("ko-KR");
+    panelProgressSub.textContent = Math.floor(info.pct).toLocaleString("ko-KR") + "%";
+  }else{
+    panelProgressLabel.textContent = "최고 등급";
+    panelProgressMeta.textContent = "MAX";
+    panelProgressSub.textContent = "100%";
+  }
+  panelTrophyBarFill.style.width = info.pct + "%";
+
   trophyRankList.innerHTML = TROPHY_RANKS.map(rank=>{
     const cleared = achievementCount >= rank.need;
     const isCurrent = current && current.need === rank.need;
     return `
-      <div class="rank-row ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""}">
+      <div class="rank-row ${rank.kind} ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""}">
         <div class="rank-top">
           <div class="rank-name">
             <span>${rank.medal}</span>
@@ -1708,11 +2010,13 @@ function render(){
   countEl.textContent = fmtAcorn(acorn);
   trophyCountTop.textContent = achievementCount.toLocaleString("ko-KR");
   renderAchievements();
+  renderTopTrophyBar();
   renderTrophyPanel();
   updateGoldenUI();
 
   achieveBtn.classList.toggle("alert", canClaimAnyAchievement());
   trophyChip.classList.toggle("alert", canClaimAnyAchievement());
+  trophyBarWrap.classList.toggle("alert", canClaimAnyAchievement());
 
   if(currentNick){
     nickWrap.style.display = "block";
@@ -2061,6 +2365,11 @@ achieveBtn.addEventListener("click", ()=>{
 achieveClose.addEventListener("click", closeAchieve);
 
 trophyChip.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(trophyPanel.classList.contains("show")) closeTrophy();
+  else openTrophy();
+});
+trophyBarWrap.addEventListener("click", ()=>{
   if(!currentNick) return;
   if(trophyPanel.classList.contains("show")) closeTrophy();
   else openTrophy();
