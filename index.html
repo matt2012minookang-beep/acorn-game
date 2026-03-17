@@ -417,7 +417,7 @@
       width:0%;
       height:100%;
       border-radius:inherit;
-      background: linear-gradient(90deg, #ffd84d 0%, #cfcfcf 30%, #39d98a 55%, #69b7ff 78%, #ff5f77 100%);
+      background: linear-gradient(90deg, #c4864d 0%, #d7dce7 20%, #ffd84d 38%, #b9f6ca 56%, #8ed8ff 78%, #ff7288 100%);
       transition: width .24s ease;
       box-shadow: 0 0 14px rgba(255,216,77,.15);
     }
@@ -448,48 +448,29 @@
       transform: translateY(-1px);
     }
 
-    .rank-row.gold{
-      background: linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,255,255,.04));
-    }
-    .rank-row.platinum{
-      background: linear-gradient(180deg, rgba(212,220,235,.16), rgba(255,255,255,.04));
-    }
-    .rank-row.emerald{
-      background: linear-gradient(180deg, rgba(57,217,138,.16), rgba(255,255,255,.04));
-    }
-    .rank-row.diamond{
-      background: linear-gradient(180deg, rgba(105,183,255,.16), rgba(255,255,255,.04));
-    }
-    .rank-row.reddiamond{
-      background: linear-gradient(180deg, rgba(255,95,119,.18), rgba(255,255,255,.04));
-    }
+    .rank-row.bronze{ background: linear-gradient(180deg, rgba(196,134,77,.18), rgba(255,255,255,.04)); }
+    .rank-row.silver{ background: linear-gradient(180deg, rgba(215,220,231,.16), rgba(255,255,255,.04)); }
+    .rank-row.gold{ background: linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,255,255,.04)); }
+    .rank-row.platinum{ background: linear-gradient(180deg, rgba(233,240,248,.16), rgba(255,255,255,.04)); }
+    .rank-row.emerald{ background: linear-gradient(180deg, rgba(90,220,160,.16), rgba(255,255,255,.04)); }
+    .rank-row.diamond{ background: linear-gradient(180deg, rgba(120,190,255,.16), rgba(255,255,255,.04)); }
+    .rank-row.reddiamond{ background: linear-gradient(180deg, rgba(255,110,130,.18), rgba(255,255,255,.04)); }
 
-    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.46); }
-    .rank-row.cleared.platinum{ border-color: rgba(212,220,235,.46); }
-    .rank-row.cleared.emerald{ border-color: rgba(57,217,138,.46); }
-    .rank-row.cleared.diamond{ border-color: rgba(105,183,255,.46); }
-    .rank-row.cleared.reddiamond{ border-color: rgba(255,95,119,.46); }
+    .rank-row.cleared.bronze{ border-color: rgba(196,134,77,.5); }
+    .rank-row.cleared.silver{ border-color: rgba(215,220,231,.5); }
+    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.5); }
+    .rank-row.cleared.platinum{ border-color: rgba(233,240,248,.5); }
+    .rank-row.cleared.emerald{ border-color: rgba(90,220,160,.5); }
+    .rank-row.cleared.diamond{ border-color: rgba(120,190,255,.5); }
+    .rank-row.cleared.reddiamond{ border-color: rgba(255,110,130,.5); }
 
-    .rank-row.current.gold{
-      border-color: rgba(255,216,77,.88);
-      box-shadow: 0 0 22px rgba(255,216,77,.14);
-    }
-    .rank-row.current.platinum{
-      border-color: rgba(212,220,235,.88);
-      box-shadow: 0 0 22px rgba(212,220,235,.14);
-    }
-    .rank-row.current.emerald{
-      border-color: rgba(57,217,138,.88);
-      box-shadow: 0 0 22px rgba(57,217,138,.14);
-    }
-    .rank-row.current.diamond{
-      border-color: rgba(105,183,255,.88);
-      box-shadow: 0 0 22px rgba(105,183,255,.14);
-    }
-    .rank-row.current.reddiamond{
-      border-color: rgba(255,95,119,.88);
-      box-shadow: 0 0 24px rgba(255,95,119,.16);
-    }
+    .rank-row.current.bronze{ border-color: rgba(196,134,77,.9); box-shadow: 0 0 22px rgba(196,134,77,.14); }
+    .rank-row.current.silver{ border-color: rgba(215,220,231,.9); box-shadow: 0 0 22px rgba(215,220,231,.14); }
+    .rank-row.current.gold{ border-color: rgba(255,216,77,.9); box-shadow: 0 0 22px rgba(255,216,77,.14); }
+    .rank-row.current.platinum{ border-color: rgba(233,240,248,.9); box-shadow: 0 0 22px rgba(233,240,248,.14); }
+    .rank-row.current.emerald{ border-color: rgba(90,220,160,.9); box-shadow: 0 0 22px rgba(90,220,160,.14); }
+    .rank-row.current.diamond{ border-color: rgba(120,190,255,.9); box-shadow: 0 0 22px rgba(120,190,255,.14); }
+    .rank-row.current.reddiamond{ border-color: rgba(255,110,130,.9); box-shadow: 0 0 24px rgba(255,110,130,.16); }
 
     .rank-top{
       display:flex;
@@ -1260,20 +1241,20 @@
 
     <div class="item trophy-summary">
       <div class="trophy-big">
-        <span id="trophyMedalBig">🏅</span>
+        <span id="trophyMedalBig">🥉</span>
         <span id="trophyRankName">무등급</span>
       </div>
       <div class="trophy-sub" id="trophySummaryText">
         현재 트로피: 0
       </div>
       <div class="trophy-next" id="trophyNextText">
-        다음 등급까지 40 필요
+        다음 등급까지 100 필요
       </div>
 
       <div class="trophy-panel-progress">
         <div class="trophy-panel-progress-top">
           <span id="panelProgressLabel">다음 등급 진행도</span>
-          <span id="panelProgressMeta">0 / 40</span>
+          <span id="panelProgressMeta">0 / 100</span>
         </div>
         <div class="trophy-panel-progress-bar">
           <div class="trophy-panel-progress-fill" id="panelTrophyBarFill"></div>
@@ -1413,25 +1394,33 @@ const GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
 
 const TROPHY_RANKS = [
-  { name: "골드 1", stars: "★", need: 40, medal: "🥇", kind: "gold" },
-  { name: "골드 2", stars: "★★", need: 80, medal: "🥇", kind: "gold" },
-  { name: "골드 3", stars: "★★★", need: 130, medal: "🥇", kind: "gold" },
+  { name: "브론즈 1", stars: "★", need: 100, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 2", stars: "★★", need: 180, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 3", stars: "★★★", need: 280, medal: "🥉", kind: "bronze" },
 
-  { name: "플래티넘 1", stars: "★", need: 190, medal: "⚪", kind: "platinum" },
-  { name: "플래티넘 2", stars: "★★", need: 260, medal: "⚪", kind: "platinum" },
-  { name: "플래티넘 3", stars: "★★★", need: 340, medal: "⚪", kind: "platinum" },
+  { name: "실버 1", stars: "★", need: 400, medal: "🥈", kind: "silver" },
+  { name: "실버 2", stars: "★★", need: 550, medal: "🥈", kind: "silver" },
+  { name: "실버 3", stars: "★★★", need: 730, medal: "🥈", kind: "silver" },
 
-  { name: "에메랄드 1", stars: "★", need: 430, medal: "🟢", kind: "emerald" },
-  { name: "에메랄드 2", stars: "★★", need: 530, medal: "🟢", kind: "emerald" },
-  { name: "에메랄드 3", stars: "★★★", need: 640, medal: "🟢", kind: "emerald" },
+  { name: "골드 1", stars: "★", need: 950, medal: "🥇", kind: "gold" },
+  { name: "골드 2", stars: "★★", need: 1220, medal: "🥇", kind: "gold" },
+  { name: "골드 3", stars: "★★★", need: 1550, medal: "🥇", kind: "gold" },
 
-  { name: "다이아 1", stars: "★", need: 770, medal: "💎", kind: "diamond" },
-  { name: "다이아 2", stars: "★★", need: 920, medal: "💎", kind: "diamond" },
-  { name: "다이아 3", stars: "★★★", need: 1100, medal: "💎", kind: "diamond" },
+  { name: "플래티넘 1", stars: "★", need: 1950, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 2", stars: "★★", need: 2420, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 3", stars: "★★★", need: 2980, medal: "⚪", kind: "platinum" },
 
-  { name: "레드 다이아 1", stars: "★", need: 1320, medal: "🔴", kind: "reddiamond" },
-  { name: "레드 다이아 2", stars: "★★", need: 1580, medal: "🔴", kind: "reddiamond" },
-  { name: "레드 다이아 3", stars: "★★★", need: 1900, medal: "🔴", kind: "reddiamond" }
+  { name: "에메랄드 1", stars: "★", need: 3650, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 2", stars: "★★", need: 4450, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 3", stars: "★★★", need: 5400, medal: "🟢", kind: "emerald" },
+
+  { name: "다이아 1", stars: "★", need: 6550, medal: "💎", kind: "diamond" },
+  { name: "다이아 2", stars: "★★", need: 7900, medal: "💎", kind: "diamond" },
+  { name: "다이아 3", stars: "★★★", need: 9500, medal: "💎", kind: "diamond" },
+
+  { name: "레드 다이아 1", stars: "★", need: 11400, medal: "🔴", kind: "reddiamond" },
+  { name: "레드 다이아 2", stars: "★★", need: 13700, medal: "🔴", kind: "reddiamond" },
+  { name: "레드 다이아 3", stars: "★★★", need: 16500, medal: "🔴", kind: "reddiamond" }
 ];
 
 const UPGRADE_STEPS = [
@@ -1884,7 +1873,7 @@ function renderTrophyPanel(){
   const next = getNextTrophyRank();
   const info = getTrophyProgressInfo();
 
-  trophyMedalBig.textContent = current ? current.medal : "🏅";
+  trophyMedalBig.textContent = current ? current.medal : "🥉";
   trophyRankName.textContent = current
     ? current.name + " " + current.stars
     : "무등급";
