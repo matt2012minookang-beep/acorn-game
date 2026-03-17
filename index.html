@@ -1,3 +1,1344 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>도토리 게임</title>
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --panel: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.16);
+      --text:#ffffff;
+      --accent:#7a2cff;
+      --danger:#ff5a7a;
+      --good:#2ecc71;
+      --gold:#ffd84d;
+      --intro-bg-1:#f3d8cf;
+      --intro-bg-2:#d4b9ff;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+
+    body{
+      font-family: "Malgun Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 500px at 50% 0%, rgba(122,44,255,.18), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      overflow:hidden;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .topbar{
+      position:fixed;
+      top:0; left:0; right:0;
+      height:72px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 18px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
+      z-index:10;
+      pointer-events:none;
+    }
+    .title{
+      pointer-events:auto;
+      font-weight:800;
+      letter-spacing:-0.5px;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .title .badge{ font-size:18px; opacity:.9; }
+
+    .top-right{
+      pointer-events:auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .trophy-chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      background: var(--panel);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:900;
+      cursor:pointer;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+    .trophy-chip:active{ transform: scale(0.98); }
+    .trophy-chip .emoji{
+      font-size:19px;
+      line-height:1;
+    }
+    .trophy-chip .count{
+      min-width:24px;
+      text-align:center;
+    }
+    .trophy-chip.alert{
+      border-color: rgba(255,216,77,.72);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 16px rgba(255,216,77,.18),
+        0 0 28px rgba(255,216,77,.10);
+    }
+
+    .counter-chip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: var(--panel);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:800;
+    }
+    .counter-chip .emoji{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+      transition: color .15s ease, text-shadow .15s ease, filter .15s ease;
+    }
+    .counter-chip .count{
+      font-size:18px;
+      min-width:110px;
+      text-align:right;
+      letter-spacing:0.2px;
+    }
+    .counter-chip.golden .emoji{
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255,216,77,.85), 0 0 22px rgba(255,216,77,.5);
+      filter: drop-shadow(0 0 8px rgba(255,216,77,.65));
+    }
+
+    .shop-btn,
+    .achieve-btn{
+      position:fixed;
+      left:14px;
+      z-index:20;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      font-weight:800;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .shop-btn{ top:84px; }
+    .achieve-btn{ top:136px; }
+    .shop-btn:active,
+    .achieve-btn:active{ transform: scale(0.98); }
+
+    .achieve-btn.alert{
+      border-color: rgba(255,216,77,.78);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 18px rgba(255,216,77,.22),
+        0 0 36px rgba(255,216,77,.12);
+      animation: buttonGlow 1.15s ease-in-out infinite alternate;
+    }
+
+    @keyframes buttonGlow{
+      from{
+        box-shadow:
+          0 12px 30px rgba(0,0,0,.35),
+          0 0 10px rgba(255,216,77,.14),
+          0 0 20px rgba(255,216,77,.08);
+      }
+      to{
+        box-shadow:
+          0 12px 30px rgba(0,0,0,.35),
+          0 0 18px rgba(255,216,77,.28),
+          0 0 42px rgba(255,216,77,.16);
+      }
+    }
+
+    .shop-panel{
+      position:fixed;
+      top:84px;
+      left:14px;
+      width:min(380px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+    }
+    .shop-panel.show{ display:block; }
+
+    .achieve-panel{
+      position:fixed;
+      top:136px;
+      left:14px;
+      width:min(395px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
+    }
+    .achieve-panel.show{ display:block; }
+
+    .trophy-panel{
+      position:fixed;
+      top:84px;
+      right:14px;
+      width:min(390px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.82);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 24px 90px rgba(0,0,0,.58);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
+    }
+    .trophy-panel.show{ display:block; }
+
+    .shop-header,
+    .achieve-header,
+    .trophy-header{
+      display:block;
+      position:relative;
+      margin-bottom:10px;
+      z-index:2;
+    }
+    .shop-title,
+    .achieve-title,
+    .trophy-title{
+      display:block;
+      font-weight:1000;
+      font-size:16px;
+      padding-right:72px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      z-index:1;
+    }
+    .close{
+      cursor:pointer;
+      min-width:56px;
+      height:36px;
+      padding:0 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:800;
+      position:absolute;
+      top:-40px;
+      right:0;
+      z-index:5;
+      flex:0 0 auto;
+    }
+
+    .item{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .item:last-child{ margin-bottom:0; }
+
+    .item-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .item-name{ font-weight:900; }
+    .item-desc{
+      opacity:.8;
+      font-size:13px;
+      line-height:1.4;
+      margin-top:4px;
+    }
+    .price{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:900;
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+    .buy{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+    }
+    .buy:disabled{
+      cursor:not-allowed;
+      opacity:.45;
+      background: rgba(122,44,255,.35);
+    }
+    .owned{
+      margin-top:10px;
+      font-size:12px;
+      opacity:.8;
+    }
+
+    .achievement-card{
+      transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .achievement-card.ready{
+      border-color: rgba(255,216,77,.75);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 0 0 1px rgba(255,216,77,.22) inset,
+        0 0 18px rgba(255,216,77,.25),
+        0 0 34px rgba(255,216,77,.12);
+      animation: achievementGlow 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes achievementGlow{
+      from{
+        box-shadow:
+          0 0 0 1px rgba(255,216,77,.18) inset,
+          0 0 10px rgba(255,216,77,.18),
+          0 0 20px rgba(255,216,77,.08);
+      }
+      to{
+        box-shadow:
+          0 0 0 1px rgba(255,216,77,.3) inset,
+          0 0 18px rgba(255,216,77,.34),
+          0 0 42px rgba(255,216,77,.16);
+      }
+    }
+
+    .achievement-card-title{
+      font-size:18px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .achievement-progress{
+      font-size:14px;
+      opacity:.88;
+      margin-bottom:10px;
+    }
+    .achievement-reward{
+      font-size:13px;
+      opacity:.78;
+      margin-bottom:12px;
+    }
+
+    .trophy-summary{
+      background:
+        radial-gradient(circle at top right, rgba(255,216,77,.18), transparent 35%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.16);
+      overflow:hidden;
+    }
+    .trophy-big{
+      font-size:28px;
+      font-weight:1000;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .trophy-sub{
+      font-size:14px;
+      opacity:.9;
+      line-height:1.6;
+    }
+    .trophy-next{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.86;
+    }
+
+    .trophy-panel-progress{
+      margin-top:12px;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.11);
+    }
+    .trophy-panel-progress-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .trophy-panel-progress-bar{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      overflow:hidden;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.28);
+    }
+    .trophy-panel-progress-fill{
+      width:0%;
+      height:100%;
+      border-radius:inherit;
+      background: linear-gradient(90deg, #d28d5b 0%, #dbe4ff 48%, #ffd84d 100%);
+      transition: width .24s ease;
+      box-shadow: 0 0 14px rgba(255,216,77,.15);
+    }
+    .trophy-panel-progress-sub{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.8;
+      text-align:right;
+      font-weight:800;
+    }
+
+    .rank-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .rank-row{
+      border-radius:16px;
+      padding:13px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    }
+    .rank-row.cleared{
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    .rank-row.current{
+      transform: translateY(-1px);
+      box-shadow: 0 0 22px rgba(255,216,77,.09);
+    }
+    .rank-row.bronze{
+      background: linear-gradient(180deg, rgba(214,148,93,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.silver{
+      background: linear-gradient(180deg, rgba(219,228,255,.14), rgba(255,255,255,.04));
+    }
+    .rank-row.gold{
+      background: linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.cleared.bronze{ border-color: rgba(214,148,93,.48); }
+    .rank-row.cleared.silver{ border-color: rgba(219,228,255,.46); }
+    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.46); }
+
+    .rank-row.current.bronze{
+      border-color: rgba(214,148,93,.88);
+      box-shadow: 0 0 22px rgba(214,148,93,.14);
+    }
+    .rank-row.current.silver{
+      border-color: rgba(219,228,255,.9);
+      box-shadow: 0 0 22px rgba(219,228,255,.12);
+    }
+    .rank-row.current.gold{
+      border-color: rgba(255,216,77,.9);
+      box-shadow: 0 0 24px rgba(255,216,77,.14);
+    }
+
+    .rank-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+      font-weight:900;
+    }
+    .rank-name{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:15px;
+    }
+    .rank-stars{
+      opacity:.95;
+      letter-spacing:.5px;
+    }
+    .rank-need{
+      font-size:13px;
+      opacity:.82;
+    }
+    .rank-state{
+      font-size:12px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      white-space:nowrap;
+    }
+    .rank-row.cleared .rank-state{
+      border-color: rgba(46,204,113,.35);
+      background: rgba(46,204,113,.14);
+      color: #baffd1;
+    }
+    .rank-row.current .rank-state{
+      border-color: rgba(255,216,77,.38);
+      background: rgba(255,216,77,.14);
+      color: #ffe78b;
+    }
+
+    .stage{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-top:72px;
+    }
+    .acorn-btn{
+      width:min(360px, 72vw);
+      height:min(360px, 72vw);
+      border-radius:28px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      outline:none;
+      position:relative;
+    }
+    .acorn-btn:active{
+      transform: scale(0.97);
+      background: rgba(255,255,255,.06);
+    }
+    .acorn-svg{
+      width:min(190px, 34vw);
+      height:min(190px, 34vw);
+      display:block;
+      filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
+      transition: filter .15s ease, transform .15s ease;
+      pointer-events:none;
+    }
+    .acorn-btn.golden{
+      border-color: rgba(255,216,77,.8);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45), 0 0 26px rgba(255,216,77,.22);
+    }
+    .acorn-btn.golden .acorn-svg{
+      filter:
+        drop-shadow(0 0 12px rgba(255,216,77,.7))
+        drop-shadow(0 10px 0 rgba(0,0,0,.35));
+    }
+
+    .float-text{
+      position:fixed;
+      z-index:50;
+      font-weight:1000;
+      font-size:18px;
+      pointer-events:none;
+      text-shadow: 0 6px 18px rgba(0,0,0,.45);
+      animation: floatUp 700ms ease-out forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes floatUp{
+      0%   { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.05); opacity: 0; }
+    }
+
+    .hint{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      opacity:.72;
+      font-size:14px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(8px);
+      z-index:5;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(10px);
+      z-index:100;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(520px, 96vw);
+      border-radius:22px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 28px 110px rgba(0,0,0,.6);
+      padding:18px;
+    }
+    .modal h2{
+      margin:0 0 6px;
+      font-size:20px;
+      letter-spacing:-.3px;
+    }
+    .modal .sub{
+      margin:0 0 14px;
+      opacity:.75;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .section{
+      padding:12px;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .section-title{
+      font-weight:900;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    input[type="text"]{
+      flex:1;
+      min-width:200px;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      color:#fff;
+      outline:none;
+    }
+    .btn{
+      padding:11px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+      min-width:110px;
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background: rgba(122,44,255,.35);
+    }
+    .msg{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.85;
+    }
+    .msg.good{ color: rgba(46, 204, 113, .95); }
+    .msg.bad{ color: rgba(255, 90, 122, .95); }
+    .tiny{
+      margin-top:10px;
+      opacity:.6;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .locked{ pointer-events:none; opacity:.75; }
+
+    .nick-wrap{
+      position:fixed;
+      top:84px;
+      right:14px;
+      z-index:20;
+      display:none;
+    }
+    .nick-chip{
+      padding:9px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nick-chip:active{ transform: scale(0.98); }
+
+    .nick-menu{
+      position:absolute;
+      top:44px;
+      right:0;
+      width:220px;
+      border-radius:16px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+    }
+    .nick-menu.show{ display:block; }
+
+    .menu-btn{
+      width:100%;
+      text-align:left;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      cursor:pointer;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .menu-btn:last-child{ margin-bottom:0; }
+    .menu-btn.danger{
+      border-color: rgba(255,90,122,.25);
+      background: rgba(255,90,122,.10);
+    }
+    .menu-btn:active{ transform: scale(0.99); }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      top:92px;
+      transform: translateX(-50%);
+      z-index:200;
+      min-width:min(420px, 92vw);
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,90,122,.35);
+      background: rgba(255,90,122,.14);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      display:none;
+      font-weight:900;
+    }
+    .toast small{
+      display:block;
+      margin-top:4px;
+      opacity:.8;
+      font-weight:700;
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .squirrel-dock{
+      position:fixed;
+      left:50%;
+      bottom:78px;
+      transform: translateX(-50%);
+      z-index:25;
+      display:flex;
+      align-items:center;
+      gap:16px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      pointer-events:none;
+    }
+    .dock-unit{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:max-content;
+    }
+    .dock-unit .emo{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+      position:relative;
+      display:inline-block;
+    }
+    .dock-unit .label{
+      font-weight:900;
+      font-size:14px;
+      opacity:.9;
+      white-space:nowrap;
+    }
+    .dock-sep{
+      font-weight:900;
+      opacity:.45;
+    }
+
+    .intro{
+      position:fixed;
+      inset:0;
+      z-index:500;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,241,198,.98), rgba(255,241,198,.72) 16%, rgba(255,241,198,.18) 38%, transparent 62%),
+        radial-gradient(circle at 50% 100%, rgba(255,255,255,.12), transparent 45%),
+        linear-gradient(180deg, var(--intro-bg-1), var(--intro-bg-2));
+      transition: opacity .6s ease, visibility .6s ease;
+    }
+    .intro.hidden{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+    .intro::before{
+      content:"";
+      position:absolute;
+      inset:-15%;
+      background:
+        radial-gradient(circle, rgba(255,255,255,.18) 0 2px, transparent 3px) 0 0/52px 52px,
+        radial-gradient(circle, rgba(255,255,255,.14) 0 1.5px, transparent 2.5px) 18px 12px/42px 42px;
+      opacity:.45;
+      animation: introSparkle 8s linear infinite;
+    }
+    .intro::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,.82), rgba(255,255,255,.2) 20%, transparent 52%);
+      opacity:0;
+      animation: introBrighten 3s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes introSparkle{
+      from{ transform:translateY(0); }
+      to{ transform:translateY(30px); }
+    }
+    @keyframes introBrighten{
+      0%{ opacity:.05; }
+      28%{ opacity:.28; }
+      58%{ opacity:.5; }
+      100%{ opacity:.68; }
+    }
+
+    .intro-core{
+      position:relative;
+      width:min(760px, 94vw);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:26px;
+      transform:translateY(-12px);
+      z-index:2;
+    }
+
+    .intro-logo-wrap{
+      width:min(270px, 52vw);
+      height:min(270px, 52vw);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      animation:introLogoFloat 2.5s ease-in-out infinite;
+    }
+    @keyframes introLogoFloat{
+      0%,100%{ transform:translateY(0); }
+      50%{ transform:translateY(-6px); }
+    }
+
+    .intro-burst{
+      position:absolute;
+      width:min(520px, 90vw);
+      height:min(520px, 90vw);
+      border-radius:50%;
+      background:
+        repeating-conic-gradient(
+          from 0deg,
+          rgba(255,247,214,.52) 0deg 10deg,
+          rgba(255,247,214,0) 10deg 24deg
+        );
+      filter: blur(1px);
+      opacity:.42;
+      transform:scale(.72);
+      animation:introBurst 3s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes introBurst{
+      0%{ opacity:.08; transform:scale(.45) rotate(0deg); }
+      30%{ opacity:.24; }
+      65%{ opacity:.4; }
+      100%{ opacity:.52; transform:scale(1.03) rotate(22deg); }
+    }
+
+    .intro-logo{
+      width:100%;
+      height:100%;
+      display:block;
+      filter:
+        drop-shadow(0 18px 32px rgba(126,63,18,.18))
+        drop-shadow(0 4px 0 rgba(255,255,255,.22));
+      opacity:0;
+      transform:scale(.85);
+      animation:introLogoAppear .9s ease forwards;
+    }
+    @keyframes introLogoAppear{
+      0%{ opacity:0; transform:scale(.72); }
+      45%{ opacity:.78; }
+      100%{ opacity:1; transform:scale(1); }
+    }
+
+    .intro-progress-wrap{
+      width:min(760px, 82vw);
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:10px;
+      margin-top:-8px;
+      opacity:0;
+      animation:introBarAppear .6s ease .2s forwards;
+    }
+    @keyframes introBarAppear{
+      to{ opacity:1; }
+    }
+
+    .intro-progress{
+      width:100%;
+      height:30px;
+      border-radius:999px;
+      padding:4px;
+      background: rgba(255,239,228,.55);
+      border:1px solid rgba(255,255,255,.48);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.45),
+        0 6px 20px rgba(154,113,189,.16);
+      overflow:hidden;
+    }
+    .intro-progress-fill{
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background:
+        linear-gradient(90deg, #d34cff 0%, #8a50ff 35%, #5a74ff 70%, #34c8ff 100%);
+      box-shadow:
+        inset 0 0 8px rgba(255,255,255,.32),
+        0 0 16px rgba(136,83,255,.38);
+      position:relative;
+      transition: width .08s linear;
+      will-change: width;
+    }
+    .intro-progress-fill::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,0));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+
+    .intro-version{
+      font-weight:900;
+      font-size:20px;
+      color:rgba(255,255,255,.95);
+      text-shadow:0 4px 18px rgba(0,0,0,.12);
+      letter-spacing:.3px;
+      margin-right:8px;
+    }
+
+    @media (max-width: 560px){
+      .top-right{
+        gap:8px;
+      }
+      .trophy-chip{
+        padding:10px 10px;
+      }
+      .counter-chip{
+        padding:10px 11px;
+      }
+      .counter-chip .count{
+        min-width:82px;
+        font-size:16px;
+      }
+    }
+
+    @media (max-width: 480px){
+      .squirrel-dock{
+        gap:12px;
+        padding:9px 12px;
+      }
+      .dock-unit .label{
+        font-size:13px;
+      }
+      .shop-panel,
+      .achieve-panel,
+      .trophy-panel{
+        width:min(380px, calc(100vw - 28px));
+      }
+      .intro-progress{
+        height:26px;
+      }
+      .intro-version{
+        font-size:18px;
+      }
+      .achieve-btn{ top:134px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="intro" id="introScreen" aria-hidden="true">
+    <div class="intro-core">
+      <div class="intro-logo-wrap">
+        <div class="intro-burst"></div>
+        <svg class="intro-logo" viewBox="0 0 512 512" aria-hidden="true">
+          <defs>
+            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f3af55"/>
+              <stop offset="60%" stop-color="#d98a33"/>
+              <stop offset="100%" stop-color="#bf6421"/>
+            </linearGradient>
+            <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6d392b"/>
+              <stop offset="55%" stop-color="#4d261e"/>
+              <stop offset="100%" stop-color="#2f1612"/>
+            </linearGradient>
+          </defs>
+
+          <path d="M256 182
+                   C176 182, 116 242, 116 322
+                   C116 414, 183 470, 256 470
+                   C329 470, 396 414, 396 322
+                   C396 242, 336 182, 256 182Z"
+                fill="url(#bodyGrad)"/>
+
+          <path d="M210 214
+                   C172 240, 150 284, 154 330
+                   C158 372, 182 405, 214 426"
+                fill="none"
+                stroke="rgba(255,248,214,.5)"
+                stroke-width="18"
+                stroke-linecap="round"/>
+
+          <path d="M140 218
+                   C152 145, 209 105, 256 105
+                   C303 105, 360 145, 372 218
+                   C334 242, 292 254, 256 254
+                   C220 254, 178 242, 140 218Z"
+                fill="url(#capGrad)"/>
+
+          <path d="M188 146 L256 210 L324 146" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="24"/>
+          <path d="M162 184 L228 240" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>
+          <path d="M350 184 L284 240" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>
+
+          <path d="M259 102 C258 68, 273 43, 301 21"
+                fill="none"
+                stroke="#533028"
+                stroke-width="22"
+                stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="intro-progress-wrap">
+        <div class="intro-progress" aria-label="로딩 게이지">
+          <div class="intro-progress-fill" id="introProgressFill"></div>
+        </div>
+        <div class="intro-version">v1.18</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="title">
+      <span class="badge">🌰</span>
+      <span>도토리 게임</span>
+    </div>
+
+    <div class="top-right">
+      <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
+        <span class="emoji">🏆</span>
+        <span id="achievementCountTop" class="count">0</span>
+      </div>
+
+      <div class="counter-chip" id="counterChip" aria-label="도토리 수">
+        <span class="emoji">🌰</span>
+        <span id="count" class="count">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    ⚠️ 핵 감지: 계정이 초기화되었습니다.
+    <small id="toastDetail">비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.</small>
+  </div>
+
+  <div class="nick-wrap" id="nickWrap">
+    <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
+    <div class="nick-menu" id="nickMenu">
+      <button class="menu-btn" id="btnLogout">로그아웃</button>
+      <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
+    </div>
+  </div>
+
+  <div class="squirrel-dock" id="squirrelDock" aria-hidden="true">
+    <div class="dock-unit">
+      <span class="emo" id="sqDockEmoji">🐿️</span>
+      <span class="label">x <span id="dockSq">0</span></span>
+    </div>
+    <span class="dock-sep">·</span>
+    <div class="dock-unit">
+      <span class="emo" id="csDockEmoji">🌲</span>
+      <span class="label">x <span id="dockCs">0</span></span>
+    </div>
+    <span class="dock-sep">·</span>
+    <div class="dock-unit">
+      <span class="label"><span id="dockIncome">0</span>/s</span>
+    </div>
+  </div>
+
+  <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
+    🛒 상점
+  </div>
+
+  <div class="achieve-btn locked" id="achieveBtn" aria-label="업적 열기">
+    🏆 업적
+  </div>
+
+  <div class="shop-panel" id="shopPanel" aria-label="상점">
+    <div class="shop-header">
+      <div class="shop-title">🛒 상점</div>
+      <button class="close" id="shopClose">닫기</button>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name" id="upgName">클릭 업그레이드</div>
+          <div class="item-desc" id="upgDesc">설명</div>
+        </div>
+        <div class="price"><span>🌰</span><span id="upgPrice">0</span></div>
+      </div>
+      <button class="buy" id="buyUpgrade">구매</button>
+      <div class="owned" id="upgHint"></div>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🐿️ 다람쥐 고용</div>
+          <div class="item-desc">
+            1마리당 <b>1초마다 +1</b> 도토리<br>
+            보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="sqPrice">10</span></div>
+      </div>
+      <button class="buy" id="buySquirrel">고용</button>
+      <div class="owned" id="sqHint"></div>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🌲 청솔모 고용</div>
+          <div class="item-desc">
+            1마리당 <b>1초마다 +10</b> 도토리<br>
+            보유: <b><span id="csCount">0</span>마리</b> · 현재 수익: <b><span id="csIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="csPrice">5000</span></div>
+      </div>
+      <button class="buy" id="buyChipmunk">고용</button>
+      <div class="owned" id="csHint"></div>
+    </div>
+  </div>
+
+  <div class="achieve-panel" id="achievePanel" aria-label="업적">
+    <div class="achieve-header">
+      <div class="achieve-title">🏆 업적</div>
+      <button class="close" id="achieveClose">닫기</button>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardAcorn">
+      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 1,000개 모으기</div>
+      <div class="achievement-progress" id="achievementProgressAcorn">진행도: 0 / 1,000</div>
+      <div class="achievement-reward" id="achievementRewardAcorn">보상: 트로피 +10</div>
+      <button class="buy" id="claimAchievementAcorn" disabled>받기</button>
+      <div class="owned" id="achievementHintAcorn">도토리를 더 모아야 해.</div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardClick">
+      <div class="achievement-card-title" id="achievementTitleClick">클릭 200번 하기</div>
+      <div class="achievement-progress" id="achievementProgressClick">진행도: 0 / 200</div>
+      <div class="achievement-reward" id="achievementRewardClick">보상: 트로피 +10</div>
+      <button class="buy" id="claimAchievementClick" disabled>받기</button>
+      <div class="owned" id="achievementHintClick">더 클릭해야 해.</div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardSpent">
+      <div class="achievement-card-title" id="achievementTitleSpent">도토리 10,000개 소비하기</div>
+      <div class="achievement-progress" id="achievementProgressSpent">진행도: 0 / 10,000</div>
+      <div class="achievement-reward" id="achievementRewardSpent">보상: 트로피 +20</div>
+      <button class="buy" id="claimAchievementSpent" disabled>받기</button>
+      <div class="owned" id="achievementHintSpent">도토리를 더 소비해야 해.</div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardSquirrel">
+      <div class="achievement-card-title" id="achievementTitleSquirrel">다람쥐 10마리 모으기</div>
+      <div class="achievement-progress" id="achievementProgressSquirrel">진행도: 0 / 10</div>
+      <div class="achievement-reward" id="achievementRewardSquirrel">보상: 트로피 +10</div>
+      <button class="buy" id="claimAchievementSquirrel" disabled>받기</button>
+      <div class="owned" id="achievementHintSquirrel">다람쥐를 더 모아야 해.</div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardChipmunk">
+      <div class="achievement-card-title" id="achievementTitleChipmunk">청솔모 10마리 모으기</div>
+      <div class="achievement-progress" id="achievementProgressChipmunk">진행도: 0 / 10</div>
+      <div class="achievement-reward" id="achievementRewardChipmunk">보상: 트로피 +15</div>
+      <button class="buy" id="claimAchievementChipmunk" disabled>받기</button>
+      <div class="owned" id="achievementHintChipmunk">청솔모를 더 모아야 해.</div>
+    </div>
+  </div>
+
+  <div class="trophy-panel" id="trophyPanel" aria-label="트로피 현황">
+    <div class="trophy-header">
+      <div class="trophy-title">🏆 트로피 현황</div>
+      <button class="close" id="trophyClose">닫기</button>
+    </div>
+
+    <div class="item trophy-summary">
+      <div class="trophy-big">
+        <span>🏆</span>
+        <span id="trophyRankName">무등급</span>
+      </div>
+      <div class="trophy-sub" id="trophySummaryText">
+        현재 트로피: 0
+      </div>
+      <div class="trophy-next" id="trophyNextText">
+        다음 등급까지 20 필요
+      </div>
+
+      <div class="trophy-panel-progress">
+        <div class="trophy-panel-progress-top">
+          <span id="panelProgressLabel">다음 등급 진행도</span>
+          <span id="panelProgressMeta">0 / 20</span>
+        </div>
+        <div class="trophy-panel-progress-bar">
+          <div class="trophy-panel-progress-fill" id="panelTrophyBarFill"></div>
+        </div>
+        <div class="trophy-panel-progress-sub" id="panelProgressSub">0%</div>
+      </div>
+    </div>
+
+    <div class="rank-list" id="trophyRankList"></div>
+  </div>
+
+  <div class="stage">
+    <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
+      <svg class="acorn-svg" viewBox="0 0 256 256" aria-hidden="true">
+        <path d="M128 92
+                 C88 92, 58 122, 58 162
+                 C58 208, 92 236, 128 236
+                 C164 236, 198 208, 198 162
+                 C198 122, 168 92, 128 92Z"
+              fill="#a85f2a"/>
+        <path d="M101 118
+                 C82 131, 72 152, 74 174
+                 C76 194, 88 210, 102 220"
+              fill="none"
+              stroke="rgba(255,255,255,.18)"
+              stroke-width="10"
+              stroke-linecap="round"/>
+        <path d="M72 114
+                 C78 78, 106 58, 128 58
+                 C150 58, 178 78, 184 114
+                 C166 126, 146 132, 128 132
+                 C110 132, 90 126, 72 114Z"
+              fill="#6c3f1f"/>
+        <circle cx="92" cy="92" r="5" fill="#8a5229"/>
+        <circle cx="110" cy="80" r="5" fill="#8a5229"/>
+        <circle cx="128" cy="74" r="5" fill="#8a5229"/>
+        <circle cx="146" cy="80" r="5" fill="#8a5229"/>
+        <circle cx="164" cy="92" r="5" fill="#8a5229"/>
+        <circle cx="102" cy="104" r="5" fill="#8a5229"/>
+        <circle cx="128" cy="100" r="5" fill="#8a5229"/>
+        <circle cx="154" cy="104" r="5" fill="#8a5229"/>
+        <path d="M129 57
+                 C128 42, 135 30, 147 22"
+              fill="none"
+              stroke="#5f8f3a"
+              stroke-width="10"
+              stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="hint">도토리를 눌러서 모아봐 🌰</div>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2>닉네임을 입력하세요!</h2>
+      <p class="sub">닉네임마다 진행 상황이 저장됩니다. (이 브라우저/기기 안에서만 저장)</p>
+
+      <div class="grid">
+        <div class="section">
+          <div class="section-title">🆕 새로 시작하기</div>
+          <div class="row">
+            <input id="newNick" type="text" placeholder="새 닉네임" maxlength="20" />
+            <button class="btn" id="newStart" disabled>시작</button>
+          </div>
+          <div class="msg" id="newMsg"></div>
+          <div class="tiny">입력하면 아래에 <b>사용 가능한 닉네임</b> / <b>이미 사용중인 닉네임</b>이 표시됩니다.</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">🔁 이미 사용중이신 닉네임이 있나요?</div>
+          <div class="row">
+            <input id="oldNick" type="text" placeholder="기존 닉네임" maxlength="20" />
+            <button class="btn" id="oldEnter" disabled>들어가기</button>
+          </div>
+          <div class="msg" id="oldMsg"></div>
+          <div class="tiny">기존 닉네임이 맞으면 저장된 상태로 들어갑니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script>
 const LS_KEY = "dotori_game_profiles_v18";
 
@@ -33,9 +1374,10 @@ let tier = 0;
 let achievementCount = 0;
 
 let acornAchievementStage = 1;
+let clickAchievementStep = 1;
+let spentAchievementStep = 1;
 let squirrelAchievementStep = 1;
 let chipmunkAchievementStep = 1;
-let clickAchievementStep = 1;
 
 let totalClicks = 0;
 let totalSpentAcorn = 0;
@@ -98,30 +1440,12 @@ function getNextChipmunkCost(nextIndex){
   return 5000 + (nextIndex - 1) * 500;
 }
 
-/* =========================
-   업적 규칙
-========================= */
+/* 업적 규칙 */
 function getAcornAchievementTarget(){
   return Math.pow(10, acornAchievementStage + 2); // 1000, 10000, 100000...
 }
 function getAcornAchievementReward(){
-  return acornAchievementStage * 10; // 10,20,30,40...
-}
-
-function getSquirrelAchievementTarget(){
-  if(squirrelAchievementStep <= 5) return squirrelAchievementStep * 10; // 10,20,30,40,50
-  return 50 + (squirrelAchievementStep - 4) * 50; // 100,150,200...
-}
-function getSquirrelAchievementReward(){
-  return 9 + squirrelAchievementStep; // 10,11,12,13,14,15,16...
-}
-
-function getChipmunkAchievementTarget(){
-  if(chipmunkAchievementStep <= 5) return chipmunkAchievementStep * 10; // 10,20,30,40,50
-  return 50 + (chipmunkAchievementStep - 4) * 50; // 100,150,200...
-}
-function getChipmunkAchievementReward(){
-  return 14 + chipmunkAchievementStep; // 15,16,17,18,19,20,21...
+  return acornAchievementStage * 10; // 10,20,30...
 }
 
 function getClickAchievementTarget(){
@@ -129,7 +1453,7 @@ function getClickAchievementTarget(){
   return 500 * Math.pow(2, clickAchievementStep - 2); // 200,500,1000,2000,4000...
 }
 function getClickAchievementReward(){
-  return 10 + (clickAchievementStep - 1) * 5; // 10,15,20,25,30...
+  return 10 + (clickAchievementStep - 1) * 5; // 10,15,20...
 }
 
 function getSpentAchievementTarget(){
@@ -143,11 +1467,23 @@ function getSpentAchievementReward(){
   return 35 + (spentAchievementStep - rewards.length) * 2;
 }
 
-let spentAchievementStep = 1;
+function getSquirrelAchievementTarget(){
+  if(squirrelAchievementStep <= 5) return squirrelAchievementStep * 10; // 10,20,30,40,50
+  return 100 + (squirrelAchievementStep - 6) * 50; // 100,150,200...
+}
+function getSquirrelAchievementReward(){
+  return 9 + squirrelAchievementStep; // 10,11,12,13,14,15,16...
+}
 
-/* =========================
-   DOM
-========================= */
+function getChipmunkAchievementTarget(){
+  if(chipmunkAchievementStep <= 5) return chipmunkAchievementStep * 10; // 10,20,30,40,50
+  return 100 + (chipmunkAchievementStep - 6) * 50; // 100,150,200...
+}
+function getChipmunkAchievementReward(){
+  return 14 + chipmunkAchievementStep; // 15,16,17,18,19,20,21...
+}
+
+/* DOM */
 const countEl = document.getElementById("count");
 const acornBtn = document.getElementById("acornBtn");
 const counterChip = document.getElementById("counterChip");
@@ -181,13 +1517,6 @@ const achievementRewardAcorn = document.getElementById("achievementRewardAcorn")
 const claimAchievementAcorn = document.getElementById("claimAchievementAcorn");
 const achievementHintAcorn = document.getElementById("achievementHintAcorn");
 
-const achievementCardSquirrel = document.getElementById("achievementCardSquirrel");
-const achievementTitleSquirrel = document.getElementById("achievementTitleSquirrel");
-const achievementProgressSquirrel = document.getElementById("achievementProgressSquirrel");
-const achievementRewardSquirrel = document.getElementById("achievementRewardSquirrel");
-const claimAchievementSquirrel = document.getElementById("claimAchievementSquirrel");
-const achievementHintSquirrel = document.getElementById("achievementHintSquirrel");
-
 const achievementCardClick = document.getElementById("achievementCardClick");
 const achievementTitleClick = document.getElementById("achievementTitleClick");
 const achievementProgressClick = document.getElementById("achievementProgressClick");
@@ -195,36 +1524,19 @@ const achievementRewardClick = document.getElementById("achievementRewardClick")
 const claimAchievementClick = document.getElementById("claimAchievementClick");
 const achievementHintClick = document.getElementById("achievementHintClick");
 
-/* 새 업적 카드가 HTML에 없으면 자동 생성 */
-function ensureExtraAchievementCards(){
-  const anchor = achievementCardClick;
-
-  function makeCard(idBase){
-    const card = document.createElement("div");
-    card.className = "item achievement-card";
-    card.id = `achievementCard${idBase}`;
-    card.innerHTML = `
-      <div class="achievement-card-title" id="achievementTitle${idBase}"></div>
-      <div class="achievement-progress" id="achievementProgress${idBase}"></div>
-      <div class="achievement-reward" id="achievementReward${idBase}"></div>
-      <button class="buy" id="claimAchievement${idBase}" disabled>받기</button>
-      <div class="owned" id="achievementHint${idBase}"></div>
-    `;
-    anchor.insertAdjacentElement("afterend", card);
-    return card;
-  }
-
-  if(!document.getElementById("achievementCardSpent")) makeCard("Spent");
-  if(!document.getElementById("achievementCardChipmunk")) makeCard("Chipmunk");
-}
-ensureExtraAchievementCards();
-
 const achievementCardSpent = document.getElementById("achievementCardSpent");
 const achievementTitleSpent = document.getElementById("achievementTitleSpent");
 const achievementProgressSpent = document.getElementById("achievementProgressSpent");
 const achievementRewardSpent = document.getElementById("achievementRewardSpent");
 const claimAchievementSpent = document.getElementById("claimAchievementSpent");
 const achievementHintSpent = document.getElementById("achievementHintSpent");
+
+const achievementCardSquirrel = document.getElementById("achievementCardSquirrel");
+const achievementTitleSquirrel = document.getElementById("achievementTitleSquirrel");
+const achievementProgressSquirrel = document.getElementById("achievementProgressSquirrel");
+const achievementRewardSquirrel = document.getElementById("achievementRewardSquirrel");
+const claimAchievementSquirrel = document.getElementById("claimAchievementSquirrel");
+const achievementHintSquirrel = document.getElementById("achievementHintSquirrel");
 
 const achievementCardChipmunk = document.getElementById("achievementCardChipmunk");
 const achievementTitleChipmunk = document.getElementById("achievementTitleChipmunk");
@@ -280,9 +1592,38 @@ const csDockEmoji = document.getElementById("csDockEmoji");
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
 
-/* =========================
-   저장 / 불러오기
-========================= */
+function showToast(detail){
+  toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
+  toast.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2600);
+}
+
+function updateGoldenUI(){
+  if(goldenReady){
+    acornBtn.classList.add("golden");
+    counterChip.classList.add("golden");
+  }else{
+    acornBtn.classList.remove("golden");
+    counterChip.classList.remove("golden");
+  }
+}
+
+function setLocked(isLocked){
+  const lockedEls = document.querySelectorAll(".locked");
+  lockedEls.forEach(el=>{
+    el.style.pointerEvents = isLocked ? "none" : "auto";
+    el.style.opacity = isLocked ? "0.75" : "1";
+  });
+}
+
+function normalizeByTier(){
+  const map = [1,2,4,8,16,32,64,128,256,512,1000];
+  if(tier < 0) tier = 0;
+  if(tier > 10) tier = 10;
+  clickValue = map[tier] ?? 1;
+}
+
 function buildSaveData(){
   const now = performance.now();
   const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - now)));
@@ -293,10 +1634,10 @@ function buildSaveData(){
     tier,
     achievementCount,
     acornAchievementStage,
-    squirrelAchievementStep,
-    chipmunkAchievementStep,
     clickAchievementStep,
     spentAchievementStep,
+    squirrelAchievementStep,
+    chipmunkAchievementStep,
     totalClicks,
     totalSpentAcorn,
     squirrelRemainingMs,
@@ -320,10 +1661,10 @@ function applyLoadedProfile(p){
   achievementCount = Number(p.achievementCount ?? 0) || 0;
 
   acornAchievementStage = Number(p.acornAchievementStage ?? 1) || 1;
-  squirrelAchievementStep = Number(p.squirrelAchievementStep ?? 1) || 1;
-  chipmunkAchievementStep = Number(p.chipmunkAchievementStep ?? 1) || 1;
   clickAchievementStep = Number(p.clickAchievementStep ?? 1) || 1;
   spentAchievementStep = Number(p.spentAchievementStep ?? 1) || 1;
+  squirrelAchievementStep = Number(p.squirrelAchievementStep ?? 1) || 1;
+  chipmunkAchievementStep = Number(p.chipmunkAchievementStep ?? 1) || 1;
 
   totalClicks = Number(p.totalClicks ?? 0) || 0;
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
@@ -367,10 +1708,10 @@ function createProfile(nick){
   clickValue = 1;
   achievementCount = 0;
   acornAchievementStage = 1;
-  squirrelAchievementStep = 1;
-  chipmunkAchievementStep = 1;
   clickAchievementStep = 1;
   spentAchievementStep = 1;
+  squirrelAchievementStep = 1;
+  chipmunkAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
   squirrelNextPayouts = [];
@@ -390,10 +1731,10 @@ function resetCurrentNickProgress(){
   clickValue = 1;
   achievementCount = 0;
   acornAchievementStage = 1;
-  squirrelAchievementStep = 1;
-  chipmunkAchievementStep = 1;
   clickAchievementStep = 1;
   spentAchievementStep = 1;
+  squirrelAchievementStep = 1;
+  chipmunkAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
   squirrelNextPayouts = [];
@@ -406,9 +1747,6 @@ function resetCurrentNickProgress(){
   saveCurrent();
 }
 
-/* =========================
-   UI 공통
-========================= */
 function showNicknameOverlay(){
   overlay.style.display = "flex";
   setLocked(true);
@@ -436,6 +1774,7 @@ function getNextUpgrade(){
   if(tier >= 10) return null;
   return UPGRADE_STEPS[tier];
 }
+
 function getSquirrelCount(){
   return squirrelNextPayouts.length;
 }
@@ -450,24 +1789,22 @@ function getChipmunkIncomePerSec(){
 }
 
 function canClaimAcornAchievement(){ return acorn >= getAcornAchievementTarget(); }
-function canClaimSquirrelAchievement(){ return getSquirrelCount() >= getSquirrelAchievementTarget(); }
-function canClaimChipmunkAchievement(){ return getChipmunkCount() >= getChipmunkAchievementTarget(); }
 function canClaimClickAchievement(){ return totalClicks >= getClickAchievementTarget(); }
 function canClaimSpentAchievement(){ return totalSpentAcorn >= getSpentAchievementTarget(); }
+function canClaimSquirrelAchievement(){ return getSquirrelCount() >= getSquirrelAchievementTarget(); }
+function canClaimChipmunkAchievement(){ return getChipmunkCount() >= getChipmunkAchievementTarget(); }
 
 function canClaimAnyAchievement(){
   return (
     canClaimAcornAchievement() ||
-    canClaimSquirrelAchievement() ||
-    canClaimChipmunkAchievement() ||
     canClaimClickAchievement() ||
-    canClaimSpentAchievement()
+    canClaimSpentAchievement() ||
+    canClaimSquirrelAchievement() ||
+    canClaimChipmunkAchievement()
   );
 }
 
-/* =========================
-   트로피 패널
-========================= */
+/* 트로피 */
 function getCurrentTrophyRank(){
   let current = null;
   for(const rank of TROPHY_RANKS){
@@ -492,7 +1829,9 @@ function getTrophyProgressInfo(){
     return {
       currentRankText: "무등급",
       nextRankText: next.name + " " + next.stars,
-      currentValue, maxValue, pct,
+      currentValue,
+      maxValue,
+      pct,
       remain: next.need - achievementCount
     };
   }
@@ -506,7 +1845,9 @@ function getTrophyProgressInfo(){
     return {
       currentRankText: current.name + " " + current.stars,
       nextRankText: next.name + " " + next.stars,
-      currentValue, maxValue, pct,
+      currentValue,
+      maxValue,
+      pct,
       remain: next.need - achievementCount
     };
   }
@@ -534,9 +1875,13 @@ function renderTrophyPanel(){
     "현재 트로피: <b>" + achievementCount.toLocaleString("ko-KR") + "</b>" +
     "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>";
 
-  trophyNextText.textContent = next
-    ? "다음 등급: " + next.name + " " + next.stars + " · 앞으로 " + (next.need - achievementCount).toLocaleString("ko-KR") + " 필요"
-    : "최고 등급 달성 완료!";
+  if(next){
+    trophyNextText.textContent =
+      "다음 등급: " + next.name + " " + next.stars + " · 앞으로 " +
+      (next.need - achievementCount).toLocaleString("ko-KR") + " 필요";
+  }else{
+    trophyNextText.textContent = "최고 등급 달성 완료!";
+  }
 
   if(info.remain > 0){
     panelProgressLabel.textContent = info.currentRankText + " → " + info.nextRankText;
@@ -560,7 +1905,11 @@ function renderTrophyPanel(){
             <span>${rank.name}</span>
             <span class="rank-stars">${rank.stars}</span>
           </div>
-          <div class="rank-state">${isCurrent ? "현재 등급" : (cleared ? "달성 완료" : "미달성")}</div>
+          <div class="rank-state">${
+            isCurrent ? "현재 등급" :
+            cleared ? "달성 완료" :
+            "미달성"
+          }</div>
         </div>
         <div class="rank-need">필요 트로피: ${rank.need.toLocaleString("ko-KR")}</div>
       </div>
@@ -568,14 +1917,11 @@ function renderTrophyPanel(){
   }).join("");
 }
 
-/* =========================
-   업적 렌더
-========================= */
+/* 업적 렌더 */
 function renderAchievements(){
   const acornTarget = getAcornAchievementTarget();
   const acornReward = getAcornAchievementReward();
   const acornReady = canClaimAcornAchievement();
-
   achievementTitleAcorn.textContent = "도토리 " + acornTarget.toLocaleString("ko-KR") + "개 모으기";
   achievementProgressAcorn.textContent =
     "진행도: " + Math.min(Math.floor(acorn), acornTarget).toLocaleString("ko-KR") + " / " + acornTarget.toLocaleString("ko-KR");
@@ -586,38 +1932,9 @@ function renderAchievements(){
     : "도토리를 더 모아야 해.";
   achievementCardAcorn.classList.toggle("ready", acornReady);
 
-  const squirrelTarget = getSquirrelAchievementTarget();
-  const squirrelReward = getSquirrelAchievementReward();
-  const squirrelReady = canClaimSquirrelAchievement();
-
-  achievementTitleSquirrel.textContent = "다람쥐 " + squirrelTarget.toLocaleString("ko-KR") + "마리 모으기";
-  achievementProgressSquirrel.textContent =
-    "진행도: " + Math.min(getSquirrelCount(), squirrelTarget).toLocaleString("ko-KR") + " / " + squirrelTarget.toLocaleString("ko-KR");
-  achievementRewardSquirrel.textContent = "보상: 트로피 +" + squirrelReward.toLocaleString("ko-KR");
-  claimAchievementSquirrel.disabled = !squirrelReady;
-  achievementHintSquirrel.textContent = squirrelReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + squirrelReward.toLocaleString("ko-KR") + "을 받자."
-    : "다람쥐를 더 모아야 해.";
-  achievementCardSquirrel.classList.toggle("ready", squirrelReady);
-
-  const chipmunkTarget = getChipmunkAchievementTarget();
-  const chipmunkReward = getChipmunkAchievementReward();
-  const chipmunkReady = canClaimChipmunkAchievement();
-
-  achievementTitleChipmunk.textContent = "청솔모 " + chipmunkTarget.toLocaleString("ko-KR") + "마리 모으기";
-  achievementProgressChipmunk.textContent =
-    "진행도: " + Math.min(getChipmunkCount(), chipmunkTarget).toLocaleString("ko-KR") + " / " + chipmunkTarget.toLocaleString("ko-KR");
-  achievementRewardChipmunk.textContent = "보상: 트로피 +" + chipmunkReward.toLocaleString("ko-KR");
-  claimAchievementChipmunk.disabled = !chipmunkReady;
-  achievementHintChipmunk.textContent = chipmunkReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + chipmunkReward.toLocaleString("ko-KR") + "을 받자."
-    : "청솔모를 더 모아야 해.";
-  achievementCardChipmunk.classList.toggle("ready", chipmunkReady);
-
   const clickTarget = getClickAchievementTarget();
   const clickReward = getClickAchievementReward();
   const clickReady = canClaimClickAchievement();
-
   achievementTitleClick.textContent = "클릭 " + clickTarget.toLocaleString("ko-KR") + "번 하기";
   achievementProgressClick.textContent =
     "진행도: " + Math.min(totalClicks, clickTarget).toLocaleString("ko-KR") + " / " + clickTarget.toLocaleString("ko-KR");
@@ -631,7 +1948,6 @@ function renderAchievements(){
   const spentTarget = getSpentAchievementTarget();
   const spentReward = getSpentAchievementReward();
   const spentReady = canClaimSpentAchievement();
-
   achievementTitleSpent.textContent = "도토리 " + spentTarget.toLocaleString("ko-KR") + "개 소비하기";
   achievementProgressSpent.textContent =
     "진행도: " + Math.min(totalSpentAcorn, spentTarget).toLocaleString("ko-KR") + " / " + spentTarget.toLocaleString("ko-KR");
@@ -641,11 +1957,34 @@ function renderAchievements(){
     ? "업적 달성! 받기를 눌러 트로피 +" + spentReward.toLocaleString("ko-KR") + "을 받자."
     : "도토리를 더 소비해야 해.";
   achievementCardSpent.classList.toggle("ready", spentReady);
+
+  const squirrelTarget = getSquirrelAchievementTarget();
+  const squirrelReward = getSquirrelAchievementReward();
+  const squirrelReady = canClaimSquirrelAchievement();
+  achievementTitleSquirrel.textContent = "다람쥐 " + squirrelTarget.toLocaleString("ko-KR") + "마리 모으기";
+  achievementProgressSquirrel.textContent =
+    "진행도: " + Math.min(getSquirrelCount(), squirrelTarget).toLocaleString("ko-KR") + " / " + squirrelTarget.toLocaleString("ko-KR");
+  achievementRewardSquirrel.textContent = "보상: 트로피 +" + squirrelReward.toLocaleString("ko-KR");
+  claimAchievementSquirrel.disabled = !squirrelReady;
+  achievementHintSquirrel.textContent = squirrelReady
+    ? "업적 달성! 받기를 눌러 트로피 +" + squirrelReward.toLocaleString("ko-KR") + "을 받자."
+    : "다람쥐를 더 모아야 해.";
+  achievementCardSquirrel.classList.toggle("ready", squirrelReady);
+
+  const chipmunkTarget = getChipmunkAchievementTarget();
+  const chipmunkReward = getChipmunkAchievementReward();
+  const chipmunkReady = canClaimChipmunkAchievement();
+  achievementTitleChipmunk.textContent = "청솔모 " + chipmunkTarget.toLocaleString("ko-KR") + "마리 모으기";
+  achievementProgressChipmunk.textContent =
+    "진행도: " + Math.min(getChipmunkCount(), chipmunkTarget).toLocaleString("ko-KR") + " / " + chipmunkTarget.toLocaleString("ko-KR");
+  achievementRewardChipmunk.textContent = "보상: 트로피 +" + chipmunkReward.toLocaleString("ko-KR");
+  claimAchievementChipmunk.disabled = !chipmunkReady;
+  achievementHintChipmunk.textContent = chipmunkReady
+    ? "업적 달성! 받기를 눌러 트로피 +" + chipmunkReward.toLocaleString("ko-KR") + "을 받자."
+    : "청솔모를 더 모아야 해.";
+  achievementCardChipmunk.classList.toggle("ready", chipmunkReady);
 }
 
-/* =========================
-   메인 렌더
-========================= */
 function render(){
   countEl.textContent = fmtAcorn(acorn);
   trophyCountTop.textContent = achievementCount.toLocaleString("ko-KR");
@@ -705,19 +2044,17 @@ function render(){
   dockIncome.textContent = (sqIncome + csIncome).toLocaleString("ko-KR");
 }
 
-/* =========================
-   이펙트
-========================= */
 function spawnFloatText(x, y, text, color){
   const el = document.createElement("div");
   el.className = "float-text";
   el.textContent = text;
   el.style.left = x + "px";
-  el.style.top = y + "px";
+  el.style.top  = y + "px";
   el.style.color = color || "#ffffff";
   document.body.appendChild(el);
   el.addEventListener("animationend", ()=> el.remove());
 }
+
 function spawnClickFloat(x, y, value, isGolden=false){
   let color = "#ffffff";
   if(isGolden) color = "#ffd84d";
@@ -727,18 +2064,22 @@ function spawnClickFloat(x, y, value, isGolden=false){
   else if(value >= 128) color = "#9d7bff";
   spawnFloatText(x, y, "+" + value, color);
 }
+
 function spawnSquirrelFloat(){
   const r = sqDockEmoji.getBoundingClientRect();
-  spawnFloatText(r.left + r.width / 2, r.top - 4, "+1", "#9dffb5");
-}
-function spawnChipmunkFloat(){
-  const r = csDockEmoji.getBoundingClientRect();
-  spawnFloatText(r.left + r.width / 2, r.top - 4, "+10", "#7bdfff");
+  const x = r.left + r.width / 2;
+  const y = r.top - 4;
+  spawnFloatText(x, y, "+1", "#9dffb5");
 }
 
-/* =========================
-   핵 감지
-========================= */
+function spawnChipmunkFloat(){
+  const r = csDockEmoji.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top - 4;
+  spawnFloatText(x, y, "+10", "#7bdfff");
+}
+
+/* 핵 감지 */
 function mean(arr){
   if(!arr.length) return 0;
   return arr.reduce((a,b)=>a+b,0)/arr.length;
@@ -756,7 +2097,9 @@ function dominantRoundedCount(arr){
     counts.set(r, (counts.get(r)||0)+1);
   }
   let max = 0;
-  for(const v of counts.values()) if(v > max) max = v;
+  for(const v of counts.values()){
+    if(v > max) max = v;
+  }
   return max;
 }
 function addSuspicion(points, reason){
@@ -786,21 +2129,28 @@ function runAutoChecks(now){
   const clickCutoff = now - CLICK_HISTORY_WINDOW_MS;
   while(clickTimes.length && clickTimes[0] < clickCutoff) clickTimes.shift();
 
-  while(clickIntervals.length > 40) clickIntervals.shift();
+  const intervalLimit = 40;
+  while(clickIntervals.length > intervalLimit) clickIntervals.shift();
 
   const oneSecCount = clickTimes.filter(t => now - t <= HARD_CPS_WINDOW_MS).length;
-  if(oneSecCount > HARD_CPS_LIMIT) return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
+  if(oneSecCount > HARD_CPS_LIMIT){
+    return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
+  }
 
   if(clickIntervals.length >= 16){
     const last16 = clickIntervals.slice(-16);
-    if(mean(last16) < 120 && stddev(last16) < 3.2){
+    const avg16 = mean(last16);
+    const std16 = stddev(last16);
+    if(avg16 < 120 && std16 < 3.2){
       return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.");
     }
   }
 
   if(clickIntervals.length >= 20){
     const last20 = clickIntervals.slice(-20);
-    if(mean(last20) < 130 && dominantRoundedCount(last20) >= 15){
+    const avg20 = mean(last20);
+    const dom = dominantRoundedCount(last20);
+    if(avg20 < 130 && dom >= 15){
       return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.");
     }
   }
@@ -808,14 +2158,16 @@ function runAutoChecks(now){
   if(clickTimes.length >= 35 && clickIntervals.length >= 30){
     const recent = clickIntervals.slice(-30);
     const avg = mean(recent);
+    const std = stddev(recent);
     const cps = 1000 / Math.max(avg, 1);
-    if(cps > 11.5 && stddev(recent) < 5){
+    if(cps > 11.5 && std < 5){
       return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.");
     }
   }
 
   if(clickIntervals.length >= 12){
-    const tooFast = clickIntervals.slice(-12).filter(v => v < 45).length;
+    const last12 = clickIntervals.slice(-12);
+    const tooFast = last12.filter(v => v < 45).length;
     if(tooFast >= 10){
       return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.");
     }
@@ -827,15 +2179,15 @@ function processHackCheck(now){
   decaySuspicion(now);
   const interval = lastClickTime ? (now - lastClickTime) : null;
   if(interval !== null && interval < CLICK_COOLDOWN_MS) return false;
+
   lastClickTime = now;
   clickTimes.push(now);
   if(interval !== null) clickIntervals.push(interval);
+
   return runAutoChecks(now);
 }
 
-/* =========================
-   클릭 / 골든
-========================= */
+/* 골든 */
 function triggerGolden(now){
   goldenReady = true;
   goldenStartedAt = now;
@@ -843,11 +2195,15 @@ function triggerGolden(now){
   saveCurrent();
 }
 function tryTriggerGolden(now){
-  if(!goldenReady && Math.random() < GOLDEN_CHANCE) triggerGolden(now);
+  if(goldenReady) return;
+  if(Math.random() < GOLDEN_CHANCE){
+    triggerGolden(now);
+  }
 }
 function canConsumeGolden(now){
   return goldenReady && (now - goldenStartedAt >= GOLDEN_MIN_HOLD_MS);
 }
+
 function addManualClickProgress(){
   totalClicks += 1;
 }
@@ -865,7 +2221,7 @@ function clickAcornFromPointer(e){
     goldenReady = false;
     goldenStartedAt = 0;
     isGoldenClick = true;
-  }else{
+  } else if(!goldenReady) {
     tryTriggerGolden(now);
   }
 
@@ -898,7 +2254,7 @@ acornBtn.addEventListener("keydown", (e)=>{
       goldenReady = false;
       goldenStartedAt = 0;
       isGoldenClick = true;
-    }else{
+    } else if(!goldenReady) {
       tryTriggerGolden(now);
     }
 
@@ -912,9 +2268,6 @@ acornBtn.addEventListener("keydown", (e)=>{
   }
 });
 
-/* =========================
-   자동 수익
-========================= */
 setInterval(()=>{
   if(!currentNick) return;
 
@@ -945,75 +2298,100 @@ setInterval(()=>{
   }
 }, 50);
 
-/* =========================
-   패널 열기/닫기
-========================= */
-function openShop(){ closeAchieve(); closeTrophy(); shopPanel.classList.add("show"); }
-function closeShop(){ shopPanel.classList.remove("show"); }
-function openAchieve(){ closeShop(); closeTrophy(); achievePanel.classList.add("show"); }
-function closeAchieve(){ achievePanel.classList.remove("show"); }
-function openTrophy(){ closeShop(); closeAchieve(); trophyPanel.classList.add("show"); }
-function closeTrophy(){ trophyPanel.classList.remove("show"); }
+/* 패널 */
+function openShop(){
+  closeAchieve();
+  closeTrophy();
+  shopPanel.classList.add("show");
+}
+function closeShop(){
+  shopPanel.classList.remove("show");
+}
+function openAchieve(){
+  closeShop();
+  closeTrophy();
+  achievePanel.classList.add("show");
+}
+function closeAchieve(){
+  achievePanel.classList.remove("show");
+}
+function openTrophy(){
+  closeShop();
+  closeAchieve();
+  trophyPanel.classList.add("show");
+}
+function closeTrophy(){
+  trophyPanel.classList.remove("show");
+}
 
 shopBtn.addEventListener("click", ()=>{
   if(!currentNick) return;
-  shopPanel.classList.contains("show") ? closeShop() : openShop();
+  if(shopPanel.classList.contains("show")) closeShop();
+  else openShop();
 });
 shopClose.addEventListener("click", closeShop);
 
 achieveBtn.addEventListener("click", ()=>{
   if(!currentNick) return;
-  achievePanel.classList.contains("show") ? closeAchieve() : openAchieve();
+  if(achievePanel.classList.contains("show")) closeAchieve();
+  else openAchieve();
 });
 achieveClose.addEventListener("click", closeAchieve);
 
 trophyChip.addEventListener("click", ()=>{
   if(!currentNick) return;
-  trophyPanel.classList.contains("show") ? closeTrophy() : openTrophy();
+  if(trophyPanel.classList.contains("show")) closeTrophy();
+  else openTrophy();
 });
 trophyClose.addEventListener("click", closeTrophy);
 
-/* =========================
-   업적 받기
-========================= */
+/* 업적 받기 */
 claimAchievementAcorn.addEventListener("click", ()=>{
-  if(!currentNick || !canClaimAcornAchievement()) return;
+  if(!currentNick) return;
+  if(!canClaimAcornAchievement()) return;
   achievementCount += getAcornAchievementReward();
   acornAchievementStage += 1;
-  render(); saveCurrent();
-});
-
-claimAchievementSquirrel.addEventListener("click", ()=>{
-  if(!currentNick || !canClaimSquirrelAchievement()) return;
-  achievementCount += getSquirrelAchievementReward();
-  squirrelAchievementStep += 1;
-  render(); saveCurrent();
-});
-
-claimAchievementChipmunk.addEventListener("click", ()=>{
-  if(!currentNick || !canClaimChipmunkAchievement()) return;
-  achievementCount += getChipmunkAchievementReward();
-  chipmunkAchievementStep += 1;
-  render(); saveCurrent();
+  render();
+  saveCurrent();
 });
 
 claimAchievementClick.addEventListener("click", ()=>{
-  if(!currentNick || !canClaimClickAchievement()) return;
+  if(!currentNick) return;
+  if(!canClaimClickAchievement()) return;
   achievementCount += getClickAchievementReward();
   clickAchievementStep += 1;
-  render(); saveCurrent();
+  render();
+  saveCurrent();
 });
 
 claimAchievementSpent.addEventListener("click", ()=>{
-  if(!currentNick || !canClaimSpentAchievement()) return;
+  if(!currentNick) return;
+  if(!canClaimSpentAchievement()) return;
   achievementCount += getSpentAchievementReward();
   spentAchievementStep += 1;
-  render(); saveCurrent();
+  render();
+  saveCurrent();
 });
 
-/* =========================
-   구매 처리
-========================= */
+claimAchievementSquirrel.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(!canClaimSquirrelAchievement()) return;
+  achievementCount += getSquirrelAchievementReward();
+  squirrelAchievementStep += 1;
+  render();
+  saveCurrent();
+});
+
+claimAchievementChipmunk.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(!canClaimChipmunkAchievement()) return;
+  achievementCount += getChipmunkAchievementReward();
+  chipmunkAchievementStep += 1;
+  render();
+  saveCurrent();
+});
+
+/* 소비 추적 */
 function spendAcorn(cost){
   acorn -= cost;
   totalSpentAcorn += cost;
@@ -1022,40 +2400,53 @@ function spendAcorn(cost){
 buyUpgrade.addEventListener("click", ()=>{
   if(!currentNick) return;
   const next = getNextUpgrade();
-  if(!next || acorn < next.cost) return;
+  if(!next) return;
+  if(acorn < next.cost) return;
+
   spendAcorn(next.cost);
   tier = next.toTier;
   normalizeByTier();
-  render(); saveCurrent();
+
+  render();
+  saveCurrent();
 });
 
 buySquirrel.addEventListener("click", ()=>{
   if(!currentNick) return;
-  const cost = getNextSquirrelCost(getSquirrelCount() + 1);
+
+  const sqCount = getSquirrelCount();
+  const cost = getNextSquirrelCost(sqCount + 1);
   if(acorn < cost) return;
+
   spendAcorn(cost);
   squirrelNextPayouts.push(performance.now() + SQUIRREL_TICK_MS);
-  render(); saveCurrent();
+
+  render();
+  saveCurrent();
   spawnSquirrelFloat();
 });
 
 buyChipmunk.addEventListener("click", ()=>{
   if(!currentNick) return;
-  const cost = getNextChipmunkCost(getChipmunkCount() + 1);
+
+  const csCount = getChipmunkCount();
+  const cost = getNextChipmunkCost(csCount + 1);
   if(acorn < cost) return;
+
   spendAcorn(cost);
   chipmunkNextPayouts.push(performance.now() + CHIPMUNK_TICK_MS);
-  render(); saveCurrent();
+
+  render();
+  saveCurrent();
   spawnChipmunkFloat();
 });
 
-/* =========================
-   닉네임 메뉴
-========================= */
+/* 닉네임 메뉴 */
 function openNickMenu(){ nickMenu.classList.add("show"); }
 function closeNickMenu(){ nickMenu.classList.remove("show"); }
 function toggleNickMenu(){
-  nickMenu.classList.contains("show") ? closeNickMenu() : openNickMenu();
+  if(nickMenu.classList.contains("show")) closeNickMenu();
+  else openNickMenu();
 }
 
 nickChip.addEventListener("click", (e)=>{
@@ -1063,7 +2454,9 @@ nickChip.addEventListener("click", (e)=>{
   toggleNickMenu();
 });
 
-document.addEventListener("click", ()=> closeNickMenu());
+document.addEventListener("click", ()=>{
+  closeNickMenu();
+});
 
 btnLogout.addEventListener("click", (e)=>{
   e.stopPropagation();
@@ -1080,9 +2473,6 @@ btnResetNick.addEventListener("click", (e)=>{
   closeTrophy();
 });
 
-/* =========================
-   닉네임 입력
-========================= */
 function setMsg(el, text, kind){
   el.textContent = text || "";
   el.classList.remove("good","bad");
@@ -1099,11 +2489,12 @@ function updateNewNickUI(){
   if(profiles[nick]){
     newStart.disabled = true;
     setMsg(newMsg, "이미 사용중인 닉네임", "bad");
-  }else{
+  } else {
     newStart.disabled = false;
     setMsg(newMsg, "사용 가능한 닉네임", "good");
   }
 }
+
 function updateOldNickUI(){
   const nick = sanitizeNick(oldNick.value);
   if(!isValidNick(nick)){
@@ -1114,7 +2505,7 @@ function updateOldNickUI(){
   if(profiles[nick]){
     oldEnter.disabled = false;
     setMsg(oldMsg, "이미 사용중인 닉네임", "good");
-  }else{
+  } else {
     oldEnter.disabled = true;
     setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
   }
@@ -1126,11 +2517,13 @@ oldNick.addEventListener("input", updateOldNickUI);
 newStart.addEventListener("click", ()=>{
   const nick = sanitizeNick(newNick.value);
   if(!isValidNick(nick)) return;
+
   if(profiles[nick]){
     setMsg(newMsg, "이미 사용중인 닉네임", "bad");
     newStart.disabled = true;
     return;
   }
+
   createProfile(nick);
   overlay.style.display = "none";
   setLocked(false);
@@ -1141,11 +2534,13 @@ newStart.addEventListener("click", ()=>{
 oldEnter.addEventListener("click", ()=>{
   const nick = sanitizeNick(oldNick.value);
   if(!isValidNick(nick)) return;
+
   if(!profiles[nick]){
     setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
     oldEnter.disabled = true;
     return;
   }
+
   loadProfile(nick);
   overlay.style.display = "none";
   setLocked(false);
@@ -1160,9 +2555,7 @@ oldNick.addEventListener("keydown", (e)=>{
   if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
 });
 
-/* =========================
-   오프닝
-========================= */
+/* 오프닝 */
 function createIrregularStops(totalMs = 3000){
   const stops = [];
   let elapsed = 0;
@@ -1173,11 +2566,17 @@ function createIrregularStops(totalMs = 3000){
     const dur = Math.min(remain, 120 + Math.random() * 300);
 
     let jump;
-    if(progress < 12) jump = 5 + Math.random() * 9;
-    else if(progress < 35) jump = 4 + Math.random() * 7;
-    else if(progress < 65) jump = 3 + Math.random() * 5.5;
-    else if(progress < 88) jump = 1.2 + Math.random() * 3;
-    else jump = 0.5 + Math.random() * 1.6;
+    if(progress < 12){
+      jump = 5 + Math.random() * 9;
+    }else if(progress < 35){
+      jump = 4 + Math.random() * 7;
+    }else if(progress < 65){
+      jump = 3 + Math.random() * 5.5;
+    }else if(progress < 88){
+      jump = 1.2 + Math.random() * 3;
+    }else{
+      jump = 0.5 + Math.random() * 1.6;
+    }
 
     progress = Math.min(99, progress + jump);
     elapsed += dur;
@@ -1224,17 +2623,18 @@ function runOpening(){
 
     setTimeout(()=>{
       introScreen.classList.add("hidden");
-      setTimeout(()=> showNicknameOverlay(), 550);
+      setTimeout(()=>{
+        showNicknameOverlay();
+      }, 550);
     }, 100);
   }
 
   requestAnimationFrame(tick);
 }
 
-/* =========================
-   시작
-========================= */
 setLocked(true);
 render();
 runOpening();
 </script>
+</body>
+</html>
