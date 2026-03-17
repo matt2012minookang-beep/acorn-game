@@ -213,9 +213,9 @@
       position:fixed;
       top:84px;
       right:14px;
-      width:min(390px, 92vw);
+      width:min(400px, 92vw);
       z-index:30;
-      background: rgba(15,15,22,.82);
+      background: rgba(15,15,22,.84);
       border:1px solid rgba(255,255,255,.16);
       border-radius:20px;
       backdrop-filter: blur(16px);
@@ -370,7 +370,7 @@
       overflow:hidden;
     }
     .trophy-big{
-      font-size:28px;
+      font-size:26px;
       font-weight:1000;
       margin-bottom:6px;
       display:flex;
@@ -417,7 +417,7 @@
       width:0%;
       height:100%;
       border-radius:inherit;
-      background: linear-gradient(90deg, #d28d5b 0%, #dbe4ff 48%, #ffd84d 100%);
+      background: linear-gradient(90deg, #ffd84d 0%, #cfcfcf 30%, #39d98a 55%, #69b7ff 78%, #ff5f77 100%);
       transition: width .24s ease;
       box-shadow: 0 0 14px rgba(255,216,77,.15);
     }
@@ -446,32 +446,49 @@
     }
     .rank-row.current{
       transform: translateY(-1px);
-      box-shadow: 0 0 22px rgba(255,216,77,.09);
     }
-    .rank-row.bronze{
-      background: linear-gradient(180deg, rgba(214,148,93,.16), rgba(255,255,255,.04));
-    }
-    .rank-row.silver{
-      background: linear-gradient(180deg, rgba(219,228,255,.14), rgba(255,255,255,.04));
-    }
+
     .rank-row.gold{
       background: linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,255,255,.04));
     }
-    .rank-row.cleared.bronze{ border-color: rgba(214,148,93,.48); }
-    .rank-row.cleared.silver{ border-color: rgba(219,228,255,.46); }
-    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.46); }
+    .rank-row.platinum{
+      background: linear-gradient(180deg, rgba(212,220,235,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.emerald{
+      background: linear-gradient(180deg, rgba(57,217,138,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.diamond{
+      background: linear-gradient(180deg, rgba(105,183,255,.16), rgba(255,255,255,.04));
+    }
+    .rank-row.reddiamond{
+      background: linear-gradient(180deg, rgba(255,95,119,.18), rgba(255,255,255,.04));
+    }
 
-    .rank-row.current.bronze{
-      border-color: rgba(214,148,93,.88);
-      box-shadow: 0 0 22px rgba(214,148,93,.14);
-    }
-    .rank-row.current.silver{
-      border-color: rgba(219,228,255,.9);
-      box-shadow: 0 0 22px rgba(219,228,255,.12);
-    }
+    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.46); }
+    .rank-row.cleared.platinum{ border-color: rgba(212,220,235,.46); }
+    .rank-row.cleared.emerald{ border-color: rgba(57,217,138,.46); }
+    .rank-row.cleared.diamond{ border-color: rgba(105,183,255,.46); }
+    .rank-row.cleared.reddiamond{ border-color: rgba(255,95,119,.46); }
+
     .rank-row.current.gold{
-      border-color: rgba(255,216,77,.9);
-      box-shadow: 0 0 24px rgba(255,216,77,.14);
+      border-color: rgba(255,216,77,.88);
+      box-shadow: 0 0 22px rgba(255,216,77,.14);
+    }
+    .rank-row.current.platinum{
+      border-color: rgba(212,220,235,.88);
+      box-shadow: 0 0 22px rgba(212,220,235,.14);
+    }
+    .rank-row.current.emerald{
+      border-color: rgba(57,217,138,.88);
+      box-shadow: 0 0 22px rgba(57,217,138,.14);
+    }
+    .rank-row.current.diamond{
+      border-color: rgba(105,183,255,.88);
+      box-shadow: 0 0 22px rgba(105,183,255,.14);
+    }
+    .rank-row.current.reddiamond{
+      border-color: rgba(255,95,119,.88);
+      box-shadow: 0 0 24px rgba(255,95,119,.16);
     }
 
     .rank-top{
@@ -1078,7 +1095,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.18</div>
+        <div class="intro-version">v1.20</div>
       </div>
     </div>
   </div>
@@ -1243,20 +1260,20 @@
 
     <div class="item trophy-summary">
       <div class="trophy-big">
-        <span>🏆</span>
+        <span id="trophyMedalBig">🏅</span>
         <span id="trophyRankName">무등급</span>
       </div>
       <div class="trophy-sub" id="trophySummaryText">
         현재 트로피: 0
       </div>
       <div class="trophy-next" id="trophyNextText">
-        다음 등급까지 20 필요
+        다음 등급까지 40 필요
       </div>
 
       <div class="trophy-panel-progress">
         <div class="trophy-panel-progress-top">
           <span id="panelProgressLabel">다음 등급 진행도</span>
-          <span id="panelProgressMeta">0 / 20</span>
+          <span id="panelProgressMeta">0 / 40</span>
         </div>
         <div class="trophy-panel-progress-bar">
           <div class="trophy-panel-progress-fill" id="panelTrophyBarFill"></div>
@@ -1340,7 +1357,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v18";
+const LS_KEY = "dotori_game_profiles_v20";
 
 function loadProfiles(){
   try{
@@ -1396,15 +1413,25 @@ const GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
 
 const TROPHY_RANKS = [
-  { name: "브론즈 1", stars: "★", need: 20, medal: "🥉", kind: "bronze" },
-  { name: "브론즈 2", stars: "★★", need: 50, medal: "🥉", kind: "bronze" },
-  { name: "브론즈 3", stars: "★★★", need: 70, medal: "🥉", kind: "bronze" },
-  { name: "실버 1", stars: "★", need: 120, medal: "🥈", kind: "silver" },
-  { name: "실버 2", stars: "★★", need: 170, medal: "🥈", kind: "silver" },
-  { name: "실버 3", stars: "★★★", need: 230, medal: "🥈", kind: "silver" },
-  { name: "골드 1", stars: "★", need: 320, medal: "🥇", kind: "gold" },
-  { name: "골드 2", stars: "★★", need: 450, medal: "🥇", kind: "gold" },
-  { name: "골드 3", stars: "★★★", need: 600, medal: "🥇", kind: "gold" }
+  { name: "골드 1", stars: "★", need: 40, medal: "🥇", kind: "gold" },
+  { name: "골드 2", stars: "★★", need: 80, medal: "🥇", kind: "gold" },
+  { name: "골드 3", stars: "★★★", need: 130, medal: "🥇", kind: "gold" },
+
+  { name: "플래티넘 1", stars: "★", need: 190, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 2", stars: "★★", need: 260, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 3", stars: "★★★", need: 340, medal: "⚪", kind: "platinum" },
+
+  { name: "에메랄드 1", stars: "★", need: 430, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 2", stars: "★★", need: 530, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 3", stars: "★★★", need: 640, medal: "🟢", kind: "emerald" },
+
+  { name: "다이아 1", stars: "★", need: 770, medal: "💎", kind: "diamond" },
+  { name: "다이아 2", stars: "★★", need: 920, medal: "💎", kind: "diamond" },
+  { name: "다이아 3", stars: "★★★", need: 1100, medal: "💎", kind: "diamond" },
+
+  { name: "레드 다이아 1", stars: "★", need: 1320, medal: "🔴", kind: "reddiamond" },
+  { name: "레드 다이아 2", stars: "★★", need: 1580, medal: "🔴", kind: "reddiamond" },
+  { name: "레드 다이아 3", stars: "★★★", need: 1900, medal: "🔴", kind: "reddiamond" }
 ];
 
 const UPGRADE_STEPS = [
@@ -1440,22 +1467,19 @@ function getNextChipmunkCost(nextIndex){
   return 5000 + (nextIndex - 1) * 500;
 }
 
-/* 업적 규칙 */
 function getAcornAchievementTarget(){
-  return Math.pow(10, acornAchievementStage + 2); // 1000, 10000, 100000...
+  return Math.pow(10, acornAchievementStage + 2);
 }
 function getAcornAchievementReward(){
-  return acornAchievementStage * 10; // 10,20,30...
+  return acornAchievementStage * 10;
 }
-
 function getClickAchievementTarget(){
   if(clickAchievementStep === 1) return 200;
-  return 500 * Math.pow(2, clickAchievementStep - 2); // 200,500,1000,2000,4000...
+  return 500 * Math.pow(2, clickAchievementStep - 2);
 }
 function getClickAchievementReward(){
-  return 10 + (clickAchievementStep - 1) * 5; // 10,15,20...
+  return 10 + (clickAchievementStep - 1) * 5;
 }
-
 function getSpentAchievementTarget(){
   const targets = [10000, 15000, 20000, 25000, 30000, 35000];
   if(spentAchievementStep <= targets.length) return targets[spentAchievementStep - 1];
@@ -1466,24 +1490,21 @@ function getSpentAchievementReward(){
   if(spentAchievementStep <= rewards.length) return rewards[spentAchievementStep - 1];
   return 35 + (spentAchievementStep - rewards.length) * 2;
 }
-
 function getSquirrelAchievementTarget(){
-  if(squirrelAchievementStep <= 5) return squirrelAchievementStep * 10; // 10,20,30,40,50
-  return 100 + (squirrelAchievementStep - 6) * 50; // 100,150,200...
+  if(squirrelAchievementStep <= 5) return squirrelAchievementStep * 10;
+  return 100 + (squirrelAchievementStep - 6) * 50;
 }
 function getSquirrelAchievementReward(){
-  return 9 + squirrelAchievementStep; // 10,11,12,13,14,15,16...
+  return 9 + squirrelAchievementStep;
 }
-
 function getChipmunkAchievementTarget(){
-  if(chipmunkAchievementStep <= 5) return chipmunkAchievementStep * 10; // 10,20,30,40,50
-  return 100 + (chipmunkAchievementStep - 6) * 50; // 100,150,200...
+  if(chipmunkAchievementStep <= 5) return chipmunkAchievementStep * 10;
+  return 100 + (chipmunkAchievementStep - 6) * 50;
 }
 function getChipmunkAchievementReward(){
-  return 14 + chipmunkAchievementStep; // 15,16,17,18,19,20,21...
+  return 14 + chipmunkAchievementStep;
 }
 
-/* DOM */
 const countEl = document.getElementById("count");
 const acornBtn = document.getElementById("acornBtn");
 const counterChip = document.getElementById("counterChip");
@@ -1496,6 +1517,7 @@ const trophyRankName = document.getElementById("trophyRankName");
 const trophySummaryText = document.getElementById("trophySummaryText");
 const trophyNextText = document.getElementById("trophyNextText");
 const trophyRankList = document.getElementById("trophyRankList");
+const trophyMedalBig = document.getElementById("trophyMedalBig");
 
 const panelProgressLabel = document.getElementById("panelProgressLabel");
 const panelProgressMeta = document.getElementById("panelProgressMeta");
@@ -1659,16 +1681,13 @@ function applyLoadedProfile(p){
   tier = Number(p.tier ?? 0) || 0;
   clickValue = Number(p.clickValue ?? 1) || 1;
   achievementCount = Number(p.achievementCount ?? 0) || 0;
-
   acornAchievementStage = Number(p.acornAchievementStage ?? 1) || 1;
   clickAchievementStep = Number(p.clickAchievementStep ?? 1) || 1;
   spentAchievementStep = Number(p.spentAchievementStep ?? 1) || 1;
   squirrelAchievementStep = Number(p.squirrelAchievementStep ?? 1) || 1;
   chipmunkAchievementStep = Number(p.chipmunkAchievementStep ?? 1) || 1;
-
   totalClicks = Number(p.totalClicks ?? 0) || 0;
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
-
   goldenReady = !!p.goldenReady;
   normalizeByTier();
 
@@ -1774,7 +1793,6 @@ function getNextUpgrade(){
   if(tier >= 10) return null;
   return UPGRADE_STEPS[tier];
 }
-
 function getSquirrelCount(){
   return squirrelNextPayouts.length;
 }
@@ -1804,7 +1822,6 @@ function canClaimAnyAchievement(){
   );
 }
 
-/* 트로피 */
 function getCurrentTrophyRank(){
   let current = null;
   for(const rank of TROPHY_RANKS){
@@ -1867,8 +1884,9 @@ function renderTrophyPanel(){
   const next = getNextTrophyRank();
   const info = getTrophyProgressInfo();
 
+  trophyMedalBig.textContent = current ? current.medal : "🏅";
   trophyRankName.textContent = current
-    ? current.medal + " " + current.name + " " + current.stars
+    ? current.name + " " + current.stars
     : "무등급";
 
   trophySummaryText.innerHTML =
@@ -1917,7 +1935,6 @@ function renderTrophyPanel(){
   }).join("");
 }
 
-/* 업적 렌더 */
 function renderAchievements(){
   const acornTarget = getAcornAchievementTarget();
   const acornReward = getAcornAchievementReward();
@@ -2079,7 +2096,6 @@ function spawnChipmunkFloat(){
   spawnFloatText(x, y, "+10", "#7bdfff");
 }
 
-/* 핵 감지 */
 function mean(arr){
   if(!arr.length) return 0;
   return arr.reduce((a,b)=>a+b,0)/arr.length;
@@ -2187,7 +2203,6 @@ function processHackCheck(now){
   return runAutoChecks(now);
 }
 
-/* 골든 */
 function triggerGolden(now){
   goldenReady = true;
   goldenStartedAt = now;
@@ -2298,7 +2313,6 @@ setInterval(()=>{
   }
 }, 50);
 
-/* 패널 */
 function openShop(){
   closeAchieve();
   closeTrophy();
@@ -2345,7 +2359,6 @@ trophyChip.addEventListener("click", ()=>{
 });
 trophyClose.addEventListener("click", closeTrophy);
 
-/* 업적 받기 */
 claimAchievementAcorn.addEventListener("click", ()=>{
   if(!currentNick) return;
   if(!canClaimAcornAchievement()) return;
@@ -2391,7 +2404,6 @@ claimAchievementChipmunk.addEventListener("click", ()=>{
   saveCurrent();
 });
 
-/* 소비 추적 */
 function spendAcorn(cost){
   acorn -= cost;
   totalSpentAcorn += cost;
@@ -2441,7 +2453,6 @@ buyChipmunk.addEventListener("click", ()=>{
   spawnChipmunkFloat();
 });
 
-/* 닉네임 메뉴 */
 function openNickMenu(){ nickMenu.classList.add("show"); }
 function closeNickMenu(){ nickMenu.classList.remove("show"); }
 function toggleNickMenu(){
@@ -2555,7 +2566,6 @@ oldNick.addEventListener("keydown", (e)=>{
   if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
 });
 
-/* 오프닝 */
 function createIrregularStops(totalMs = 3000){
   const stops = [];
   let elapsed = 0;
