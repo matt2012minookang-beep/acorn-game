@@ -37,9 +37,9 @@
       top:0; left:0; right:0;
       height:72px;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      padding:0 18px;
+      padding:10px 18px 0;
       background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
       z-index:10;
       pointer-events:none;
@@ -52,14 +52,22 @@
       display:flex;
       align-items:center;
       gap:10px;
+      margin-top:10px;
     }
     .title .badge{ font-size:18px; opacity:.9; }
 
     .top-right{
       pointer-events:auto;
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       gap:10px;
+    }
+
+    .trophy-stack{
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:6px;
     }
 
     .trophy-chip{
@@ -93,6 +101,26 @@
         0 0 28px rgba(255,216,77,.10);
     }
 
+    .coin-under{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:12px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+      font-weight:900;
+      font-size:13px;
+      min-height:34px;
+    }
+    .coin-under .emoji{
+      font-size:16px;
+      line-height:1;
+    }
+
     .counter-chip{
       display:flex;
       align-items:center;
@@ -104,6 +132,7 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 12px 30px rgba(0,0,0,.35);
       font-weight:800;
+      margin-top:0;
     }
     .counter-chip .emoji{
       font-size:22px;
@@ -986,6 +1015,10 @@
       .trophy-chip{
         padding:10px 10px;
       }
+      .coin-under{
+        padding:6px 8px;
+        font-size:12px;
+      }
       .counter-chip{
         padding:10px 11px;
       }
@@ -1088,9 +1121,15 @@
     </div>
 
     <div class="top-right">
-      <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
-        <span class="emoji">🏆</span>
-        <span id="achievementCountTop" class="count">0</span>
+      <div class="trophy-stack">
+        <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
+          <span class="emoji">🏆</span>
+          <span id="achievementCountTop" class="count">0</span>
+        </div>
+        <div class="coin-under" aria-label="코인 수">
+          <span class="emoji">🪙</span>
+          <span id="coinCountTop">0</span>
+        </div>
       </div>
 
       <div class="counter-chip" id="counterChip" aria-label="도토리 수">
@@ -1370,6 +1409,8 @@ let acorn = 0;
 let clickValue = 1;
 let tier = 0;
 let achievementCount = 0;
+let coinCount = 0;
+let highestCoinRankIndex = -1;
 
 let acornAchievementStage = 1;
 let clickAchievementStep = 1;
@@ -1500,6 +1541,7 @@ const counterChip = document.getElementById("counterChip");
 
 const trophyChip = document.getElementById("trophyChip");
 const trophyCountTop = document.getElementById("achievementCountTop");
+const coinCountTop = document.getElementById("coinCountTop");
 const trophyPanel = document.getElementById("trophyPanel");
 const trophyClose = document.getElementById("trophyClose");
 const trophyRankName = document.getElementById("trophyRankName");
@@ -1635,6 +1677,23 @@ function normalizeByTier(){
   clickValue = map[tier] ?? 1;
 }
 
+function getCurrentTrophyRankIndex(){
+  let idx = -1;
+  for(let i = 0; i < TROPHY_RANKS.length; i++){
+    if(achievementCount >= TROPHY_RANKS[i].need) idx = i;
+  }
+  return idx;
+}
+
+function grantRankCoinsIfNeeded(){
+  const currentIdx = getCurrentTrophyRankIndex();
+  if(currentIdx > highestCoinRankIndex){
+    const gainedRanks = currentIdx - highestCoinRankIndex;
+    coinCount += gainedRanks * 2;
+    highestCoinRankIndex = currentIdx;
+  }
+}
+
 function buildSaveData(){
   const now = performance.now();
   const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - now)));
@@ -1644,6 +1703,8 @@ function buildSaveData(){
     clickValue,
     tier,
     achievementCount,
+    coinCount,
+    highestCoinRankIndex,
     acornAchievementStage,
     clickAchievementStep,
     spentAchievementStep,
@@ -1670,6 +1731,8 @@ function applyLoadedProfile(p){
   tier = Number(p.tier ?? 0) || 0;
   clickValue = Number(p.clickValue ?? 1) || 1;
   achievementCount = Number(p.achievementCount ?? 0) || 0;
+  coinCount = Number(p.coinCount ?? 0) || 0;
+  highestCoinRankIndex = Number(p.highestCoinRankIndex ?? -1);
   acornAchievementStage = Number(p.acornAchievementStage ?? 1) || 1;
   clickAchievementStep = Number(p.clickAchievementStep ?? 1) || 1;
   spentAchievementStep = Number(p.spentAchievementStep ?? 1) || 1;
@@ -1689,6 +1752,8 @@ function applyLoadedProfile(p){
   const goldenRemainingMs = Number(p.goldenRemainingMs ?? 0) || 0;
   goldenStartedAt = now - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
 
+  if(highestCoinRankIndex < -1) highestCoinRankIndex = -1;
+  grantRankCoinsIfNeeded();
   updateGoldenUI();
 }
 
@@ -1715,6 +1780,8 @@ function createProfile(nick){
   tier = 0;
   clickValue = 1;
   achievementCount = 0;
+  coinCount = 0;
+  highestCoinRankIndex = -1;
   acornAchievementStage = 1;
   clickAchievementStep = 1;
   spentAchievementStep = 1;
@@ -1738,6 +1805,8 @@ function resetCurrentNickProgress(){
   tier = 0;
   clickValue = 1;
   achievementCount = 0;
+  coinCount = 0;
+  highestCoinRankIndex = -1;
   acornAchievementStage = 1;
   clickAchievementStep = 1;
   spentAchievementStep = 1;
@@ -1766,6 +1835,7 @@ function showNicknameOverlay(){
   newStart.disabled = true;
   oldEnter.disabled = true;
   countEl.textContent = "0";
+  coinCountTop.textContent = "0";
 }
 
 function logout(){
@@ -1880,7 +1950,8 @@ function renderTrophyPanel(){
 
   trophySummaryText.innerHTML =
     "현재 트로피: <b>" + achievementCount.toLocaleString("ko-KR") + "</b>" +
-    "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>";
+    "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>" +
+    "<br>보유 코인: <b>" + coinCount.toLocaleString("ko-KR") + "</b>";
 
   if(next){
     trophyNextText.textContent =
@@ -1918,7 +1989,7 @@ function renderTrophyPanel(){
             "미달성"
           }</div>
         </div>
-        <div class="rank-need">필요 트로피: ${rank.need.toLocaleString("ko-KR")}</div>
+        <div class="rank-need">필요 트로피: ${rank.need.toLocaleString("ko-KR")} · 달성 시 코인 +2</div>
       </div>
     `;
   }).join("");
@@ -1994,6 +2065,7 @@ function renderAchievements(){
 function render(){
   countEl.textContent = fmtAcorn(acorn);
   trophyCountTop.textContent = achievementCount.toLocaleString("ko-KR");
+  coinCountTop.textContent = coinCount.toLocaleString("ko-KR");
   renderAchievements();
   renderTrophyPanel();
   updateGoldenUI();
@@ -2353,6 +2425,7 @@ claimAchievementAcorn.addEventListener("click", ()=>{
   if(!canClaimAcornAchievement()) return;
   achievementCount += getAcornAchievementReward();
   acornAchievementStage += 1;
+  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2362,6 +2435,7 @@ claimAchievementClick.addEventListener("click", ()=>{
   if(!canClaimClickAchievement()) return;
   achievementCount += getClickAchievementReward();
   clickAchievementStep += 1;
+  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2371,6 +2445,7 @@ claimAchievementSpent.addEventListener("click", ()=>{
   if(!canClaimSpentAchievement()) return;
   achievementCount += getSpentAchievementReward();
   spentAchievementStep += 1;
+  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2380,6 +2455,7 @@ claimAchievementSquirrel.addEventListener("click", ()=>{
   if(!canClaimSquirrelAchievement()) return;
   achievementCount += getSquirrelAchievementReward();
   squirrelAchievementStep += 1;
+  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2389,6 +2465,7 @@ claimAchievementChipmunk.addEventListener("click", ()=>{
   if(!canClaimChipmunkAchievement()) return;
   achievementCount += getChipmunkAchievementReward();
   chipmunkAchievementStep += 1;
+  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
