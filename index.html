@@ -1287,13 +1287,13 @@
         현재 트로피: 0
       </div>
       <div class="trophy-next" id="trophyNextText">
-        다음 등급까지 100 필요
+        다음 등급까지 30 필요
       </div>
 
       <div class="trophy-panel-progress">
         <div class="trophy-panel-progress-top">
           <span id="panelProgressLabel">다음 등급 진행도</span>
-          <span id="panelProgressMeta">0 / 100</span>
+          <span id="panelProgressMeta">0 / 30</span>
         </div>
         <div class="trophy-panel-progress-bar">
           <div class="trophy-panel-progress-fill" id="panelTrophyBarFill"></div>
@@ -1435,33 +1435,33 @@ const GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
 
 const TROPHY_RANKS = [
-  { name: "브론즈 1", stars: "★", need: 100, medal: "🥉", kind: "bronze" },
-  { name: "브론즈 2", stars: "★★", need: 180, medal: "🥉", kind: "bronze" },
-  { name: "브론즈 3", stars: "★★★", need: 280, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 1", stars: "★", need: 30, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 2", stars: "★★", need: 70, medal: "🥉", kind: "bronze" },
+  { name: "브론즈 3", stars: "★★★", need: 130, medal: "🥉", kind: "bronze" },
 
-  { name: "실버 1", stars: "★", need: 400, medal: "🥈", kind: "silver" },
-  { name: "실버 2", stars: "★★", need: 550, medal: "🥈", kind: "silver" },
-  { name: "실버 3", stars: "★★★", need: 730, medal: "🥈", kind: "silver" },
+  { name: "실버 1", stars: "★", need: 230, medal: "🥈", kind: "silver" },
+  { name: "실버 2", stars: "★★", need: 380, medal: "🥈", kind: "silver" },
+  { name: "실버 3", stars: "★★★", need: 580, medal: "🥈", kind: "silver" },
 
-  { name: "골드 1", stars: "★", need: 950, medal: "🥇", kind: "gold" },
-  { name: "골드 2", stars: "★★", need: 1220, medal: "🥇", kind: "gold" },
-  { name: "골드 3", stars: "★★★", need: 1550, medal: "🥇", kind: "gold" },
+  { name: "골드 1", stars: "★", need: 850, medal: "🥇", kind: "gold" },
+  { name: "골드 2", stars: "★★", need: 1180, medal: "🥇", kind: "gold" },
+  { name: "골드 3", stars: "★★★", need: 1580, medal: "🥇", kind: "gold" },
 
-  { name: "플래티넘 1", stars: "★", need: 1950, medal: "⚪", kind: "platinum" },
-  { name: "플래티넘 2", stars: "★★", need: 2420, medal: "⚪", kind: "platinum" },
-  { name: "플래티넘 3", stars: "★★★", need: 2980, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 1", stars: "★", need: 2080, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 2", stars: "★★", need: 2680, medal: "⚪", kind: "platinum" },
+  { name: "플래티넘 3", stars: "★★★", need: 3400, medal: "⚪", kind: "platinum" },
 
-  { name: "에메랄드 1", stars: "★", need: 3650, medal: "🟢", kind: "emerald" },
-  { name: "에메랄드 2", stars: "★★", need: 4450, medal: "🟢", kind: "emerald" },
-  { name: "에메랄드 3", stars: "★★★", need: 5400, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 1", stars: "★", need: 4250, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 2", stars: "★★", need: 5250, medal: "🟢", kind: "emerald" },
+  { name: "에메랄드 3", stars: "★★★", need: 6450, medal: "🟢", kind: "emerald" },
 
-  { name: "다이아 1", stars: "★", need: 6550, medal: "💎", kind: "diamond" },
-  { name: "다이아 2", stars: "★★", need: 7900, medal: "💎", kind: "diamond" },
-  { name: "다이아 3", stars: "★★★", need: 9500, medal: "💎", kind: "diamond" },
+  { name: "다이아 1", stars: "★", need: 7900, medal: "💎", kind: "diamond" },
+  { name: "다이아 2", stars: "★★", need: 9650, medal: "💎", kind: "diamond" },
+  { name: "다이아 3", stars: "★★★", need: 11750, medal: "💎", kind: "diamond" },
 
-  { name: "레드 다이아 1", stars: "★", need: 11400, medal: "🔴", kind: "reddiamond" },
-  { name: "레드 다이아 2", stars: "★★", need: 13700, medal: "🔴", kind: "reddiamond" },
-  { name: "레드 다이아 3", stars: "★★★", need: 16500, medal: "🔴", kind: "reddiamond" }
+  { name: "레드 다이아 1", stars: "★", need: 14300, medal: "🔴", kind: "reddiamond" },
+  { name: "레드 다이아 2", stars: "★★", need: 17400, medal: "🔴", kind: "reddiamond" },
+  { name: "레드 다이아 3", stars: "★★★", need: 21200, medal: "🔴", kind: "reddiamond" }
 ];
 
 const UPGRADE_STEPS = [
@@ -1474,7 +1474,8 @@ const UPGRADE_STEPS = [
   { toTier: 7, toValue: 128, cost: 15000, name: "클릭 수익 +64", desc: "구매 후: 클릭당 <b>+128</b>" },
   { toTier: 8, toValue: 256, cost: 35000, name: "클릭 수익 +128", desc: "구매 후: 클릭당 <b>+256</b>" },
   { toTier: 9, toValue: 512, cost: 100000, name: "클릭 수익 +256", desc: "구매 후: 클릭당 <b>+512</b>" },
-  { toTier: 10, toValue: 1000, cost: 200000, name: "클릭 수익 +512", desc: "구매 후: 클릭당 <b>+1000</b>" }
+  { toTier: 10, toValue: 1000, cost: 200000, name: "클릭 수익 +488", desc: "구매 후: 클릭당 <b>+1000</b>" },
+  { toTier: 11, toValue: 2000, cost: 400000, name: "클릭 수익 +1000", desc: "구매 후: 클릭당 <b>+2000</b>" }
 ];
 
 const CLICK_COOLDOWN_MS = 10;
@@ -1671,9 +1672,9 @@ function setLocked(isLocked){
 }
 
 function normalizeByTier(){
-  const map = [1,2,4,8,16,32,64,128,256,512,1000];
+  const map = [1,2,4,8,16,32,64,128,256,512,1000,2000];
   if(tier < 0) tier = 0;
-  if(tier > 10) tier = 10;
+  if(tier > 11) tier = 11;
   clickValue = map[tier] ?? 1;
 }
 
@@ -1849,7 +1850,7 @@ function logout(){
 }
 
 function getNextUpgrade(){
-  if(tier >= 10) return null;
+  if(tier >= 11) return null;
   return UPGRADE_STEPS[tier];
 }
 function getSquirrelCount(){
