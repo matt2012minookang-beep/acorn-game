@@ -206,7 +206,7 @@
       position:fixed;
       top:84px;
       left:14px;
-      width:min(380px, 92vw);
+      width:min(390px, 92vw);
       z-index:30;
       background: rgba(15,15,22,.78);
       border:1px solid rgba(255,255,255,.16);
@@ -324,6 +324,7 @@
       font-weight:900;
       white-space:nowrap;
       flex:0 0 auto;
+      text-align:right;
     }
     .buy{
       width:100%;
@@ -344,6 +345,7 @@
       margin-top:10px;
       font-size:12px;
       opacity:.8;
+      line-height:1.5;
     }
 
     .achievement-card{
@@ -1109,7 +1111,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.20</div>
+        <div class="intro-version">v1.21</div>
       </div>
     </div>
   </div>
@@ -1128,6 +1130,7 @@
         </div>
         <div class="coin-under" aria-label="코인 수">
           <span class="emoji">🪙</span>
+          <span>코인</span>
           <span id="coinCountTop">0</span>
         </div>
       </div>
@@ -1188,7 +1191,7 @@
           <div class="item-name" id="upgName">클릭 업그레이드</div>
           <div class="item-desc" id="upgDesc">설명</div>
         </div>
-        <div class="price"><span>🌰</span><span id="upgPrice">0</span></div>
+        <div class="price"><span id="upgPricePrefix">🌰</span><span id="upgPrice">0</span></div>
       </div>
       <button class="buy" id="buyUpgrade">구매</button>
       <div class="owned" id="upgHint"></div>
@@ -1232,8 +1235,8 @@
     </div>
 
     <div class="item achievement-card" id="achievementCardAcorn">
-      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 1,000개 모으기</div>
-      <div class="achievement-progress" id="achievementProgressAcorn">진행도: 0 / 1,000</div>
+      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 1000개 모으기</div>
+      <div class="achievement-progress" id="achievementProgressAcorn">진행도: 0 / 1000</div>
       <div class="achievement-reward" id="achievementRewardAcorn">보상: 트로피 +10</div>
       <button class="buy" id="claimAchievementAcorn" disabled>받기</button>
       <div class="owned" id="achievementHintAcorn">도토리를 더 모아야 해.</div>
@@ -1248,8 +1251,8 @@
     </div>
 
     <div class="item achievement-card" id="achievementCardSpent">
-      <div class="achievement-card-title" id="achievementTitleSpent">도토리 10,000개 소비하기</div>
-      <div class="achievement-progress" id="achievementProgressSpent">진행도: 0 / 10,000</div>
+      <div class="achievement-card-title" id="achievementTitleSpent">도토리 10000개 소비하기</div>
+      <div class="achievement-progress" id="achievementProgressSpent">진행도: 0 / 10000</div>
       <div class="achievement-reward" id="achievementRewardSpent">보상: 트로피 +20</div>
       <button class="buy" id="claimAchievementSpent" disabled>받기</button>
       <div class="owned" id="achievementHintSpent">도토리를 더 소비해야 해.</div>
@@ -1377,7 +1380,39 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v20";
+const LS_KEY = "dotori_game_profiles_v21";
+
+const SHORT_SUFFIXES = [
+  "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
+  "und", "duo", "tre", "qua", "qui", "sxe", "spt", "oct", "nov", "vig"
+];
+
+function suffixFromIndex(index){
+  if(index < SHORT_SUFFIXES.length) return SHORT_SUFFIXES[index];
+  const extra = index - SHORT_SUFFIXES.length;
+  const first = Math.floor(extra / 26);
+  const second = extra % 26;
+  return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
+}
+
+function fmtShort(value){
+  const n = Math.floor(Number(value) || 0);
+  if(n < 1000) return n.toString();
+
+  let num = n;
+  let idx = 0;
+  while(num >= 1000){
+    num /= 1000;
+    idx += 1;
+  }
+
+  let shown;
+  if(num >= 100) shown = Math.floor(num).toString();
+  else if(num >= 10) shown = (Math.floor(num * 10) / 10).toFixed(1).replace(/\.0$/, "");
+  else shown = (Math.floor(num * 100) / 100).toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+
+  return shown + suffixFromIndex(idx);
+}
 
 function loadProfiles(){
   try{
@@ -1399,7 +1434,7 @@ function isValidNick(n){
   return s.length >= 1 && s.length <= 20;
 }
 function fmtAcorn(n){
-  return Math.floor(n).toLocaleString("ko-KR");
+  return fmtShort(n);
 }
 
 let profiles = loadProfiles();
@@ -1475,7 +1510,9 @@ const UPGRADE_STEPS = [
   { toTier: 8, toValue: 256, cost: 35000, name: "클릭 수익 +128", desc: "구매 후: 클릭당 <b>+256</b>" },
   { toTier: 9, toValue: 512, cost: 100000, name: "클릭 수익 +256", desc: "구매 후: 클릭당 <b>+512</b>" },
   { toTier: 10, toValue: 1000, cost: 200000, name: "클릭 수익 +488", desc: "구매 후: 클릭당 <b>+1000</b>" },
-  { toTier: 11, toValue: 2000, cost: 400000, name: "클릭 수익 +1000", desc: "구매 후: 클릭당 <b>+2000</b>" }
+  { toTier: 11, toValue: 2000, cost: 400000, name: "클릭 수익 +1000", desc: "구매 후: 클릭당 <b>+2000</b>" },
+  { toTier: 12, toValue: 5000, cost: 1000000, coinCost: 5, name: "클릭 수익 +3000", desc: "구매 후: 클릭당 <b>+5000</b>" },
+  { toTier: 13, toValue: 10000, cost: 2000000, coinCost: 7, name: "클릭 수익 +5000", desc: "구매 후: 클릭당 <b>+10000</b>" }
 ];
 
 const CLICK_COOLDOWN_MS = 10;
@@ -1602,6 +1639,7 @@ const achievementHintChipmunk = document.getElementById("achievementHintChipmunk
 const upgName = document.getElementById("upgName");
 const upgDesc = document.getElementById("upgDesc");
 const upgPrice = document.getElementById("upgPrice");
+const upgPricePrefix = document.getElementById("upgPricePrefix");
 const buyUpgrade = document.getElementById("buyUpgrade");
 const upgHint = document.getElementById("upgHint");
 
@@ -1672,9 +1710,9 @@ function setLocked(isLocked){
 }
 
 function normalizeByTier(){
-  const map = [1,2,4,8,16,32,64,128,256,512,1000,2000];
+  const map = [1,2,4,8,16,32,64,128,256,512,1000,2000,5000,10000];
   if(tier < 0) tier = 0;
-  if(tier > 11) tier = 11;
+  if(tier > 13) tier = 13;
   clickValue = map[tier] ?? 1;
 }
 
@@ -1850,7 +1888,7 @@ function logout(){
 }
 
 function getNextUpgrade(){
-  if(tier >= 11) return null;
+  if(tier >= 13) return null;
   return UPGRADE_STEPS[tier];
 }
 function getSquirrelCount(){
@@ -1950,22 +1988,22 @@ function renderTrophyPanel(){
     : "무등급";
 
   trophySummaryText.innerHTML =
-    "현재 트로피: <b>" + achievementCount.toLocaleString("ko-KR") + "</b>" +
+    "현재 트로피: <b>" + fmtShort(achievementCount) + "</b>" +
     "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>" +
-    "<br>보유 코인: <b>" + coinCount.toLocaleString("ko-KR") + "</b>";
+    "<br>보유 코인: <b>" + fmtShort(coinCount) + "</b>";
 
   if(next){
     trophyNextText.textContent =
       "다음 등급: " + next.name + " " + next.stars + " · 앞으로 " +
-      (next.need - achievementCount).toLocaleString("ko-KR") + " 필요";
+      fmtShort(next.need - achievementCount) + " 필요";
   }else{
     trophyNextText.textContent = "최고 등급 달성 완료!";
   }
 
   if(info.remain > 0){
     panelProgressLabel.textContent = info.currentRankText + " → " + info.nextRankText;
-    panelProgressMeta.textContent = info.currentValue.toLocaleString("ko-KR") + " / " + info.maxValue.toLocaleString("ko-KR");
-    panelProgressSub.textContent = Math.floor(info.pct).toLocaleString("ko-KR") + "%";
+    panelProgressMeta.textContent = fmtShort(info.currentValue) + " / " + fmtShort(info.maxValue);
+    panelProgressSub.textContent = Math.floor(info.pct).toString() + "%";
   }else{
     panelProgressLabel.textContent = "최고 등급";
     panelProgressMeta.textContent = "MAX";
@@ -1990,7 +2028,7 @@ function renderTrophyPanel(){
             "미달성"
           }</div>
         </div>
-        <div class="rank-need">필요 트로피: ${rank.need.toLocaleString("ko-KR")} · 달성 시 코인 +2</div>
+        <div class="rank-need">필요 트로피: ${fmtShort(rank.need)} · 달성 시 코인 +2</div>
       </div>
     `;
   }).join("");
@@ -2000,73 +2038,109 @@ function renderAchievements(){
   const acornTarget = getAcornAchievementTarget();
   const acornReward = getAcornAchievementReward();
   const acornReady = canClaimAcornAchievement();
-  achievementTitleAcorn.textContent = "도토리 " + acornTarget.toLocaleString("ko-KR") + "개 모으기";
+  achievementTitleAcorn.textContent = "도토리 " + fmtShort(acornTarget) + "개 모으기";
   achievementProgressAcorn.textContent =
-    "진행도: " + Math.min(Math.floor(acorn), acornTarget).toLocaleString("ko-KR") + " / " + acornTarget.toLocaleString("ko-KR");
-  achievementRewardAcorn.textContent = "보상: 트로피 +" + acornReward.toLocaleString("ko-KR");
+    "진행도: " + fmtShort(Math.min(Math.floor(acorn), acornTarget)) + " / " + fmtShort(acornTarget);
+  achievementRewardAcorn.textContent = "보상: 트로피 +" + fmtShort(acornReward);
   claimAchievementAcorn.disabled = !acornReady;
   achievementHintAcorn.textContent = acornReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + acornReward.toLocaleString("ko-KR") + "을 받자."
+    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(acornReward) + "을 받자."
     : "도토리를 더 모아야 해.";
   achievementCardAcorn.classList.toggle("ready", acornReady);
 
   const clickTarget = getClickAchievementTarget();
   const clickReward = getClickAchievementReward();
   const clickReady = canClaimClickAchievement();
-  achievementTitleClick.textContent = "클릭 " + clickTarget.toLocaleString("ko-KR") + "번 하기";
+  achievementTitleClick.textContent = "클릭 " + fmtShort(clickTarget) + "번 하기";
   achievementProgressClick.textContent =
-    "진행도: " + Math.min(totalClicks, clickTarget).toLocaleString("ko-KR") + " / " + clickTarget.toLocaleString("ko-KR");
-  achievementRewardClick.textContent = "보상: 트로피 +" + clickReward.toLocaleString("ko-KR");
+    "진행도: " + fmtShort(Math.min(totalClicks, clickTarget)) + " / " + fmtShort(clickTarget);
+  achievementRewardClick.textContent = "보상: 트로피 +" + fmtShort(clickReward);
   claimAchievementClick.disabled = !clickReady;
   achievementHintClick.textContent = clickReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + clickReward.toLocaleString("ko-KR") + "을 받자."
+    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(clickReward) + "을 받자."
     : "더 클릭해야 해.";
   achievementCardClick.classList.toggle("ready", clickReady);
 
   const spentTarget = getSpentAchievementTarget();
   const spentReward = getSpentAchievementReward();
   const spentReady = canClaimSpentAchievement();
-  achievementTitleSpent.textContent = "도토리 " + spentTarget.toLocaleString("ko-KR") + "개 소비하기";
+  achievementTitleSpent.textContent = "도토리 " + fmtShort(spentTarget) + "개 소비하기";
   achievementProgressSpent.textContent =
-    "진행도: " + Math.min(totalSpentAcorn, spentTarget).toLocaleString("ko-KR") + " / " + spentTarget.toLocaleString("ko-KR");
-  achievementRewardSpent.textContent = "보상: 트로피 +" + spentReward.toLocaleString("ko-KR");
+    "진행도: " + fmtShort(Math.min(totalSpentAcorn, spentTarget)) + " / " + fmtShort(spentTarget);
+  achievementRewardSpent.textContent = "보상: 트로피 +" + fmtShort(spentReward);
   claimAchievementSpent.disabled = !spentReady;
   achievementHintSpent.textContent = spentReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + spentReward.toLocaleString("ko-KR") + "을 받자."
+    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(spentReward) + "을 받자."
     : "도토리를 더 소비해야 해.";
   achievementCardSpent.classList.toggle("ready", spentReady);
 
   const squirrelTarget = getSquirrelAchievementTarget();
   const squirrelReward = getSquirrelAchievementReward();
   const squirrelReady = canClaimSquirrelAchievement();
-  achievementTitleSquirrel.textContent = "다람쥐 " + squirrelTarget.toLocaleString("ko-KR") + "마리 모으기";
+  achievementTitleSquirrel.textContent = "다람쥐 " + fmtShort(squirrelTarget) + "마리 모으기";
   achievementProgressSquirrel.textContent =
-    "진행도: " + Math.min(getSquirrelCount(), squirrelTarget).toLocaleString("ko-KR") + " / " + squirrelTarget.toLocaleString("ko-KR");
-  achievementRewardSquirrel.textContent = "보상: 트로피 +" + squirrelReward.toLocaleString("ko-KR");
+    "진행도: " + fmtShort(Math.min(getSquirrelCount(), squirrelTarget)) + " / " + fmtShort(squirrelTarget);
+  achievementRewardSquirrel.textContent = "보상: 트로피 +" + fmtShort(squirrelReward);
   claimAchievementSquirrel.disabled = !squirrelReady;
   achievementHintSquirrel.textContent = squirrelReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + squirrelReward.toLocaleString("ko-KR") + "을 받자."
+    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(squirrelReward) + "을 받자."
     : "다람쥐를 더 모아야 해.";
   achievementCardSquirrel.classList.toggle("ready", squirrelReady);
 
   const chipmunkTarget = getChipmunkAchievementTarget();
   const chipmunkReward = getChipmunkAchievementReward();
   const chipmunkReady = canClaimChipmunkAchievement();
-  achievementTitleChipmunk.textContent = "청솔모 " + chipmunkTarget.toLocaleString("ko-KR") + "마리 모으기";
+  achievementTitleChipmunk.textContent = "청솔모 " + fmtShort(chipmunkTarget) + "마리 모으기";
   achievementProgressChipmunk.textContent =
-    "진행도: " + Math.min(getChipmunkCount(), chipmunkTarget).toLocaleString("ko-KR") + " / " + chipmunkTarget.toLocaleString("ko-KR");
-  achievementRewardChipmunk.textContent = "보상: 트로피 +" + chipmunkReward.toLocaleString("ko-KR");
+    "진행도: " + fmtShort(Math.min(getChipmunkCount(), chipmunkTarget)) + " / " + fmtShort(chipmunkTarget);
+  achievementRewardChipmunk.textContent = "보상: 트로피 +" + fmtShort(chipmunkReward);
   claimAchievementChipmunk.disabled = !chipmunkReady;
   achievementHintChipmunk.textContent = chipmunkReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + chipmunkReward.toLocaleString("ko-KR") + "을 받자."
+    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(chipmunkReward) + "을 받자."
     : "청솔모를 더 모아야 해.";
   achievementCardChipmunk.classList.toggle("ready", chipmunkReady);
 }
 
+function renderUpgradeUI(next){
+  if(!next){
+    upgName.textContent = "클릭 업그레이드 완료";
+    upgDesc.innerHTML = "현재 클릭당 <b>+" + fmtShort(clickValue) + "</b>";
+    upgPricePrefix.textContent = "-";
+    upgPrice.textContent = "-";
+    buyUpgrade.disabled = true;
+    buyUpgrade.textContent = "완료";
+    upgHint.textContent = "더 이상 업그레이드가 없습니다.";
+    return;
+  }
+
+  upgName.textContent = next.name;
+  upgDesc.innerHTML = next.desc;
+
+  if(next.coinCost){
+    upgPricePrefix.textContent = "🌰/🪙";
+    upgPrice.textContent = fmtShort(next.cost) + " 또는 " + fmtShort(next.coinCost);
+    const canBuyByAcorn = acorn >= next.cost;
+    const canBuyByCoin = coinCount >= next.coinCost;
+    buyUpgrade.disabled = !(canBuyByAcorn || canBuyByCoin);
+    buyUpgrade.textContent = canBuyByCoin ? "코인으로 구매" : "구매";
+    upgHint.textContent =
+      "현재 클릭당 +" + fmtShort(clickValue) +
+      " → 업그레이드 후 +" + fmtShort(next.toValue) +
+      " / 필요: 도토리 " + fmtShort(next.cost) +
+      " 또는 코인 " + fmtShort(next.coinCost);
+  }else{
+    upgPricePrefix.textContent = "🌰";
+    upgPrice.textContent = fmtShort(next.cost);
+    buyUpgrade.disabled = acorn < next.cost;
+    buyUpgrade.textContent = "구매";
+    upgHint.textContent = "현재 클릭당 +" + fmtShort(clickValue) + " → 업그레이드 후 +" + fmtShort(next.toValue);
+  }
+}
+
 function render(){
   countEl.textContent = fmtAcorn(acorn);
-  trophyCountTop.textContent = achievementCount.toLocaleString("ko-KR");
-  coinCountTop.textContent = coinCount.toLocaleString("ko-KR");
+  trophyCountTop.textContent = fmtShort(achievementCount);
+  coinCountTop.textContent = fmtShort(coinCount);
   renderAchievements();
   renderTrophyPanel();
   updateGoldenUI();
@@ -2079,48 +2153,33 @@ function render(){
     nickText.textContent = currentNick;
   }
 
-  const next = getNextUpgrade();
-  if(!next){
-    upgName.textContent = "클릭 업그레이드 완료";
-    upgDesc.innerHTML = "현재 클릭당 <b>+" + clickValue + "</b>";
-    upgPrice.textContent = "-";
-    buyUpgrade.disabled = true;
-    buyUpgrade.textContent = "완료";
-    upgHint.textContent = "더 이상 업그레이드가 없습니다.";
-  } else {
-    upgName.textContent = next.name;
-    upgDesc.innerHTML = next.desc;
-    upgPrice.textContent = next.cost.toLocaleString("ko-KR");
-    buyUpgrade.disabled = acorn < next.cost;
-    buyUpgrade.textContent = "구매";
-    upgHint.textContent = "현재 클릭당 +" + clickValue + " → 업그레이드 후 +" + next.toValue;
-  }
+  renderUpgradeUI(getNextUpgrade());
 
   const sqCount = getSquirrelCount();
   const sqIncome = getSquirrelIncomePerSec();
-  sqCountEl.textContent = sqCount.toLocaleString("ko-KR");
-  sqIncomeEl.textContent = sqIncome.toLocaleString("ko-KR");
+  sqCountEl.textContent = fmtShort(sqCount);
+  sqIncomeEl.textContent = fmtShort(sqIncome);
   const nextSqCost = getNextSquirrelCost(sqCount + 1);
-  sqPriceEl.textContent = nextSqCost.toLocaleString("ko-KR");
+  sqPriceEl.textContent = fmtShort(nextSqCost);
   buySquirrel.disabled = acorn < nextSqCost;
   sqHint.textContent =
-    "다음 가격: " + nextSqCost.toLocaleString("ko-KR") +
-    " (구매 후 수익 " + ((sqCount + 1) * SQUIRREL_INCOME_PER_TICK).toLocaleString("ko-KR") + "/s)";
+    "다음 가격: " + fmtShort(nextSqCost) +
+    " (구매 후 수익 " + fmtShort((sqCount + 1) * SQUIRREL_INCOME_PER_TICK) + "/s)";
 
   const csCount = getChipmunkCount();
   const csIncome = getChipmunkIncomePerSec();
-  csCountEl.textContent = csCount.toLocaleString("ko-KR");
-  csIncomeEl.textContent = csIncome.toLocaleString("ko-KR");
+  csCountEl.textContent = fmtShort(csCount);
+  csIncomeEl.textContent = fmtShort(csIncome);
   const nextCsCost = getNextChipmunkCost(csCount + 1);
-  csPriceEl.textContent = nextCsCost.toLocaleString("ko-KR");
+  csPriceEl.textContent = fmtShort(nextCsCost);
   buyChipmunk.disabled = acorn < nextCsCost;
   csHint.textContent =
-    "다음 가격: " + nextCsCost.toLocaleString("ko-KR") +
-    " (구매 후 수익 " + ((csCount + 1) * CHIPMUNK_INCOME_PER_TICK).toLocaleString("ko-KR") + "/s)";
+    "다음 가격: " + fmtShort(nextCsCost) +
+    " (구매 후 수익 " + fmtShort((csCount + 1) * CHIPMUNK_INCOME_PER_TICK) + "/s)";
 
-  dockSq.textContent = sqCount.toLocaleString("ko-KR");
-  dockCs.textContent = csCount.toLocaleString("ko-KR");
-  dockIncome.textContent = (sqIncome + csIncome).toLocaleString("ko-KR");
+  dockSq.textContent = fmtShort(sqCount);
+  dockCs.textContent = fmtShort(csCount);
+  dockIncome.textContent = fmtShort(sqIncome + csIncome);
 }
 
 function spawnFloatText(x, y, text, color){
@@ -2137,11 +2196,14 @@ function spawnFloatText(x, y, text, color){
 function spawnClickFloat(x, y, value, isGolden=false){
   let color = "#ffffff";
   if(isGolden) color = "#ffd84d";
+  else if(value >= 10000) color = "#ff8fd5";
+  else if(value >= 5000) color = "#ff9cf0";
+  else if(value >= 2000) color = "#ffd84d";
   else if(value >= 1000) color = "#ffd84d";
   else if(value >= 512) color = "#ffd36e";
   else if(value >= 256) color = "#9dffb5";
   else if(value >= 128) color = "#9d7bff";
-  spawnFloatText(x, y, "+" + value, color);
+  spawnFloatText(x, y, "+" + fmtShort(value), color);
 }
 
 function spawnSquirrelFloat(){
@@ -2475,17 +2537,39 @@ function spendAcorn(cost){
   acorn -= cost;
   totalSpentAcorn += cost;
 }
+function spendCoin(cost){
+  coinCount -= cost;
+}
 
 buyUpgrade.addEventListener("click", ()=>{
   if(!currentNick) return;
   const next = getNextUpgrade();
   if(!next) return;
-  if(acorn < next.cost) return;
 
+  if(next.coinCost){
+    if(coinCount >= next.coinCost){
+      spendCoin(next.coinCost);
+      tier = next.toTier;
+      normalizeByTier();
+      render();
+      saveCurrent();
+      return;
+    }
+    if(acorn >= next.cost){
+      spendAcorn(next.cost);
+      tier = next.toTier;
+      normalizeByTier();
+      render();
+      saveCurrent();
+      return;
+    }
+    return;
+  }
+
+  if(acorn < next.cost) return;
   spendAcorn(next.cost);
   tier = next.toTier;
   normalizeByTier();
-
   render();
   saveCurrent();
 });
