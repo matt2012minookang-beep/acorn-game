@@ -94,13 +94,6 @@
       min-width:24px;
       text-align:center;
     }
-    .trophy-chip.alert{
-      border-color: rgba(255,216,77,.72);
-      box-shadow:
-        0 12px 30px rgba(0,0,0,.35),
-        0 0 16px rgba(255,216,77,.18),
-        0 0 28px rgba(255,216,77,.10);
-    }
 
     .coin-under{
       display:flex;
@@ -243,7 +236,7 @@
       position:fixed;
       top:84px;
       right:14px;
-      width:min(400px, 92vw);
+      width:min(430px, 92vw);
       z-index:30;
       background: rgba(15,15,22,.84);
       border:1px solid rgba(255,255,255,.16);
@@ -449,7 +442,7 @@
       width:0%;
       height:100%;
       border-radius:inherit;
-      background: linear-gradient(90deg, #c4864d 0%, #d7dce7 20%, #ffd84d 38%, #b9f6ca 56%, #8ed8ff 78%, #ff7288 100%);
+      background: linear-gradient(90deg, #c4864d 0%, #d7dce7 15%, #ffd84d 30%, #69ffa8 45%, #7fcbff 60%, #b68cff 75%, #ff7288 100%);
       transition: width .24s ease;
       box-shadow: 0 0 14px rgba(255,216,77,.15);
     }
@@ -472,12 +465,20 @@
       border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.04);
       transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+      cursor:default;
     }
     .rank-row.cleared{
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
     }
     .rank-row.current{
       transform: translateY(-1px);
+    }
+    .rank-row.claimable{
+      cursor:pointer;
+      box-shadow:
+        0 0 0 1px rgba(255,216,77,.22) inset,
+        0 0 18px rgba(255,216,77,.18);
+      animation: achievementGlow 1.2s ease-in-out infinite alternate;
     }
 
     .rank-row.bronze{ background: linear-gradient(180deg, rgba(196,134,77,.18), rgba(255,255,255,.04)); }
@@ -487,6 +488,10 @@
     .rank-row.emerald{ background: linear-gradient(180deg, rgba(90,220,160,.16), rgba(255,255,255,.04)); }
     .rank-row.diamond{ background: linear-gradient(180deg, rgba(120,190,255,.16), rgba(255,255,255,.04)); }
     .rank-row.reddiamond{ background: linear-gradient(180deg, rgba(255,110,130,.18), rgba(255,255,255,.04)); }
+    .rank-row.hero{ background: linear-gradient(180deg, rgba(255,138,76,.22), rgba(255,225,120,.10), rgba(255,255,255,.04)); }
+    .rank-row.myth{ background: linear-gradient(180deg, rgba(184,114,255,.22), rgba(114,177,255,.12), rgba(255,255,255,.04)); }
+    .rank-row.legend{ background: linear-gradient(180deg, rgba(255,214,77,.22), rgba(255,120,180,.12), rgba(255,255,255,.04)); }
+    .rank-row.master{ background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(120,255,233,.12), rgba(162,129,255,.12), rgba(255,255,255,.04)); }
 
     .rank-row.cleared.bronze{ border-color: rgba(196,134,77,.5); }
     .rank-row.cleared.silver{ border-color: rgba(215,220,231,.5); }
@@ -495,6 +500,10 @@
     .rank-row.cleared.emerald{ border-color: rgba(90,220,160,.5); }
     .rank-row.cleared.diamond{ border-color: rgba(120,190,255,.5); }
     .rank-row.cleared.reddiamond{ border-color: rgba(255,110,130,.5); }
+    .rank-row.cleared.hero{ border-color: rgba(255,182,84,.65); }
+    .rank-row.cleared.myth{ border-color: rgba(165,129,255,.65); }
+    .rank-row.cleared.legend{ border-color: rgba(255,205,84,.65); }
+    .rank-row.cleared.master{ border-color: rgba(210,240,255,.7); }
 
     .rank-row.current.bronze{ border-color: rgba(196,134,77,.9); box-shadow: 0 0 22px rgba(196,134,77,.14); }
     .rank-row.current.silver{ border-color: rgba(215,220,231,.9); box-shadow: 0 0 22px rgba(215,220,231,.14); }
@@ -503,6 +512,10 @@
     .rank-row.current.emerald{ border-color: rgba(90,220,160,.9); box-shadow: 0 0 22px rgba(90,220,160,.14); }
     .rank-row.current.diamond{ border-color: rgba(120,190,255,.9); box-shadow: 0 0 22px rgba(120,190,255,.14); }
     .rank-row.current.reddiamond{ border-color: rgba(255,110,130,.9); box-shadow: 0 0 24px rgba(255,110,130,.16); }
+    .rank-row.current.hero{ border-color: rgba(255,188,94,.95); box-shadow: 0 0 24px rgba(255,188,94,.18); }
+    .rank-row.current.myth{ border-color: rgba(176,136,255,.95); box-shadow: 0 0 24px rgba(176,136,255,.18); }
+    .rank-row.current.legend{ border-color: rgba(255,214,92,.95); box-shadow: 0 0 24px rgba(255,214,92,.18); }
+    .rank-row.current.master{ border-color: rgba(240,250,255,.95); box-shadow: 0 0 28px rgba(195,230,255,.2); }
 
     .rank-top{
       display:flex;
@@ -525,6 +538,7 @@
     .rank-need{
       font-size:13px;
       opacity:.82;
+      line-height:1.5;
     }
     .rank-state{
       font-size:12px;
@@ -544,6 +558,11 @@
       border-color: rgba(255,216,77,.38);
       background: rgba(255,216,77,.14);
       color: #ffe78b;
+    }
+    .rank-row.claimable .rank-state{
+      border-color: rgba(255,216,77,.55);
+      background: rgba(255,216,77,.18);
+      color:#ffe78b;
     }
 
     .pages{
@@ -1205,7 +1224,7 @@
       .shop-panel,
       .achieve-panel,
       .trophy-panel{
-        width:min(380px, calc(100vw - 28px));
+        width:min(390px, calc(100vw - 28px));
       }
       .intro-progress{
         height:26px;
@@ -1278,7 +1297,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.24</div>
+        <div class="intro-version">v1.25</div>
       </div>
     </div>
   </div>
@@ -1386,43 +1405,51 @@
     </div>
 
     <div class="item achievement-card" id="achievementCardAcorn">
-      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 1000개 모으기</div>
-      <div class="achievement-progress" id="achievementProgressAcorn">진행도: 0 / 1000</div>
-      <div class="achievement-reward" id="achievementRewardAcorn">보상: 트로피 +10</div>
+      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 수집</div>
+      <div class="achievement-progress" id="achievementProgressAcorn">진행도</div>
+      <div class="achievement-reward" id="achievementRewardAcorn">보상</div>
       <button class="buy" id="claimAchievementAcorn" disabled>받기</button>
-      <div class="owned" id="achievementHintAcorn">도토리를 더 모아야 해.</div>
+      <div class="owned" id="achievementHintAcorn"></div>
     </div>
 
     <div class="item achievement-card" id="achievementCardClick">
-      <div class="achievement-card-title" id="achievementTitleClick">클릭 200번 하기</div>
-      <div class="achievement-progress" id="achievementProgressClick">진행도: 0 / 200</div>
-      <div class="achievement-reward" id="achievementRewardClick">보상: 트로피 +10</div>
+      <div class="achievement-card-title" id="achievementTitleClick">클릭 업적</div>
+      <div class="achievement-progress" id="achievementProgressClick">진행도</div>
+      <div class="achievement-reward" id="achievementRewardClick">보상</div>
       <button class="buy" id="claimAchievementClick" disabled>받기</button>
-      <div class="owned" id="achievementHintClick">더 클릭해야 해.</div>
+      <div class="owned" id="achievementHintClick"></div>
     </div>
 
     <div class="item achievement-card" id="achievementCardSpent">
-      <div class="achievement-card-title" id="achievementTitleSpent">도토리 10000개 소비하기</div>
-      <div class="achievement-progress" id="achievementProgressSpent">진행도: 0 / 10000</div>
-      <div class="achievement-reward" id="achievementRewardSpent">보상: 트로피 +20</div>
+      <div class="achievement-card-title" id="achievementTitleSpent">소비 업적</div>
+      <div class="achievement-progress" id="achievementProgressSpent">진행도</div>
+      <div class="achievement-reward" id="achievementRewardSpent">보상</div>
       <button class="buy" id="claimAchievementSpent" disabled>받기</button>
-      <div class="owned" id="achievementHintSpent">도토리를 더 소비해야 해.</div>
+      <div class="owned" id="achievementHintSpent"></div>
     </div>
 
     <div class="item achievement-card" id="achievementCardSquirrel">
-      <div class="achievement-card-title" id="achievementTitleSquirrel">다람쥐 10마리 모으기</div>
-      <div class="achievement-progress" id="achievementProgressSquirrel">진행도: 0 / 10</div>
-      <div class="achievement-reward" id="achievementRewardSquirrel">보상: 트로피 +10</div>
+      <div class="achievement-card-title" id="achievementTitleSquirrel">다람쥐 업적</div>
+      <div class="achievement-progress" id="achievementProgressSquirrel">진행도</div>
+      <div class="achievement-reward" id="achievementRewardSquirrel">보상</div>
       <button class="buy" id="claimAchievementSquirrel" disabled>받기</button>
-      <div class="owned" id="achievementHintSquirrel">다람쥐를 더 모아야 해.</div>
+      <div class="owned" id="achievementHintSquirrel"></div>
     </div>
 
     <div class="item achievement-card" id="achievementCardChipmunk">
-      <div class="achievement-card-title" id="achievementTitleChipmunk">청솔모 10마리 모으기</div>
-      <div class="achievement-progress" id="achievementProgressChipmunk">진행도: 0 / 10</div>
-      <div class="achievement-reward" id="achievementRewardChipmunk">보상: 트로피 +15</div>
+      <div class="achievement-card-title" id="achievementTitleChipmunk">청솔모 업적</div>
+      <div class="achievement-progress" id="achievementProgressChipmunk">진행도</div>
+      <div class="achievement-reward" id="achievementRewardChipmunk">보상</div>
       <button class="buy" id="claimAchievementChipmunk" disabled>받기</button>
-      <div class="owned" id="achievementHintChipmunk">청솔모를 더 모아야 해.</div>
+      <div class="owned" id="achievementHintChipmunk"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardCoinShop">
+      <div class="achievement-card-title" id="achievementTitleCoinShop">코인상점 구매 업적</div>
+      <div class="achievement-progress" id="achievementProgressCoinShop">진행도</div>
+      <div class="achievement-reward" id="achievementRewardCoinShop">보상</div>
+      <button class="buy" id="claimAchievementCoinShop" disabled>받기</button>
+      <div class="owned" id="achievementHintCoinShop"></div>
     </div>
   </div>
 
@@ -1609,7 +1636,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v124";
+const LS_KEY = "dotori_game_profiles_v125";
 
 const SHORT_SUFFIXES = [
   "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
@@ -1683,16 +1710,18 @@ let clickValue = 1;
 let tier = 0;
 let achievementCount = 0;
 let coinCount = 0;
-let highestCoinRankIndex = -1;
+let claimedCoinRankIndices = [];
 
 let acornAchievementStage = 1;
 let clickAchievementStep = 1;
 let spentAchievementStep = 1;
 let squirrelAchievementStep = 1;
 let chipmunkAchievementStep = 1;
+let coinShopPurchaseAchievementStep = 1;
 
 let totalClicks = 0;
 let totalSpentAcorn = 0;
+let totalCoinShopPurchases = 0;
 
 let goldenChanceLevel = 0;
 let freeCoinNextAt = 0;
@@ -1738,7 +1767,23 @@ const TROPHY_RANKS = [
 
   { name: "레드 다이아 1", stars: "★", need: 14300, medal: "🔴", kind: "reddiamond" },
   { name: "레드 다이아 2", stars: "★★", need: 17400, medal: "🔴", kind: "reddiamond" },
-  { name: "레드 다이아 3", stars: "★★★", need: 21200, medal: "🔴", kind: "reddiamond" }
+  { name: "레드 다이아 3", stars: "★★★", need: 21200, medal: "🔴", kind: "reddiamond" },
+
+  { name: "영웅 1", stars: "★", need: 25800, medal: "🦸", kind: "hero" },
+  { name: "영웅 2", stars: "★★", need: 31200, medal: "🦸", kind: "hero" },
+  { name: "영웅 3", stars: "★★★", need: 37800, medal: "🦸", kind: "hero" },
+
+  { name: "신화 1", stars: "★", need: 45800, medal: "🌌", kind: "myth" },
+  { name: "신화 2", stars: "★★", need: 55600, medal: "🌌", kind: "myth" },
+  { name: "신화 3", stars: "★★★", need: 67600, medal: "🌌", kind: "myth" },
+
+  { name: "전설 1", stars: "★", need: 82200, medal: "🔥", kind: "legend" },
+  { name: "전설 2", stars: "★★", need: 100200, medal: "🔥", kind: "legend" },
+  { name: "전설 3", stars: "★★★", need: 122200, medal: "🔥", kind: "legend" },
+
+  { name: "마스터 1", stars: "★", need: 149200, medal: "👑", kind: "master" },
+  { name: "마스터 2", stars: "★★", need: 182200, medal: "👑", kind: "master" },
+  { name: "마스터 3", stars: "★★★", need: 222200, medal: "👑", kind: "master" }
 ];
 
 const UPGRADE_STEPS = [
@@ -1802,12 +1847,12 @@ function getClickAchievementReward(){
   return 10 + (clickAchievementStep - 1) * 5;
 }
 function getSpentAchievementTarget(){
-  return 10000 * Math.pow(4, spentAchievementStep - 1);
+  return 1000 * Math.pow(10, spentAchievementStep - 1);
 }
 function getSpentAchievementReward(){
-  const rewards = [20, 23, 25, 30, 33, 35];
+  const rewards = [20, 25, 30, 35, 40, 45];
   if(spentAchievementStep <= rewards.length) return rewards[spentAchievementStep - 1];
-  return 35 + (spentAchievementStep - rewards.length) * 2;
+  return rewards[rewards.length - 1] + (spentAchievementStep - rewards.length) * 5;
 }
 function getSquirrelAchievementTarget(){
   if(squirrelAchievementStep <= 5) return squirrelAchievementStep * 10;
@@ -1822,6 +1867,13 @@ function getChipmunkAchievementTarget(){
 }
 function getChipmunkAchievementReward(){
   return 14 + chipmunkAchievementStep;
+}
+function getCoinShopPurchaseTarget(){
+  if(coinShopPurchaseAchievementStep === 1) return 2;
+  return (coinShopPurchaseAchievementStep - 1) * 5;
+}
+function getCoinShopPurchaseReward(){
+  return coinShopPurchaseAchievementStep * 20;
 }
 
 const countEl = document.getElementById("count");
@@ -1886,6 +1938,13 @@ const achievementProgressChipmunk = document.getElementById("achievementProgress
 const achievementRewardChipmunk = document.getElementById("achievementRewardChipmunk");
 const claimAchievementChipmunk = document.getElementById("claimAchievementChipmunk");
 const achievementHintChipmunk = document.getElementById("achievementHintChipmunk");
+
+const achievementCardCoinShop = document.getElementById("achievementCardCoinShop");
+const achievementTitleCoinShop = document.getElementById("achievementTitleCoinShop");
+const achievementProgressCoinShop = document.getElementById("achievementProgressCoinShop");
+const achievementRewardCoinShop = document.getElementById("achievementRewardCoinShop");
+const claimAchievementCoinShop = document.getElementById("claimAchievementCoinShop");
+const achievementHintCoinShop = document.getElementById("achievementHintCoinShop");
 
 const upgName = document.getElementById("upgName");
 const upgDesc = document.getElementById("upgDesc");
@@ -1974,6 +2033,14 @@ function normalizeByTier(){
   clickValue = 1;
 }
 
+function getUnclaimedRankCount(){
+  let count = 0;
+  for(let i = 0; i < TROPHY_RANKS.length; i++){
+    if(achievementCount >= TROPHY_RANKS[i].need && !claimedCoinRankIndices.includes(i)) count++;
+  }
+  return count;
+}
+
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
   toast.style.display = "block";
@@ -2020,23 +2087,6 @@ function setLocked(isLocked){
   });
 }
 
-function getCurrentTrophyRankIndex(){
-  let idx = -1;
-  for(let i = 0; i < TROPHY_RANKS.length; i++){
-    if(achievementCount >= TROPHY_RANKS[i].need) idx = i;
-  }
-  return idx;
-}
-
-function grantRankCoinsIfNeeded(){
-  const currentIdx = getCurrentTrophyRankIndex();
-  if(currentIdx > highestCoinRankIndex){
-    const gainedRanks = currentIdx - highestCoinRankIndex;
-    coinCount += gainedRanks * 2;
-    highestCoinRankIndex = currentIdx;
-  }
-}
-
 function buildSaveData(){
   const nowPerf = performance.now();
   const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
@@ -2047,14 +2097,16 @@ function buildSaveData(){
     tier,
     achievementCount,
     coinCount,
-    highestCoinRankIndex,
+    claimedCoinRankIndices,
     acornAchievementStage,
     clickAchievementStep,
     spentAchievementStep,
     squirrelAchievementStep,
     chipmunkAchievementStep,
+    coinShopPurchaseAchievementStep,
     totalClicks,
     totalSpentAcorn,
+    totalCoinShopPurchases,
     goldenChanceLevel,
     freeCoinNextAt,
     squirrelRemainingMs,
@@ -2077,14 +2129,16 @@ function applyLoadedProfile(p){
   clickValue = Number(p.clickValue ?? 1) || 1;
   achievementCount = Number(p.achievementCount ?? 0) || 0;
   coinCount = Number(p.coinCount ?? 0) || 0;
-  highestCoinRankIndex = Number(p.highestCoinRankIndex ?? -1);
+  claimedCoinRankIndices = Array.isArray(p.claimedCoinRankIndices) ? p.claimedCoinRankIndices.map(v => Number(v) || 0) : [];
   acornAchievementStage = Number(p.acornAchievementStage ?? 1) || 1;
   clickAchievementStep = Number(p.clickAchievementStep ?? 1) || 1;
   spentAchievementStep = Number(p.spentAchievementStep ?? 1) || 1;
   squirrelAchievementStep = Number(p.squirrelAchievementStep ?? 1) || 1;
   chipmunkAchievementStep = Number(p.chipmunkAchievementStep ?? 1) || 1;
+  coinShopPurchaseAchievementStep = Number(p.coinShopPurchaseAchievementStep ?? 1) || 1;
   totalClicks = Number(p.totalClicks ?? 0) || 0;
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
+  totalCoinShopPurchases = Number(p.totalCoinShopPurchases ?? 0) || 0;
   goldenChanceLevel = Number(p.goldenChanceLevel ?? 0) || 0;
   freeCoinNextAt = Number(p.freeCoinNextAt ?? 0) || 0;
   goldenReady = !!p.goldenReady;
@@ -2099,8 +2153,6 @@ function applyLoadedProfile(p){
   const goldenRemainingMs = Number(p.goldenRemainingMs ?? 0) || 0;
   goldenStartedAt = nowPerf - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
 
-  if(highestCoinRankIndex < -1) highestCoinRankIndex = -1;
-  grantRankCoinsIfNeeded();
   updateGoldenUI();
 }
 
@@ -2128,14 +2180,16 @@ function createProfile(nick){
   clickValue = 1;
   achievementCount = 0;
   coinCount = 0;
-  highestCoinRankIndex = -1;
+  claimedCoinRankIndices = [];
   acornAchievementStage = 1;
   clickAchievementStep = 1;
   spentAchievementStep = 1;
   squirrelAchievementStep = 1;
   chipmunkAchievementStep = 1;
+  coinShopPurchaseAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
+  totalCoinShopPurchases = 0;
   goldenChanceLevel = 0;
   freeCoinNextAt = 0;
   squirrelNextPayouts = [];
@@ -2155,14 +2209,16 @@ function resetCurrentNickProgress(){
   clickValue = 1;
   achievementCount = 0;
   coinCount = 0;
-  highestCoinRankIndex = -1;
+  claimedCoinRankIndices = [];
   acornAchievementStage = 1;
   clickAchievementStep = 1;
   spentAchievementStep = 1;
   squirrelAchievementStep = 1;
   chipmunkAchievementStep = 1;
+  coinShopPurchaseAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
+  totalCoinShopPurchases = 0;
   goldenChanceLevel = 0;
   freeCoinNextAt = 0;
   squirrelNextPayouts = [];
@@ -2221,6 +2277,7 @@ function canClaimClickAchievement(){ return totalClicks >= getClickAchievementTa
 function canClaimSpentAchievement(){ return totalSpentAcorn >= getSpentAchievementTarget(); }
 function canClaimSquirrelAchievement(){ return getSquirrelCount() >= getSquirrelAchievementTarget(); }
 function canClaimChipmunkAchievement(){ return getChipmunkCount() >= getChipmunkAchievementTarget(); }
+function canClaimCoinShopPurchaseAchievement(){ return totalCoinShopPurchases >= getCoinShopPurchaseTarget(); }
 
 function canClaimAnyAchievement(){
   return (
@@ -2228,7 +2285,8 @@ function canClaimAnyAchievement(){
     canClaimClickAchievement() ||
     canClaimSpentAchievement() ||
     canClaimSquirrelAchievement() ||
-    canClaimChipmunkAchievement()
+    canClaimChipmunkAchievement() ||
+    canClaimCoinShopPurchaseAchievement()
   );
 }
 
@@ -2293,6 +2351,7 @@ function renderTrophyPanel(){
   const current = getCurrentTrophyRank();
   const next = getNextTrophyRank();
   const info = getTrophyProgressInfo();
+  const unclaimedCount = getUnclaimedRankCount();
 
   trophyMedalBig.textContent = current ? current.medal : "🥉";
   trophyRankName.textContent = current
@@ -2302,7 +2361,8 @@ function renderTrophyPanel(){
   trophySummaryText.innerHTML =
     "현재 트로피: <b>" + fmtShort(achievementCount) + "</b>" +
     "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>" +
-    "<br>보유 코인: <b>" + fmtShort(coinCount) + "</b>";
+    "<br>보유 코인: <b>" + fmtShort(coinCount) + "</b>" +
+    "<br>수령 가능한 등급 코인: <b>" + fmtShort(unclaimedCount * 2) + "</b>";
 
   if(next){
     trophyNextText.textContent =
@@ -2323,24 +2383,30 @@ function renderTrophyPanel(){
   }
   panelTrophyBarFill.style.width = info.pct + "%";
 
-  trophyRankList.innerHTML = TROPHY_RANKS.map(rank=>{
+  trophyRankList.innerHTML = TROPHY_RANKS.map((rank, i)=>{
     const cleared = achievementCount >= rank.need;
     const isCurrent = current && current.need === rank.need;
+    const claimed = claimedCoinRankIndices.includes(i);
+    const claimable = cleared && !claimed;
+
+    let stateText = "미달성";
+    if(cleared && claimed) stateText = isCurrent ? "현재 등급 · 수령 완료" : "수령 완료";
+    if(claimable) stateText = isCurrent ? "현재 등급 · 코인 받기" : "코인 받기";
+
     return `
-      <div class="rank-row ${rank.kind} ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""}">
+      <div class="rank-row ${rank.kind} ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""} ${claimable ? "claimable" : ""}" data-rank-index="${i}">
         <div class="rank-top">
           <div class="rank-name">
             <span>${rank.medal}</span>
             <span>${rank.name}</span>
             <span class="rank-stars">${rank.stars}</span>
           </div>
-          <div class="rank-state">${
-            isCurrent ? "현재 등급" :
-            cleared ? "달성 완료" :
-            "미달성"
-          }</div>
+          <div class="rank-state">${stateText}</div>
         </div>
-        <div class="rank-need">필요 트로피: ${fmtShort(rank.need)} · 달성 시 코인 +2</div>
+        <div class="rank-need">
+          필요 트로피: ${fmtShort(rank.need)}<br>
+          달성 보상: 코인 +2 ${claimable ? "· 눌러서 받기" : ""}
+        </div>
       </div>
     `;
   }).join("");
@@ -2350,67 +2416,86 @@ function renderAchievements(){
   const acornTarget = getAcornAchievementTarget();
   const acornReward = getAcornAchievementReward();
   const acornReady = canClaimAcornAchievement();
-  achievementTitleAcorn.textContent = "도토리 " + fmtShort(acornTarget) + "개 모으기";
+  achievementTitleAcorn.textContent = "도토리 수집 Lv." + (acornAchievementStage - 1) + " → Lv." + acornAchievementStage;
   achievementProgressAcorn.textContent =
-    "진행도: " + fmtShort(Math.min(Math.floor(acorn), acornTarget)) + " / " + fmtShort(acornTarget);
+    "목표: 도토리 " + fmtShort(acornTarget) + "개 · 진행도: " +
+    fmtShort(Math.min(Math.floor(acorn), acornTarget)) + " / " + fmtShort(acornTarget);
   achievementRewardAcorn.textContent = "보상: 트로피 +" + fmtShort(acornReward);
   claimAchievementAcorn.disabled = !acornReady;
   achievementHintAcorn.textContent = acornReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(acornReward) + "을 받자."
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
     : "도토리를 더 모아야 해.";
   achievementCardAcorn.classList.toggle("ready", acornReady);
 
   const clickTarget = getClickAchievementTarget();
   const clickReward = getClickAchievementReward();
   const clickReady = canClaimClickAchievement();
-  achievementTitleClick.textContent = "클릭 " + fmtShort(clickTarget) + "번 하기";
+  achievementTitleClick.textContent = "클릭 Lv." + (clickAchievementStep - 1) + " → Lv." + clickAchievementStep;
   achievementProgressClick.textContent =
-    "진행도: " + fmtShort(Math.min(totalClicks, clickTarget)) + " / " + fmtShort(clickTarget);
+    "목표: 클릭 " + fmtShort(clickTarget) + "번 · 진행도: " +
+    fmtShort(Math.min(totalClicks, clickTarget)) + " / " + fmtShort(clickTarget);
   achievementRewardClick.textContent = "보상: 트로피 +" + fmtShort(clickReward);
   claimAchievementClick.disabled = !clickReady;
   achievementHintClick.textContent = clickReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(clickReward) + "을 받자."
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
     : "더 클릭해야 해.";
   achievementCardClick.classList.toggle("ready", clickReady);
 
   const spentTarget = getSpentAchievementTarget();
   const spentReward = getSpentAchievementReward();
   const spentReady = canClaimSpentAchievement();
-  achievementTitleSpent.textContent = "도토리 " + fmtShort(spentTarget) + "개 소비하기";
+  achievementTitleSpent.textContent = "도토리 소비 Lv." + (spentAchievementStep - 1) + " → Lv." + spentAchievementStep;
   achievementProgressSpent.textContent =
-    "진행도: " + fmtShort(Math.min(totalSpentAcorn, spentTarget)) + " / " + fmtShort(spentTarget);
+    "목표: " + fmtShort(spentTarget) + " 소비 · 진행도: " +
+    fmtShort(Math.min(totalSpentAcorn, spentTarget)) + " / " + fmtShort(spentTarget);
   achievementRewardSpent.textContent = "보상: 트로피 +" + fmtShort(spentReward);
   claimAchievementSpent.disabled = !spentReady;
   achievementHintSpent.textContent = spentReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(spentReward) + "을 받자."
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
     : "도토리를 더 소비해야 해.";
   achievementCardSpent.classList.toggle("ready", spentReady);
 
   const squirrelTarget = getSquirrelAchievementTarget();
   const squirrelReward = getSquirrelAchievementReward();
   const squirrelReady = canClaimSquirrelAchievement();
-  achievementTitleSquirrel.textContent = "다람쥐 " + fmtShort(squirrelTarget) + "마리 모으기";
+  achievementTitleSquirrel.textContent = "다람쥐 Lv." + (squirrelAchievementStep - 1) + " → Lv." + squirrelAchievementStep;
   achievementProgressSquirrel.textContent =
-    "진행도: " + fmtShort(Math.min(getSquirrelCount(), squirrelTarget)) + " / " + fmtShort(squirrelTarget);
+    "목표: 다람쥐 " + fmtShort(squirrelTarget) + "마리 · 진행도: " +
+    fmtShort(Math.min(getSquirrelCount(), squirrelTarget)) + " / " + fmtShort(squirrelTarget);
   achievementRewardSquirrel.textContent = "보상: 트로피 +" + fmtShort(squirrelReward);
   claimAchievementSquirrel.disabled = !squirrelReady;
   achievementHintSquirrel.textContent = squirrelReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(squirrelReward) + "을 받자."
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
     : "다람쥐를 더 모아야 해.";
   achievementCardSquirrel.classList.toggle("ready", squirrelReady);
 
   const chipmunkTarget = getChipmunkAchievementTarget();
   const chipmunkReward = getChipmunkAchievementReward();
   const chipmunkReady = canClaimChipmunkAchievement();
-  achievementTitleChipmunk.textContent = "청솔모 " + fmtShort(chipmunkTarget) + "마리 모으기";
+  achievementTitleChipmunk.textContent = "청솔모 Lv." + (chipmunkAchievementStep - 1) + " → Lv." + chipmunkAchievementStep;
   achievementProgressChipmunk.textContent =
-    "진행도: " + fmtShort(Math.min(getChipmunkCount(), chipmunkTarget)) + " / " + fmtShort(chipmunkTarget);
+    "목표: 청솔모 " + fmtShort(chipmunkTarget) + "마리 · 진행도: " +
+    fmtShort(Math.min(getChipmunkCount(), chipmunkTarget)) + " / " + fmtShort(chipmunkTarget);
   achievementRewardChipmunk.textContent = "보상: 트로피 +" + fmtShort(chipmunkReward);
   claimAchievementChipmunk.disabled = !chipmunkReady;
   achievementHintChipmunk.textContent = chipmunkReady
-    ? "업적 달성! 받기를 눌러 트로피 +" + fmtShort(chipmunkReward) + "을 받자."
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
     : "청솔모를 더 모아야 해.";
   achievementCardChipmunk.classList.toggle("ready", chipmunkReady);
+
+  const coinShopTarget = getCoinShopPurchaseTarget();
+  const coinShopReward = getCoinShopPurchaseReward();
+  const coinShopReady = canClaimCoinShopPurchaseAchievement();
+  achievementTitleCoinShop.textContent = "코인상점 구매 Lv." + (coinShopPurchaseAchievementStep - 1) + " → Lv." + coinShopPurchaseAchievementStep;
+  achievementProgressCoinShop.textContent =
+    "목표: 코인상점 " + fmtShort(coinShopTarget) + "회 구매 · 진행도: " +
+    fmtShort(Math.min(totalCoinShopPurchases, coinShopTarget)) + " / " + fmtShort(coinShopTarget);
+  achievementRewardCoinShop.textContent = "보상: 트로피 +" + fmtShort(coinShopReward);
+  claimAchievementCoinShop.disabled = !coinShopReady;
+  achievementHintCoinShop.textContent = coinShopReady
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
+    : "코인상점에서 더 구매해야 해.";
+  achievementCardCoinShop.classList.toggle("ready", coinShopReady);
 }
 
 function renderUpgradeUI(next){
@@ -2469,7 +2554,8 @@ function renderCoinShop(){
   goldenChanceMeta.innerHTML =
     "현재 확률: <b>" + currentPct.toFixed(1) + "%</b><br>" +
     "다음 확률: <b>" + nextPct.toFixed(1) + "%</b><br>" +
-    "현재 단계: <b>" + fmtShort(goldenChanceLevel) + "</b>";
+    "현재 단계: <b>" + fmtShort(goldenChanceLevel) + "</b><br>" +
+    "누적 코인상점 구매: <b>" + fmtShort(totalCoinShopPurchases) + "</b>회";
 }
 
 function render(){
@@ -2482,7 +2568,6 @@ function render(){
   updateGoldenUI();
 
   achieveBtn.classList.toggle("alert", canClaimAnyAchievement());
-  trophyChip.classList.toggle("alert", canClaimAnyAchievement());
 
   if(currentNick){
     nickWrap.style.display = "block";
@@ -2828,12 +2913,29 @@ trophyChip.addEventListener("click", ()=>{
 });
 trophyClose.addEventListener("click", closeTrophy);
 
+trophyRankList.addEventListener("click", (e)=>{
+  const row = e.target.closest(".rank-row");
+  if(!row || !currentNick) return;
+
+  const idx = Number(row.dataset.rankIndex);
+  if(Number.isNaN(idx)) return;
+
+  const rank = TROPHY_RANKS[idx];
+  if(!rank) return;
+  if(achievementCount < rank.need) return;
+  if(claimedCoinRankIndices.includes(idx)) return;
+
+  claimedCoinRankIndices.push(idx);
+  coinCount += 2;
+  render();
+  saveCurrent();
+});
+
 claimAchievementAcorn.addEventListener("click", ()=>{
   if(!currentNick) return;
   if(!canClaimAcornAchievement()) return;
   achievementCount += getAcornAchievementReward();
   acornAchievementStage += 1;
-  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2843,7 +2945,6 @@ claimAchievementClick.addEventListener("click", ()=>{
   if(!canClaimClickAchievement()) return;
   achievementCount += getClickAchievementReward();
   clickAchievementStep += 1;
-  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2853,7 +2954,6 @@ claimAchievementSpent.addEventListener("click", ()=>{
   if(!canClaimSpentAchievement()) return;
   achievementCount += getSpentAchievementReward();
   spentAchievementStep += 1;
-  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2863,7 +2963,6 @@ claimAchievementSquirrel.addEventListener("click", ()=>{
   if(!canClaimSquirrelAchievement()) return;
   achievementCount += getSquirrelAchievementReward();
   squirrelAchievementStep += 1;
-  grantRankCoinsIfNeeded();
   render();
   saveCurrent();
 });
@@ -2873,7 +2972,15 @@ claimAchievementChipmunk.addEventListener("click", ()=>{
   if(!canClaimChipmunkAchievement()) return;
   achievementCount += getChipmunkAchievementReward();
   chipmunkAchievementStep += 1;
-  grantRankCoinsIfNeeded();
+  render();
+  saveCurrent();
+});
+
+claimAchievementCoinShop.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(!canClaimCoinShopPurchaseAchievement()) return;
+  achievementCount += getCoinShopPurchaseReward();
+  coinShopPurchaseAchievementStep += 1;
   render();
   saveCurrent();
 });
@@ -2967,6 +3074,7 @@ buyGoldenChanceUpgrade.addEventListener("click", ()=>{
 
   spendCoin(cost);
   goldenChanceLevel += 1;
+  totalCoinShopPurchases += 1;
   render();
   saveCurrent();
 });
