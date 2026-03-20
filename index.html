@@ -16,6 +16,7 @@
       --gold:#ffd84d;
       --intro-bg-1:#f3d8cf;
       --intro-bg-2:#d4b9ff;
+      --nav-h:72px;
     }
     *{ box-sizing:border-box; }
     html,body{ height:100%; margin:0; }
@@ -545,12 +546,26 @@
       color: #ffe78b;
     }
 
+    .pages{
+      position:fixed;
+      inset:72px 0 var(--nav-h) 0;
+      overflow:hidden;
+    }
+    .page{
+      position:absolute;
+      inset:0;
+      display:none;
+    }
+    .page.show{
+      display:block;
+    }
+
     .stage{
       height:100%;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding-top:72px;
+      padding-top:24px;
     }
     .acorn-btn{
       width:min(360px, 72vw);
@@ -605,19 +620,212 @@
       100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.05); opacity: 0; }
     }
 
-    .hint{
+    .squirrel-dock{
       position:fixed;
-      bottom:18px;
       left:50%;
-      transform:translateX(-50%);
-      opacity:.72;
-      font-size:14px;
+      bottom:calc(var(--nav-h) + 12px);
+      transform: translateX(-50%);
+      z-index:25;
+      display:flex;
+      align-items:center;
+      gap:16px;
       padding:10px 14px;
       border-radius:999px;
       background: rgba(255,255,255,.05);
       border:1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(8px);
-      z-index:5;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      pointer-events:none;
+    }
+    .dock-unit{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:max-content;
+    }
+    .dock-unit .emo{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+      position:relative;
+      display:inline-block;
+    }
+    .dock-unit .label{
+      font-weight:900;
+      font-size:14px;
+      opacity:.9;
+      white-space:nowrap;
+    }
+    .dock-sep{
+      font-weight:900;
+      opacity:.45;
+    }
+
+    .bottom-nav{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      height:var(--nav-h);
+      z-index:40;
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.12));
+      backdrop-filter: blur(10px);
+    }
+    .nav-btn{
+      border:none;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color:#fff;
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      transition: transform .08s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .nav-btn:active{ transform:scale(0.98); }
+    .nav-btn.active{
+      background:
+        linear-gradient(180deg, rgba(122,44,255,.22), rgba(122,44,255,.1)),
+        rgba(255,255,255,.06);
+      border-color: rgba(122,44,255,.55);
+      box-shadow: 0 10px 30px rgba(122,44,255,.18);
+    }
+
+    .page-wrap{
+      height:100%;
+      overflow:auto;
+      padding:22px 18px 18px;
+    }
+
+    .page-card{
+      width:min(760px, 100%);
+      margin:0 auto 14px;
+      padding:16px;
+      border-radius:22px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 20px 50px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+    }
+    .page-title{
+      font-size:24px;
+      font-weight:1000;
+      margin-bottom:6px;
+    }
+    .page-sub{
+      font-size:13px;
+      opacity:.76;
+      line-height:1.5;
+      margin-bottom:14px;
+    }
+
+    .coin-free-box{
+      background:
+        radial-gradient(circle at top right, rgba(255,216,77,.22), transparent 38%),
+        rgba(255,255,255,.05);
+    }
+    .coin-free-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .coin-free-title{
+      font-size:20px;
+      font-weight:1000;
+    }
+    .cooldown-chip{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:900;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .free-coin-btn{
+      width:100%;
+      padding:13px 14px;
+      border:none;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,216,77,.95), rgba(255,197,56,.95));
+      color:#222;
+      font-weight:1000;
+      font-size:16px;
+      cursor:pointer;
+      box-shadow: 0 14px 34px rgba(255,216,77,.18);
+    }
+    .free-coin-btn:disabled{
+      cursor:not-allowed;
+      opacity:.5;
+      background: rgba(255,216,77,.4);
+      color:#fff;
+      box-shadow:none;
+    }
+    .cooldown-line{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.82;
+      font-weight:800;
+    }
+
+    .coin-shop-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .perm-card{
+      padding:14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .perm-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .perm-name{
+      font-size:18px;
+      font-weight:1000;
+      margin-bottom:4px;
+    }
+    .perm-desc{
+      font-size:13px;
+      opacity:.8;
+      line-height:1.5;
+    }
+    .perm-cost{
+      text-align:right;
+      font-weight:1000;
+      white-space:nowrap;
+    }
+    .perm-meta{
+      margin-top:10px;
+      font-size:13px;
+      line-height:1.6;
+      opacity:.9;
+    }
+
+    .placeholder-box{
+      min-height:220px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      font-size:18px;
+      font-weight:900;
+      opacity:.8;
+      border-radius:20px;
+      background: rgba(255,255,255,.04);
+      border:1px dashed rgba(255,255,255,.16);
     }
 
     .overlay{
@@ -792,48 +1000,6 @@
       font-weight:700;
       font-size:12px;
       line-height:1.4;
-    }
-
-    .squirrel-dock{
-      position:fixed;
-      left:50%;
-      bottom:78px;
-      transform: translateX(-50%);
-      z-index:25;
-      display:flex;
-      align-items:center;
-      gap:16px;
-      padding:10px 14px;
-      border-radius:999px;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.12);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
-      pointer-events:none;
-    }
-    .dock-unit{
-      position:relative;
-      display:flex;
-      align-items:center;
-      gap:6px;
-      min-width:max-content;
-    }
-    .dock-unit .emo{
-      font-size:22px;
-      line-height:1;
-      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
-      position:relative;
-      display:inline-block;
-    }
-    .dock-unit .label{
-      font-weight:900;
-      font-size:14px;
-      opacity:.9;
-      white-space:nowrap;
-    }
-    .dock-sep{
-      font-weight:900;
-      opacity:.45;
     }
 
     .intro{
@@ -1028,16 +1194,14 @@
         min-width:82px;
         font-size:16px;
       }
+      .bottom-nav{
+        gap:8px;
+        padding-left:10px;
+        padding-right:10px;
+      }
     }
 
     @media (max-width: 480px){
-      .squirrel-dock{
-        gap:12px;
-        padding:9px 12px;
-      }
-      .dock-unit .label{
-        font-size:13px;
-      }
       .shop-panel,
       .achieve-panel,
       .trophy-panel{
@@ -1050,6 +1214,9 @@
         font-size:18px;
       }
       .achieve-btn{ top:134px; }
+      .page-title{
+        font-size:22px;
+      }
     }
   </style>
 </head>
@@ -1111,7 +1278,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.21</div>
+        <div class="intro-version">v1.24</div>
       </div>
     </div>
   </div>
@@ -1152,22 +1319,6 @@
     <div class="nick-menu" id="nickMenu">
       <button class="menu-btn" id="btnLogout">로그아웃</button>
       <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
-    </div>
-  </div>
-
-  <div class="squirrel-dock" id="squirrelDock" aria-hidden="true">
-    <div class="dock-unit">
-      <span class="emo" id="sqDockEmoji">🐿️</span>
-      <span class="label">x <span id="dockSq">0</span></span>
-    </div>
-    <span class="dock-sep">·</span>
-    <div class="dock-unit">
-      <span class="emo" id="csDockEmoji">🌲</span>
-      <span class="label">x <span id="dockCs">0</span></span>
-    </div>
-    <span class="dock-sep">·</span>
-    <div class="dock-unit">
-      <span class="label"><span id="dockIncome">0</span>/s</span>
     </div>
   </div>
 
@@ -1308,47 +1459,125 @@
     <div class="rank-list" id="trophyRankList"></div>
   </div>
 
-  <div class="stage">
-    <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
-      <svg class="acorn-svg" viewBox="0 0 256 256" aria-hidden="true">
-        <path d="M128 92
-                 C88 92, 58 122, 58 162
-                 C58 208, 92 236, 128 236
-                 C164 236, 198 208, 198 162
-                 C198 122, 168 92, 128 92Z"
-              fill="#a85f2a"/>
-        <path d="M101 118
-                 C82 131, 72 152, 74 174
-                 C76 194, 88 210, 102 220"
-              fill="none"
-              stroke="rgba(255,255,255,.18)"
-              stroke-width="10"
-              stroke-linecap="round"/>
-        <path d="M72 114
-                 C78 78, 106 58, 128 58
-                 C150 58, 178 78, 184 114
-                 C166 126, 146 132, 128 132
-                 C110 132, 90 126, 72 114Z"
-              fill="#6c3f1f"/>
-        <circle cx="92" cy="92" r="5" fill="#8a5229"/>
-        <circle cx="110" cy="80" r="5" fill="#8a5229"/>
-        <circle cx="128" cy="74" r="5" fill="#8a5229"/>
-        <circle cx="146" cy="80" r="5" fill="#8a5229"/>
-        <circle cx="164" cy="92" r="5" fill="#8a5229"/>
-        <circle cx="102" cy="104" r="5" fill="#8a5229"/>
-        <circle cx="128" cy="100" r="5" fill="#8a5229"/>
-        <circle cx="154" cy="104" r="5" fill="#8a5229"/>
-        <path d="M129 57
-                 C128 42, 135 30, 147 22"
-              fill="none"
-              stroke="#5f8f3a"
-              stroke-width="10"
-              stroke-linecap="round"/>
-      </svg>
-    </button>
+  <div class="pages">
+    <div class="page show" id="pageHome">
+      <div class="stage">
+        <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
+          <svg class="acorn-svg" viewBox="0 0 256 256" aria-hidden="true">
+            <path d="M128 92
+                     C88 92, 58 122, 58 162
+                     C58 208, 92 236, 128 236
+                     C164 236, 198 208, 198 162
+                     C198 122, 168 92, 128 92Z"
+                  fill="#a85f2a"/>
+            <path d="M101 118
+                     C82 131, 72 152, 74 174
+                     C76 194, 88 210, 102 220"
+                  fill="none"
+                  stroke="rgba(255,255,255,.18)"
+                  stroke-width="10"
+                  stroke-linecap="round"/>
+            <path d="M72 114
+                     C78 78, 106 58, 128 58
+                     C150 58, 178 78, 184 114
+                     C166 126, 146 132, 128 132
+                     C110 132, 90 126, 72 114Z"
+                  fill="#6c3f1f"/>
+            <circle cx="92" cy="92" r="5" fill="#8a5229"/>
+            <circle cx="110" cy="80" r="5" fill="#8a5229"/>
+            <circle cx="128" cy="74" r="5" fill="#8a5229"/>
+            <circle cx="146" cy="80" r="5" fill="#8a5229"/>
+            <circle cx="164" cy="92" r="5" fill="#8a5229"/>
+            <circle cx="102" cy="104" r="5" fill="#8a5229"/>
+            <circle cx="128" cy="100" r="5" fill="#8a5229"/>
+            <circle cx="154" cy="104" r="5" fill="#8a5229"/>
+            <path d="M129 57
+                     C128 42, 135 30, 147 22"
+                  fill="none"
+                  stroke="#5f8f3a"
+                  stroke-width="10"
+                  stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="page" id="pageMinigame">
+      <div class="page-wrap">
+        <div class="page-card">
+          <div class="page-title">🎮 미니게임</div>
+          <div class="page-sub">여기는 나중에 미니게임이 들어갈 자리야.</div>
+          <div class="placeholder-box">
+            미니게임은 다음에 붙이자.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="pageCoinShop">
+      <div class="page-wrap">
+        <div class="page-card coin-free-box">
+          <div class="coin-free-head">
+            <div class="coin-free-title">🪙 무료 코인!</div>
+            <div class="cooldown-chip" id="freeCoinStateChip">지금 받기 가능</div>
+          </div>
+          <div class="page-sub" style="margin-bottom:12px;">
+            버튼을 누르면 코인 <b>2개</b>를 받을 수 있어. 쿨타임은 <b>10분</b>이야.
+          </div>
+          <button class="free-coin-btn" id="claimFreeCoinBtn">코인 2개 받기</button>
+          <div class="cooldown-line" id="freeCoinCooldownText">지금 바로 받을 수 있어.</div>
+        </div>
+
+        <div class="page-card">
+          <div class="page-title">🛍️ 코인 상점</div>
+          <div class="page-sub">여기 업그레이드는 전부 <b>영구 적용</b>돼.</div>
+
+          <div class="coin-shop-list">
+            <div class="perm-card">
+              <div class="perm-top">
+                <div>
+                  <div class="perm-name">🌟 황금 도토리 확률 증가</div>
+                  <div class="perm-desc">
+                    황금 도토리 확률을 영구적으로 올려줘.
+                  </div>
+                </div>
+                <div class="perm-cost">
+                  🪙 <span id="goldenChanceUpgradeCost">5</span>
+                </div>
+              </div>
+              <button class="buy" id="buyGoldenChanceUpgrade">업그레이드</button>
+              <div class="perm-meta" id="goldenChanceMeta">
+                현재 확률: 3.0%<br>
+                다음 확률: 3.5%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="hint">도토리를 눌러서 모아봐 🌰</div>
+  <div class="squirrel-dock" id="squirrelDock" aria-hidden="true">
+    <div class="dock-unit">
+      <span class="emo" id="sqDockEmoji">🐿️</span>
+      <span class="label">x <span id="dockSq">0</span></span>
+    </div>
+    <span class="dock-sep">·</span>
+    <div class="dock-unit">
+      <span class="emo" id="csDockEmoji">🌲</span>
+      <span class="label">x <span id="dockCs">0</span></span>
+    </div>
+    <span class="dock-sep">·</span>
+    <div class="dock-unit">
+      <span class="label"><span id="dockIncome">0</span>/s</span>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn" id="navMinigame">🎮 미니게임</button>
+    <button class="nav-btn active" id="navHome">🏠 홈</button>
+    <button class="nav-btn" id="navCoinShop">🪙 코인 상점</button>
+  </div>
 
   <div class="overlay" id="overlay">
     <div class="modal">
@@ -1380,7 +1609,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v21";
+const LS_KEY = "dotori_game_profiles_v124";
 
 const SHORT_SUFFIXES = [
   "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
@@ -1414,6 +1643,13 @@ function fmtShort(value){
   return shown + suffixFromIndex(idx);
 }
 
+function formatCooldown(ms){
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return String(min).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+}
+
 function loadProfiles(){
   try{
     const raw = localStorage.getItem(LS_KEY);
@@ -1440,6 +1676,8 @@ function fmtAcorn(n){
 let profiles = loadProfiles();
 let currentNick = null;
 
+let currentPage = "home";
+
 let acorn = 0;
 let clickValue = 1;
 let tier = 0;
@@ -1456,6 +1694,9 @@ let chipmunkAchievementStep = 1;
 let totalClicks = 0;
 let totalSpentAcorn = 0;
 
+let goldenChanceLevel = 0;
+let freeCoinNextAt = 0;
+
 let squirrelNextPayouts = [];
 const SQUIRREL_INCOME_PER_TICK = 1;
 const SQUIRREL_TICK_MS = 1000;
@@ -1466,8 +1707,9 @@ const CHIPMUNK_TICK_MS = 1000;
 
 let goldenReady = false;
 let goldenStartedAt = 0;
-const GOLDEN_CHANCE = 0.03;
+const BASE_GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
+const FREE_COIN_COOLDOWN_MS = 10 * 60 * 1000;
 
 const TROPHY_RANKS = [
   { name: "브론즈 1", stars: "★", need: 30, medal: "🥉", kind: "bronze" },
@@ -1535,6 +1777,17 @@ function getNextChipmunkCost(nextIndex){
   return 5000 + (nextIndex - 1) * 500;
 }
 
+function getGoldenChance(){
+  return BASE_GOLDEN_CHANCE + goldenChanceLevel * 0.005;
+}
+function getGoldenChanceCost(){
+  const nextStage = goldenChanceLevel + 1;
+  return 4 * nextStage + 1;
+}
+function getGoldenChancePercent(level = goldenChanceLevel){
+  return (BASE_GOLDEN_CHANCE + level * 0.005) * 100;
+}
+
 function getAcornAchievementTarget(){
   return Math.pow(10, acornAchievementStage + 2);
 }
@@ -1549,9 +1802,7 @@ function getClickAchievementReward(){
   return 10 + (clickAchievementStep - 1) * 5;
 }
 function getSpentAchievementTarget(){
-  const targets = [10000, 15000, 20000, 25000, 30000, 35000];
-  if(spentAchievementStep <= targets.length) return targets[spentAchievementStep - 1];
-  return 35000 + (spentAchievementStep - targets.length) * 5000;
+  return 10000 * Math.pow(4, spentAchievementStep - 1);
 }
 function getSpentAchievementReward(){
   const rewards = [20, 23, 25, 30, 33, 35];
@@ -1675,11 +1926,26 @@ const toast = document.getElementById("toast");
 const toastDetail = document.getElementById("toastDetail");
 let toastTimer = null;
 
+const pageHome = document.getElementById("pageHome");
+const pageMinigame = document.getElementById("pageMinigame");
+const pageCoinShop = document.getElementById("pageCoinShop");
+const navHome = document.getElementById("navHome");
+const navMinigame = document.getElementById("navMinigame");
+const navCoinShop = document.getElementById("navCoinShop");
+
 const dockSq = document.getElementById("dockSq");
 const dockCs = document.getElementById("dockCs");
 const dockIncome = document.getElementById("dockIncome");
 const sqDockEmoji = document.getElementById("sqDockEmoji");
 const csDockEmoji = document.getElementById("csDockEmoji");
+const squirrelDock = document.getElementById("squirrelDock");
+
+const claimFreeCoinBtn = document.getElementById("claimFreeCoinBtn");
+const freeCoinStateChip = document.getElementById("freeCoinStateChip");
+const freeCoinCooldownText = document.getElementById("freeCoinCooldownText");
+const buyGoldenChanceUpgrade = document.getElementById("buyGoldenChanceUpgrade");
+const goldenChanceUpgradeCost = document.getElementById("goldenChanceUpgradeCost");
+const goldenChanceMeta = document.getElementById("goldenChanceMeta");
 
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
@@ -1689,6 +1955,27 @@ function showToast(detail){
   toast.style.display = "block";
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2600);
+}
+
+function switchPage(page){
+  currentPage = page;
+  pageHome.classList.toggle("show", page === "home");
+  pageMinigame.classList.toggle("show", page === "minigame");
+  pageCoinShop.classList.toggle("show", page === "coinshop");
+
+  navHome.classList.toggle("active", page === "home");
+  navMinigame.classList.toggle("active", page === "minigame");
+  navCoinShop.classList.toggle("active", page === "coinshop");
+
+  const isHome = page === "home";
+  squirrelDock.style.display = isHome ? "flex" : "none";
+  shopBtn.style.display = isHome ? "flex" : "none";
+  achieveBtn.style.display = isHome ? "flex" : "none";
+
+  if(!isHome){
+    closeShop();
+    closeAchieve();
+  }
 }
 
 function updateGoldenUI(){
@@ -1709,13 +1996,6 @@ function setLocked(isLocked){
   });
 }
 
-function normalizeByTier(){
-  const map = [1,2,4,8,16,32,64,128,256,512,1000,2000,5000,10000];
-  if(tier < 0) tier = 0;
-  if(tier > 13) tier = 13;
-  clickValue = map[tier] ?? 1;
-}
-
 function getCurrentTrophyRankIndex(){
   let idx = -1;
   for(let i = 0; i < TROPHY_RANKS.length; i++){
@@ -1734,9 +2014,9 @@ function grantRankCoinsIfNeeded(){
 }
 
 function buildSaveData(){
-  const now = performance.now();
-  const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - now)));
-  const chipmunkRemainingMs = chipmunkNextPayouts.map(t => Math.max(0, Math.round(t - now)));
+  const nowPerf = performance.now();
+  const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
+  const chipmunkRemainingMs = chipmunkNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
   return {
     acorn,
     clickValue,
@@ -1751,10 +2031,12 @@ function buildSaveData(){
     chipmunkAchievementStep,
     totalClicks,
     totalSpentAcorn,
+    goldenChanceLevel,
+    freeCoinNextAt,
     squirrelRemainingMs,
     chipmunkRemainingMs,
     goldenReady,
-    goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (now - goldenStartedAt))) : 0
+    goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (nowPerf - goldenStartedAt))) : 0
   };
 }
 
@@ -1765,7 +2047,7 @@ function saveCurrent(){
 }
 
 function applyLoadedProfile(p){
-  const now = performance.now();
+  const nowPerf = performance.now();
   acorn = Number(p.acorn ?? 0) || 0;
   tier = Number(p.tier ?? 0) || 0;
   clickValue = Number(p.clickValue ?? 1) || 1;
@@ -1779,17 +2061,19 @@ function applyLoadedProfile(p){
   chipmunkAchievementStep = Number(p.chipmunkAchievementStep ?? 1) || 1;
   totalClicks = Number(p.totalClicks ?? 0) || 0;
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
+  goldenChanceLevel = Number(p.goldenChanceLevel ?? 0) || 0;
+  freeCoinNextAt = Number(p.freeCoinNextAt ?? 0) || 0;
   goldenReady = !!p.goldenReady;
   normalizeByTier();
 
   const sqRemainings = Array.isArray(p.squirrelRemainingMs) ? p.squirrelRemainingMs : [];
-  squirrelNextPayouts = sqRemainings.map(ms => now + Math.max(0, Number(ms) || 0));
+  squirrelNextPayouts = sqRemainings.map(ms => nowPerf + Math.max(0, Number(ms) || 0));
 
   const csRemainings = Array.isArray(p.chipmunkRemainingMs) ? p.chipmunkRemainingMs : [];
-  chipmunkNextPayouts = csRemainings.map(ms => now + Math.max(0, Number(ms) || 0));
+  chipmunkNextPayouts = csRemainings.map(ms => nowPerf + Math.max(0, Number(ms) || 0));
 
   const goldenRemainingMs = Number(p.goldenRemainingMs ?? 0) || 0;
-  goldenStartedAt = now - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
+  goldenStartedAt = nowPerf - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
 
   if(highestCoinRankIndex < -1) highestCoinRankIndex = -1;
   grantRankCoinsIfNeeded();
@@ -1828,6 +2112,8 @@ function createProfile(nick){
   chipmunkAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
+  goldenChanceLevel = 0;
+  freeCoinNextAt = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   goldenReady = false;
@@ -1853,6 +2139,8 @@ function resetCurrentNickProgress(){
   chipmunkAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
+  goldenChanceLevel = 0;
+  freeCoinNextAt = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   goldenReady = false;
@@ -2137,12 +2425,36 @@ function renderUpgradeUI(next){
   }
 }
 
+function renderCoinShop(){
+  const now = Date.now();
+  const remain = Math.max(0, freeCoinNextAt - now);
+  const canClaim = remain <= 0;
+
+  claimFreeCoinBtn.disabled = !canClaim;
+  freeCoinStateChip.textContent = canClaim ? "지금 받기 가능" : formatCooldown(remain);
+  freeCoinCooldownText.textContent = canClaim
+    ? "지금 바로 받을 수 있어."
+    : "다음 무료 코인까지 " + formatCooldown(remain);
+
+  const cost = getGoldenChanceCost();
+  const currentPct = getGoldenChancePercent(goldenChanceLevel);
+  const nextPct = getGoldenChancePercent(goldenChanceLevel + 1);
+
+  goldenChanceUpgradeCost.textContent = fmtShort(cost);
+  buyGoldenChanceUpgrade.disabled = coinCount < cost;
+  goldenChanceMeta.innerHTML =
+    "현재 확률: <b>" + currentPct.toFixed(1) + "%</b><br>" +
+    "다음 확률: <b>" + nextPct.toFixed(1) + "%</b><br>" +
+    "현재 단계: <b>" + fmtShort(goldenChanceLevel) + "</b>";
+}
+
 function render(){
   countEl.textContent = fmtAcorn(acorn);
   trophyCountTop.textContent = fmtShort(achievementCount);
   coinCountTop.textContent = fmtShort(coinCount);
   renderAchievements();
   renderTrophyPanel();
+  renderCoinShop();
   updateGoldenUI();
 
   achieveBtn.classList.toggle("alert", canClaimAnyAchievement());
@@ -2335,7 +2647,7 @@ function triggerGolden(now){
 }
 function tryTriggerGolden(now){
   if(goldenReady) return;
-  if(Math.random() < GOLDEN_CHANCE){
+  if(Math.random() < getGoldenChance()){
     triggerGolden(now);
   }
 }
@@ -2349,6 +2661,8 @@ function addManualClickProgress(){
 
 function clickAcornFromPointer(e){
   if(!currentNick) return;
+  if(currentPage !== "home") return;
+
   const now = performance.now();
   if(!processHackCheck(now)) return;
 
@@ -2380,7 +2694,7 @@ acornBtn.addEventListener("pointerdown", (e)=>{
 acornBtn.addEventListener("keydown", (e)=>{
   if(e.key === " " || e.key === "Enter"){
     e.preventDefault();
-    if(!currentNick) return;
+    if(!currentNick || currentPage !== "home") return;
 
     const now = performance.now();
     if(!processHackCheck(now)) return;
@@ -2417,7 +2731,7 @@ setInterval(()=>{
     if(now >= squirrelNextPayouts[i]){
       squirrelNextPayouts[i] += SQUIRREL_TICK_MS;
       acorn += SQUIRREL_INCOME_PER_TICK;
-      spawnSquirrelFloat();
+      if(currentPage === "home") spawnSquirrelFloat();
       changed = true;
     }
   }
@@ -2426,7 +2740,7 @@ setInterval(()=>{
     if(now >= chipmunkNextPayouts[i]){
       chipmunkNextPayouts[i] += CHIPMUNK_TICK_MS;
       acorn += CHIPMUNK_INCOME_PER_TICK;
-      spawnChipmunkFloat();
+      if(currentPage === "home") spawnChipmunkFloat();
       changed = true;
     }
   }
@@ -2437,7 +2751,13 @@ setInterval(()=>{
   }
 }, 50);
 
+setInterval(()=>{
+  if(!currentNick) return;
+  renderCoinShop();
+}, 250);
+
 function openShop(){
+  if(currentPage !== "home") return;
   closeAchieve();
   closeTrophy();
   shopPanel.classList.add("show");
@@ -2446,6 +2766,7 @@ function closeShop(){
   shopPanel.classList.remove("show");
 }
 function openAchieve(){
+  if(currentPage !== "home") return;
   closeShop();
   closeTrophy();
   achievePanel.classList.add("show");
@@ -2586,7 +2907,7 @@ buySquirrel.addEventListener("click", ()=>{
 
   render();
   saveCurrent();
-  spawnSquirrelFloat();
+  if(currentPage === "home") spawnSquirrelFloat();
 });
 
 buyChipmunk.addEventListener("click", ()=>{
@@ -2601,7 +2922,29 @@ buyChipmunk.addEventListener("click", ()=>{
 
   render();
   saveCurrent();
-  spawnChipmunkFloat();
+  if(currentPage === "home") spawnChipmunkFloat();
+});
+
+claimFreeCoinBtn.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  const now = Date.now();
+  if(now < freeCoinNextAt) return;
+
+  coinCount += 2;
+  freeCoinNextAt = now + FREE_COIN_COOLDOWN_MS;
+  render();
+  saveCurrent();
+});
+
+buyGoldenChanceUpgrade.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  const cost = getGoldenChanceCost();
+  if(coinCount < cost) return;
+
+  spendCoin(cost);
+  goldenChanceLevel += 1;
+  render();
+  saveCurrent();
 });
 
 function openNickMenu(){ nickMenu.classList.add("show"); }
@@ -2690,6 +3033,7 @@ newStart.addEventListener("click", ()=>{
   overlay.style.display = "none";
   setLocked(false);
   nickWrap.style.display = "block";
+  switchPage("home");
   render();
 });
 
@@ -2707,6 +3051,7 @@ oldEnter.addEventListener("click", ()=>{
   overlay.style.display = "none";
   setLocked(false);
   nickWrap.style.display = "block";
+  switchPage("home");
   render();
 });
 
@@ -2715,6 +3060,19 @@ newNick.addEventListener("keydown", (e)=>{
 });
 oldNick.addEventListener("keydown", (e)=>{
   if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
+});
+
+navHome.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  switchPage("home");
+});
+navMinigame.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  switchPage("minigame");
+});
+navCoinShop.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  switchPage("coinshop");
 });
 
 function createIrregularStops(totalMs = 3000){
@@ -2794,6 +3152,7 @@ function runOpening(){
 }
 
 setLocked(true);
+switchPage("home");
 render();
 runOpening();
 </script>
