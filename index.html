@@ -1950,6 +1950,30 @@ const goldenChanceMeta = document.getElementById("goldenChanceMeta");
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
 
+function normalizeByTier(){
+  if(tier <= 0){
+    tier = 0;
+    clickValue = 1;
+    return;
+  }
+
+  const matched = UPGRADE_STEPS.find(step => step.toTier === tier);
+  if(matched){
+    clickValue = matched.toValue;
+    return;
+  }
+
+  const maxTier = UPGRADE_STEPS[UPGRADE_STEPS.length - 1];
+  if(tier > maxTier.toTier){
+    tier = maxTier.toTier;
+    clickValue = maxTier.toValue;
+    return;
+  }
+
+  tier = 0;
+  clickValue = 1;
+}
+
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
   toast.style.display = "block";
