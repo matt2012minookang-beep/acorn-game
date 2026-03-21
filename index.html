@@ -1318,6 +1318,17 @@
       margin-right:8px;
     }
 
+    .mini-btn{
+      padding:12px 16px;
+      border:none;
+      border-radius:14px;
+      background: var(--accent);
+      color:#fff;
+      font-weight:1000;
+      cursor:pointer;
+      min-width:140px;
+    }
+
     @media (max-width: 560px){
       .top-right{
         gap:8px;
@@ -1500,7 +1511,7 @@
       <div class="item-top">
         <div>
           <div class="item-name">🐿️ 다람쥐 고용</div>
-          <div class="item-desc">
+          <div class="item-desc" id="sqDesc">
             1마리당 <b>1초마다 +1</b> 도토리<br>
             보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
           </div>
@@ -1692,9 +1703,10 @@
               <div class="item-top">
                 <div>
                   <div class="item-name">🐿️ 다람쥐 점프!</div>
-                  <div class="item-desc">
+                  <div class="item-desc" id="jumpGameDesc">
                     클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>
-                    참가비: <b>🌰 100k</b> · 보상: <b>코인 = 점수의 0.1%(반올림)</b>, <b>트로피 = 점수 × 10</b>
+                    참가비: <b>첫 1회 무료</b> · 이후 <b>🌰 100k</b><br>
+                    보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>
                   </div>
                 </div>
               </div>
@@ -1781,6 +1793,25 @@
               <div class="perm-meta" id="goldenChanceMeta">
                 현재 확률: 3.0%<br>
                 다음 확률: 3.5%
+              </div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-top">
+                <div>
+                  <div class="perm-name">🐿️ 다람쥐 수익률 증가</div>
+                  <div class="perm-desc">
+                    다람쥐의 초당 수익을 영구적으로 올려줘.
+                  </div>
+                </div>
+                <div class="perm-cost">
+                  🪙 <span id="squirrelBoostCost">3</span>
+                </div>
+              </div>
+              <button class="buy" id="buySquirrelBoostUpgrade">업그레이드</button>
+              <div class="perm-meta" id="squirrelBoostMeta">
+                현재 수익률: 0%<br>
+                다음 수익률: 10%
               </div>
             </div>
           </div>
@@ -1912,7 +1943,6 @@ function fmtAcorn(n){
 
 let profiles = loadProfiles();
 let currentNick = null;
-
 let currentPage = "home";
 
 let acorn = 0;
@@ -1935,10 +1965,11 @@ let totalSpentAcorn = 0;
 let totalCoinShopPurchases = 0;
 
 let goldenChanceLevel = 0;
+let squirrelIncomeBoostLevel = 0;
 let freeCoinNextAt = 0;
 
 let squirrelNextPayouts = [];
-const SQUIRREL_INCOME_PER_TICK = 1;
+const SQUIRREL_BASE_INCOME_PER_TICK = 1;
 const SQUIRREL_TICK_MS = 1000;
 
 let chipmunkNextPayouts = [];
@@ -1954,6 +1985,8 @@ let goldenStartedAt = 0;
 const BASE_GOLDEN_CHANCE = 0.03;
 const GOLDEN_MIN_HOLD_MS = 100;
 const FREE_COIN_COOLDOWN_MS = 10 * 60 * 1000;
+
+let jumpPlayedOnce = false;
 
 const TROPHY_RANKS = [
   { name: "브론즈 1", stars: "★", need: 30, medal: "🥉", kind: "bronze" },
@@ -2049,6 +2082,19 @@ function getGoldenChanceCost(){
 }
 function getGoldenChancePercent(level = goldenChanceLevel){
   return (BASE_GOLDEN_CHANCE + level * 0.005) * 100;
+}
+
+function getSquirrelIncomeMultiplier(){
+  return 1 + (squirrelIncomeBoostLevel * 0.1);
+}
+function getSquirrelBoostPercent(level = squirrelIncomeBoostLevel){
+  return level * 10;
+}
+function getSquirrelBoostCost(){
+  return 3 + squirrelIncomeBoostLevel * 2;
+}
+function getSquirrelIncomePerUnit(){
+  return SQUIRREL_BASE_INCOME_PER_TICK * getSquirrelIncomeMultiplier();
 }
 
 function getAcornAchievementTarget(){
@@ -2189,6 +2235,7 @@ const upgHint = document.getElementById("upgHint");
 const sqCountEl = document.getElementById("sqCount");
 const sqIncomeEl = document.getElementById("sqIncome");
 const sqPriceEl = document.getElementById("sqPrice");
+const sqDesc = document.getElementById("sqDesc");
 const buySquirrel = document.getElementById("buySquirrel");
 const sqHint = document.getElementById("sqHint");
 
@@ -2248,11 +2295,16 @@ const buyGoldenChanceUpgrade = document.getElementById("buyGoldenChanceUpgrade")
 const goldenChanceUpgradeCost = document.getElementById("goldenChanceUpgradeCost");
 const goldenChanceMeta = document.getElementById("goldenChanceMeta");
 
+const buySquirrelBoostUpgrade = document.getElementById("buySquirrelBoostUpgrade");
+const squirrelBoostCost = document.getElementById("squirrelBoostCost");
+const squirrelBoostMeta = document.getElementById("squirrelBoostMeta");
+
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
 
 const openJumpGameBtn = document.getElementById("openJumpGameBtn");
 const jumpLobbyInfo = document.getElementById("jumpLobbyInfo");
+const jumpGameDesc = document.getElementById("jumpGameDesc");
 const jumpCanvas = document.getElementById("jumpCanvas");
 const jumpCtx = jumpCanvas.getContext("2d");
 const jumpStartBtn = document.getElementById("jumpStartBtn");
@@ -2324,6 +2376,9 @@ function getUnclaimedRankCount(){
   for(let i = 0; i < TROPHY_RANKS.length; i++){
     if(achievementCount >= TROPHY_RANKS[i].need && !claimedCoinRankIndices.includes(i)) count++;
   }
+  return count;
+}
+
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
   toast.style.display = "block";
@@ -2401,13 +2456,15 @@ function buildSaveData(){
     totalSpentAcorn,
     totalCoinShopPurchases,
     goldenChanceLevel,
+    squirrelIncomeBoostLevel,
     freeCoinNextAt,
     squirrelRemainingMs,
     chipmunkRemainingMs,
     treeRemainingMs,
     goldenReady,
     goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (nowPerf - goldenStartedAt))) : 0,
-    jumpBestScore
+    jumpBestScore,
+    jumpPlayedOnce
   };
 }
 
@@ -2436,8 +2493,10 @@ function applyLoadedProfile(p){
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
   totalCoinShopPurchases = Number(p.totalCoinShopPurchases ?? 0) || 0;
   goldenChanceLevel = Number(p.goldenChanceLevel ?? 0) || 0;
+  squirrelIncomeBoostLevel = Number(p.squirrelIncomeBoostLevel ?? 0) || 0;
   freeCoinNextAt = Number(p.freeCoinNextAt ?? 0) || 0;
   jumpBestScore = Number(p.jumpBestScore ?? 0) || 0;
+  jumpPlayedOnce = !!p.jumpPlayedOnce;
   goldenReady = !!p.goldenReady;
   normalizeByTier();
 
@@ -2493,6 +2552,7 @@ function createProfile(nick){
   totalSpentAcorn = 0;
   totalCoinShopPurchases = 0;
   goldenChanceLevel = 0;
+  squirrelIncomeBoostLevel = 0;
   freeCoinNextAt = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
@@ -2500,6 +2560,7 @@ function createProfile(nick){
   goldenReady = false;
   goldenStartedAt = 0;
   jumpBestScore = 0;
+  jumpPlayedOnce = false;
   normalizeByTier();
   updateGoldenUI();
   resetAutoState();
@@ -2526,6 +2587,7 @@ function resetCurrentNickProgress(){
   totalSpentAcorn = 0;
   totalCoinShopPurchases = 0;
   goldenChanceLevel = 0;
+  squirrelIncomeBoostLevel = 0;
   freeCoinNextAt = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
@@ -2533,6 +2595,7 @@ function resetCurrentNickProgress(){
   goldenReady = false;
   goldenStartedAt = 0;
   jumpBestScore = 0;
+  jumpPlayedOnce = false;
   normalizeByTier();
   updateGoldenUI();
   resetAutoState();
@@ -2580,7 +2643,7 @@ function getTreeCount(){
   return treeNextPayouts.length;
 }
 function getSquirrelIncomePerSec(){
-  return getSquirrelCount() * SQUIRREL_INCOME_PER_TICK;
+  return getSquirrelCount() * getSquirrelIncomePerUnit();
 }
 function getChipmunkIncomePerSec(){
   return getChipmunkCount() * CHIPMUNK_INCOME_PER_TICK;
@@ -2668,7 +2731,6 @@ function getTrophyProgressInfo(){
     remain: 0
   };
 }
-
 function renderTrophyPanel(){
   const current = getCurrentTrophyRank();
   const next = getNextTrophyRank();
@@ -2867,17 +2929,28 @@ function renderCoinShop(){
     ? "지금 바로 받을 수 있어."
     : "다음 무료 코인까지 " + formatCooldown(remain);
 
-  const cost = getGoldenChanceCost();
+  const goldenCost = getGoldenChanceCost();
   const currentPct = getGoldenChancePercent(goldenChanceLevel);
   const nextPct = getGoldenChancePercent(goldenChanceLevel + 1);
 
-  goldenChanceUpgradeCost.textContent = fmtShort(cost);
-  buyGoldenChanceUpgrade.disabled = coinCount < cost;
+  goldenChanceUpgradeCost.textContent = fmtShort(goldenCost);
+  buyGoldenChanceUpgrade.disabled = coinCount < goldenCost;
   goldenChanceMeta.innerHTML =
     "현재 확률: <b>" + currentPct.toFixed(1) + "%</b><br>" +
     "다음 확률: <b>" + nextPct.toFixed(1) + "%</b><br>" +
     "현재 단계: <b>" + fmtShort(goldenChanceLevel) + "</b><br>" +
     "누적 코인상점 구매: <b>" + fmtShort(totalCoinShopPurchases) + "</b>회";
+
+  const boostCost = getSquirrelBoostCost();
+  const currentBoost = getSquirrelBoostPercent(squirrelIncomeBoostLevel);
+  const nextBoost = getSquirrelBoostPercent(squirrelIncomeBoostLevel + 1);
+
+  squirrelBoostCost.textContent = fmtShort(boostCost);
+  buySquirrelBoostUpgrade.disabled = coinCount < boostCost;
+  squirrelBoostMeta.innerHTML =
+    "현재 수익률: <b>" + currentBoost + "%</b><br>" +
+    "다음 수익률: <b>" + nextBoost + "%</b><br>" +
+    "현재 다람쥐 1마리 수익: <b>" + fmtShort(getSquirrelIncomePerUnit()) + "/s</b>";
 }
 
 function render(){
@@ -2905,12 +2978,16 @@ function render(){
   const sqIncome = getSquirrelIncomePerSec();
   sqCountEl.textContent = fmtShort(sqCount);
   sqIncomeEl.textContent = fmtShort(sqIncome);
+  sqDesc.innerHTML =
+    "1마리당 <b>1초마다 +" + fmtShort(getSquirrelIncomePerUnit()) + "</b> 도토리<br>" +
+    "보유: <b><span id=\"sqCountMirror\">" + fmtShort(sqCount) + "</span>마리</b> · 현재 수익: <b><span id=\"sqIncomeMirror\">" + fmtShort(sqIncome) + "</span>/s</b><br>" +
+    "수익률 증가: <b>" + getSquirrelBoostPercent() + "%</b>";
   const nextSqCost = getNextSquirrelCost(sqCount + 1);
   sqPriceEl.textContent = fmtShort(nextSqCost);
   buySquirrel.disabled = acorn < nextSqCost;
   sqHint.textContent =
     "다음 가격: " + fmtShort(nextSqCost) +
-    " (구매 후 수익 " + fmtShort((sqCount + 1) * SQUIRREL_INCOME_PER_TICK) + "/s)";
+    " (구매 후 수익 " + fmtShort((sqCount + 1) * getSquirrelIncomePerUnit()) + "/s)";
 
   const csCount = getChipmunkCount();
   const csIncome = getChipmunkIncomePerSec();
@@ -2939,7 +3016,14 @@ function render(){
   dockTree.textContent = fmtShort(treeCount);
   dockIncome.textContent = fmtShort(getTotalAutoIncomePerSec());
 
-  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b>";
+  jumpLobbyInfo.innerHTML =
+    "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b><br>" +
+    "참가 상태: <b>" + (jumpPlayedOnce ? "이후부터 100k 필요" : "첫 1회 무료") + "</b>";
+
+  jumpGameDesc.innerHTML =
+    "클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>" +
+    "참가비: <b>" + (jumpPlayedOnce ? "🌰 100k" : "첫 1회 무료") + "</b><br>" +
+    "보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>";
 }
 
 function spawnFloatText(x, y, text, color, type){
@@ -2979,7 +3063,7 @@ function spawnSquirrelFloat(){
   const r = sqDockEmoji.getBoundingClientRect();
   const x = r.left + r.width / 2;
   const y = r.top - 4;
-  spawnFloatText(x, y, "+1", "#9dffb5", "squirrel");
+  spawnFloatText(x, y, "+" + fmtShort(getSquirrelIncomePerUnit()), "#9dffb5", "squirrel");
 }
 
 function spawnChipmunkFloat(){
@@ -3192,11 +3276,12 @@ setInterval(()=>{
 
   const now = performance.now();
   let changed = false;
+  const squirrelUnitIncome = getSquirrelIncomePerUnit();
 
   for(let i = 0; i < squirrelNextPayouts.length; i++){
     if(now >= squirrelNextPayouts[i]){
       squirrelNextPayouts[i] += SQUIRREL_TICK_MS;
-      acorn += SQUIRREL_INCOME_PER_TICK;
+      acorn += squirrelUnitIncome;
       if(currentPage === "home") spawnSquirrelFloat();
       changed = true;
     }
@@ -3469,6 +3554,18 @@ buyGoldenChanceUpgrade.addEventListener("click", ()=>{
   saveCurrent();
 });
 
+buySquirrelBoostUpgrade.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  const cost = getSquirrelBoostCost();
+  if(coinCount < cost) return;
+
+  spendCoin(cost);
+  squirrelIncomeBoostLevel += 1;
+  totalCoinShopPurchases += 1;
+  render();
+  saveCurrent();
+});
+
 function openNickMenu(){ nickMenu.classList.add("show"); }
 function closeNickMenu(){ nickMenu.classList.remove("show"); }
 function toggleNickMenu(){
@@ -3600,7 +3697,13 @@ navCoinShop.addEventListener("click", ()=>{
 function updateJumpTexts(){
   jumpBestText.textContent = fmtShort(jumpBestScore);
   jumpScoreText.textContent = fmtShort(jumpGame.score || 0);
-  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b>";
+  jumpLobbyInfo.innerHTML =
+    "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b><br>" +
+    "참가 상태: <b>" + (jumpPlayedOnce ? "이후부터 100k 필요" : "첫 1회 무료") + "</b>";
+}
+
+function getJumpEntryFee(){
+  return jumpPlayedOnce ? MINIGAME_ENTRY_FEE : 0;
 }
 
 function showJumpOverlay(title, sub, big, buttonText, buttonVisible=true){
@@ -3647,9 +3750,11 @@ function openJumpGameScreen(){
   if(!currentNick) return;
   switchPage("jumpgame");
   resetJumpGame();
+
+  const fee = getJumpEntryFee();
   showJumpOverlay(
     "다람쥐 점프!",
-    "참가비 <b>🌰 100k</b><br>시작 버튼을 누르면 3초 뒤 게임이 시작돼.",
+    "참가비 <b>" + (fee > 0 ? "🌰 " + fmtShort(fee) : "첫 1회 무료") + "</b><br>시작 버튼을 누르면 3초 뒤 게임이 시작돼.",
     "준비",
     "게임 시작",
     true
@@ -3660,19 +3765,24 @@ function openJumpGameScreen(){
 function startJumpGame(){
   if(!currentNick) return;
   if(jumpGame.running) return;
-  if(acorn < MINIGAME_ENTRY_FEE){
+
+  const fee = getJumpEntryFee();
+  if(fee > 0 && acorn < fee){
     showJumpOverlay(
       "참가비 부족",
-      "이 미니게임은 시작할 때 <b>🌰 100k</b>가 필요해.",
+      "이 미니게임은 시작할 때 <b>🌰 " + fmtShort(fee) + "</b>가 필요해.",
       "ㅠㅠ",
       "게임 시작",
       true
     );
-    jumpResultBox.innerHTML = "참가비가 부족해.<br>필요 도토리: <b>100k</b>";
+    jumpResultBox.innerHTML = "참가비가 부족해.<br>필요 도토리: <b>" + fmtShort(fee) + "</b>";
     return;
   }
 
-  spendAcorn(MINIGAME_ENTRY_FEE);
+  if(fee > 0){
+    spendAcorn(fee);
+  }
+  jumpPlayedOnce = true;
   render();
   saveCurrent();
 
@@ -3752,7 +3862,7 @@ function endJumpGame(){
   stopJumpLoop();
 
   const score = jumpGame.score;
-  const coinReward = Math.round(score * 0.001);
+  const coinReward = Math.round(score * 0.1);
   const trophyReward = score * 10;
 
   if(score > jumpBestScore) jumpBestScore = score;
@@ -4105,5 +4215,5 @@ runOpening();
   </script>
 </body>
 </html>
-  return count;
+  };
 }
