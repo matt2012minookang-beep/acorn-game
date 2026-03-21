@@ -83,7 +83,7 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.35);
       font-weight:900;
       cursor:pointer;
-      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
     }
     .trophy-chip:active{ transform: scale(0.98); }
     .trophy-chip .emoji{
@@ -93,6 +93,17 @@
     .trophy-chip .count{
       min-width:24px;
       text-align:center;
+    }
+    .trophy-chip.alert{
+      border-color: rgba(255,216,77,.78);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 18px rgba(255,216,77,.22),
+        0 0 36px rgba(255,216,77,.12);
+      animation: buttonGlow 1.15s ease-in-out infinite alternate;
     }
 
     .coin-under{
@@ -838,77 +849,10 @@
       opacity:.9;
     }
 
-    .placeholder-box{
-      min-height:220px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      font-size:18px;
-      font-weight:900;
-      opacity:.8;
-      border-radius:20px;
-      background: rgba(255,255,255,.04);
-      border:1px dashed rgba(255,255,255,.16);
-    }
-
     .mini-wrap{
       display:grid;
       grid-template-columns:1fr;
       gap:14px;
-    }
-    .mini-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-    .mini-badges{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .mini-badge{
-      padding:8px 12px;
-      border-radius:999px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      font-weight:900;
-      font-size:13px;
-    }
-    .mini-controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .mini-btn{
-      padding:12px 14px;
-      border:none;
-      border-radius:14px;
-      background: var(--accent);
-      color:#fff;
-      font-weight:1000;
-      cursor:pointer;
-    }
-    .mini-btn:disabled{
-      opacity:.45;
-      cursor:not-allowed;
-      background: rgba(122,44,255,.35);
-    }
-    .mini-canvas-wrap{
-      border-radius:22px;
-      overflow:hidden;
-      background: rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.12);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
-    }
-    #jumpCanvas{
-      width:100%;
-      height:auto;
-      display:block;
-      background:#7fd3ff;
-      touch-action:none;
     }
     .mini-log{
       padding:14px;
@@ -917,6 +861,114 @@
       border:1px solid rgba(255,255,255,.12);
       line-height:1.7;
       font-size:14px;
+    }
+
+    .jump-screen-wrap{
+      position:relative;
+      width:min(760px, 100%);
+      margin:0 auto;
+      height:calc(100vh - 130px);
+      min-height:520px;
+      border-radius:24px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 20px 50px rgba(0,0,0,.28);
+    }
+    #jumpCanvas{
+      width:100%;
+      height:100%;
+      display:block;
+      background:#7fd3ff;
+      touch-action:none;
+    }
+    .jump-top-ui{
+      position:absolute;
+      top:14px;
+      left:14px;
+      right:14px;
+      z-index:3;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      pointer-events:none;
+    }
+    .jump-badge-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      pointer-events:none;
+    }
+    .jump-badge{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+      font-weight:900;
+      font-size:13px;
+    }
+    .jump-action-row{
+      display:flex;
+      gap:8px;
+      pointer-events:auto;
+    }
+    .jump-ui-btn{
+      padding:10px 12px;
+      border:none;
+      border-radius:14px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.16);
+      color:#fff;
+      cursor:pointer;
+      font-weight:1000;
+    }
+    .jump-overlay{
+      position:absolute;
+      inset:0;
+      z-index:4;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:20px;
+      background: rgba(0,0,0,.0);
+      color:#fff;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, background .18s ease;
+    }
+    .jump-overlay.show{
+      opacity:1;
+      background: rgba(0,0,0,.52);
+      pointer-events:auto;
+    }
+    .jump-overlay-card{
+      width:min(460px, 92%);
+      padding:22px 18px;
+      border-radius:24px;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 28px 110px rgba(0,0,0,.45);
+      backdrop-filter: blur(12px);
+    }
+    .jump-overlay-title{
+      font-size:34px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .jump-overlay-sub{
+      font-size:15px;
+      opacity:.92;
+      line-height:1.7;
+      margin-bottom:16px;
+    }
+    .jump-overlay-big{
+      font-size:64px;
+      font-weight:1000;
+      line-height:1;
+      margin:8px 0 14px;
     }
 
     .overlay{
@@ -1218,7 +1270,7 @@
       gap:10px;
       margin-top:-8px;
       opacity:0;
-      animation:introBarAppear .6s ease .2s forwards;
+      animation:introBarAppear .25s ease forwards;
     }
     @keyframes introBarAppear{
       to{ opacity:1; }
@@ -1246,7 +1298,6 @@
         inset 0 0 8px rgba(255,255,255,.32),
         0 0 16px rgba(136,83,255,.38);
       position:relative;
-      transition: width .08s linear;
       will-change: width;
     }
     .intro-progress-fill::after{
@@ -1289,6 +1340,12 @@
         gap:8px;
         padding-left:10px;
         padding-right:10px;
+      }
+      .jump-overlay-title{
+        font-size:28px;
+      }
+      .jump-overlay-big{
+        font-size:52px;
       }
     }
 
@@ -1369,7 +1426,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.27</div>
+        <div class="intro-version">v1.29</div>
       </div>
     </div>
   </div>
@@ -1478,7 +1535,7 @@
             보유: <b><span id="treeCount">0</span>개</b> · 현재 수익: <b><span id="treeIncome">0</span>/s</b>
           </div>
         </div>
-        <div class="price"><span>🌰</span><span id="treePrice">5000k</span></div>
+        <div class="price"><span>🌰</span><span id="treePrice">1m</span></div>
       </div>
       <button class="buy" id="buyTree">구매</button>
       <div class="owned" id="treeHint"></div>
@@ -1627,31 +1684,63 @@
     <div class="page" id="pageMinigame">
       <div class="page-wrap">
         <div class="page-card">
-          <div class="page-title">🎮 다람쥐 점프!</div>
-          <div class="page-sub">참가비 100K 도토리. 클릭/터치/스페이스로 점프해서 장애물을 피해 봐.</div>
+          <div class="page-title">🎮 미니게임</div>
+          <div class="page-sub">원하는 미니게임을 골라 시작해.</div>
 
           <div class="mini-wrap">
-            <div class="mini-head">
-              <div class="mini-badges">
-                <div class="mini-badge">참가비: 🌰 100k</div>
-                <div class="mini-badge">현재 점수: <span id="jumpScoreText">0</span></div>
-                <div class="mini-badge">최고 점수: <span id="jumpBestText">0</span></div>
-                <div class="mini-badge">상태: <span id="jumpStateText">대기중</span></div>
+            <div class="item">
+              <div class="item-top">
+                <div>
+                  <div class="item-name">🐿️ 다람쥐 점프!</div>
+                  <div class="item-desc">
+                    클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>
+                    참가비: <b>🌰 100k</b> · 보상: <b>코인 = 점수의 0.1%(반올림)</b>, <b>트로피 = 점수 × 10</b>
+                  </div>
+                </div>
               </div>
-
-              <div class="mini-controls">
-                <button class="mini-btn" id="jumpStartBtn">게임 시작</button>
+              <button class="buy" id="openJumpGameBtn">미니게임 시작</button>
+              <div class="owned" id="jumpLobbyInfo">
+                최고 점수: 0
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            <div class="mini-canvas-wrap">
-              <canvas id="jumpCanvas" width="360" height="560"></canvas>
+    <div class="page" id="pageJumpGame">
+      <div class="page-wrap" style="padding-top:14px;">
+        <div class="jump-screen-wrap">
+          <canvas id="jumpCanvas" width="420" height="700"></canvas>
+
+          <div class="jump-top-ui">
+            <div class="jump-badge-row">
+              <div class="jump-badge">점수 <span id="jumpScoreText">0</span></div>
+              <div class="jump-badge">최고 <span id="jumpBestText">0</span></div>
+              <div class="jump-badge">상태 <span id="jumpStateText">대기중</span></div>
             </div>
 
-            <div class="mini-log" id="jumpResultBox">
-              아직 플레이하지 않았어.<br>
-              스페이스, 클릭, 터치 중 아무거나 눌러 점프할 수 있어.
+            <div class="jump-action-row">
+              <button class="jump-ui-btn" id="jumpExitBtn">나가기</button>
             </div>
+          </div>
+
+          <div class="jump-overlay show" id="jumpOverlay">
+            <div class="jump-overlay-card">
+              <div class="jump-overlay-title" id="jumpOverlayTitle">다람쥐 점프!</div>
+              <div class="jump-overlay-sub" id="jumpOverlaySub">
+                참가비 100k를 내고 시작할까?
+              </div>
+              <div class="jump-overlay-big" id="jumpOverlayBig">준비</div>
+              <button class="mini-btn" id="jumpStartBtn">게임 시작</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-card" style="margin-top:14px;">
+          <div class="mini-log" id="jumpResultBox">
+            아직 플레이하지 않았어.<br>
+            미니게임 시작 버튼을 누르면 3초 카운트다운 후 시작해.
           </div>
         </div>
       </div>
@@ -1756,8 +1845,8 @@
     </div>
   </div>
 
-<script>
-const LS_KEY = "dotori_game_profiles_v127";
+  <script>
+const LS_KEY = "dotori_game_profiles_v129";
 
 const SHORT_SUFFIXES = [
   "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
@@ -1948,7 +2037,7 @@ function getNextChipmunkCost(nextIndex){
   return 5000 + (nextIndex - 1) * 500;
 }
 function getNextTreeCost(nextIndex){
-  return 5000000 + (nextIndex - 1) * 500000;
+  return 1000000 + (nextIndex - 1) * 200000;
 }
 
 function getGoldenChance(){
@@ -2137,6 +2226,7 @@ let toastTimer = null;
 
 const pageHome = document.getElementById("pageHome");
 const pageMinigame = document.getElementById("pageMinigame");
+const pageJumpGame = document.getElementById("pageJumpGame");
 const pageCoinShop = document.getElementById("pageCoinShop");
 const navHome = document.getElementById("navHome");
 const navMinigame = document.getElementById("navMinigame");
@@ -2161,16 +2251,21 @@ const goldenChanceMeta = document.getElementById("goldenChanceMeta");
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
 
-// 미니게임 DOM
+const openJumpGameBtn = document.getElementById("openJumpGameBtn");
+const jumpLobbyInfo = document.getElementById("jumpLobbyInfo");
 const jumpCanvas = document.getElementById("jumpCanvas");
 const jumpCtx = jumpCanvas.getContext("2d");
 const jumpStartBtn = document.getElementById("jumpStartBtn");
+const jumpExitBtn = document.getElementById("jumpExitBtn");
 const jumpScoreText = document.getElementById("jumpScoreText");
 const jumpBestText = document.getElementById("jumpBestText");
 const jumpStateText = document.getElementById("jumpStateText");
 const jumpResultBox = document.getElementById("jumpResultBox");
+const jumpOverlay = document.getElementById("jumpOverlay");
+const jumpOverlayTitle = document.getElementById("jumpOverlayTitle");
+const jumpOverlaySub = document.getElementById("jumpOverlaySub");
+const jumpOverlayBig = document.getElementById("jumpOverlayBig");
 
-// 플로팅 텍스트 제한
 const FLOAT_LIMIT_PER_TYPE = 20;
 const activeFloatCounts = {
   click: 0,
@@ -2179,9 +2274,9 @@ const activeFloatCounts = {
   tree: 0
 };
 
-// 미니게임 상태
 const MINIGAME_ENTRY_FEE = 100000;
 let jumpBestScore = 0;
+let jumpCountdownTimer = null;
 let jumpGame = {
   running: false,
   raf: 0,
@@ -2191,14 +2286,13 @@ let jumpGame = {
   spawnTimer: 0,
   bgOffset: 0,
   player: {
-    x: 78,
-    y: 280,
-    w: 34,
-    h: 34,
+    x: 86,
+    y: 330,
+    w: 36,
+    h: 36,
     vy: 0
   },
-  obstacles: [],
-  stars: []
+  obstacles: []
 };
 
 function normalizeByTier(){
@@ -2232,7 +2326,6 @@ function getUnclaimedRankCount(){
   }
   return count;
 }
-
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
   toast.style.display = "block";
@@ -2244,10 +2337,11 @@ function switchPage(page){
   currentPage = page;
   pageHome.classList.toggle("show", page === "home");
   pageMinigame.classList.toggle("show", page === "minigame");
+  pageJumpGame.classList.toggle("show", page === "jumpgame");
   pageCoinShop.classList.toggle("show", page === "coinshop");
 
   navHome.classList.toggle("active", page === "home");
-  navMinigame.classList.toggle("active", page === "minigame");
+  navMinigame.classList.toggle("active", page === "minigame" || page === "jumpgame");
   navCoinShop.classList.toggle("active", page === "coinshop");
 
   const isHome = page === "home";
@@ -2260,8 +2354,9 @@ function switchPage(page){
     closeAchieve();
   }
 
-  if(page !== "minigame"){
+  if(page !== "jumpgame"){
     stopJumpLoop();
+    clearJumpCountdown();
   }else{
     drawJumpGame();
   }
@@ -2469,6 +2564,7 @@ function logout(){
   closeAchieve();
   closeTrophy();
   stopJumpLoop();
+  clearJumpCountdown();
   showNicknameOverlay();
 }
 
@@ -2796,7 +2892,9 @@ function render(){
   updateGoldenUI();
   updateJumpTexts();
 
+  const unclaimedRankCoins = getUnclaimedRankCount() > 0;
   achieveBtn.classList.toggle("alert", canClaimAnyAchievement());
+  trophyChip.classList.toggle("alert", unclaimedRankCoins);
 
   if(currentNick){
     nickWrap.style.display = "block";
@@ -2842,6 +2940,8 @@ function render(){
   dockCs.textContent = fmtShort(csCount);
   dockTree.textContent = fmtShort(treeCount);
   dockIncome.textContent = fmtShort(getTotalAutoIncomePerSec());
+
+  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b>";
 }
 
 function spawnFloatText(x, y, text, color, type){
@@ -2930,6 +3030,7 @@ function addSuspicion(points, reason){
     closeAchieve();
     closeTrophy();
     stopJumpLoop();
+    clearJumpCountdown();
     showToast(reason);
     return false;
   }
@@ -3498,12 +3599,30 @@ navCoinShop.addEventListener("click", ()=>{
   switchPage("coinshop");
 });
 
-// =========================
-// 미니게임: 다람쥐 점프
-// =========================
 function updateJumpTexts(){
   jumpBestText.textContent = fmtShort(jumpBestScore);
   jumpScoreText.textContent = fmtShort(jumpGame.score || 0);
+  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b>";
+}
+
+function showJumpOverlay(title, sub, big, buttonText, buttonVisible=true){
+  jumpOverlayTitle.textContent = title;
+  jumpOverlaySub.innerHTML = sub;
+  jumpOverlayBig.textContent = big;
+  jumpStartBtn.style.display = buttonVisible ? "inline-block" : "none";
+  if(buttonVisible) jumpStartBtn.textContent = buttonText || "게임 시작";
+  jumpOverlay.classList.add("show");
+}
+
+function hideJumpOverlay(){
+  jumpOverlay.classList.remove("show");
+}
+
+function clearJumpCountdown(){
+  if(jumpCountdownTimer){
+    clearInterval(jumpCountdownTimer);
+    jumpCountdownTimer = null;
+  }
 }
 
 function resetJumpGame(){
@@ -3514,43 +3633,78 @@ function resetJumpGame(){
   jumpGame.spawnTimer = 0;
   jumpGame.bgOffset = 0;
   jumpGame.player = {
-    x: 78,
-    y: 280,
-    w: 34,
-    h: 34,
+    x: 86,
+    y: 330,
+    w: 36,
+    h: 36,
     vy: 0
   };
   jumpGame.obstacles = [];
-  jumpGame.stars = [];
-  for(let i=0;i<24;i++){
-    jumpGame.stars.push({
-      x: Math.random() * jumpCanvas.width,
-      y: Math.random() * (jumpCanvas.height - 120),
-      s: 1 + Math.random() * 2
-    });
-  }
   jumpStateText.textContent = "대기중";
   updateJumpTexts();
   drawJumpGame();
+}
+
+function openJumpGameScreen(){
+  if(!currentNick) return;
+  switchPage("jumpgame");
+  resetJumpGame();
+  showJumpOverlay(
+    "다람쥐 점프!",
+    "참가비 <b>🌰 100k</b><br>시작 버튼을 누르면 3초 뒤 게임이 시작돼.",
+    "준비",
+    "게임 시작",
+    true
+  );
+  jumpResultBox.innerHTML = "아직 플레이하지 않았어.<br>미니게임 시작 버튼을 누르면 3초 카운트다운 후 시작해.";
 }
 
 function startJumpGame(){
   if(!currentNick) return;
   if(jumpGame.running) return;
   if(acorn < MINIGAME_ENTRY_FEE){
+    showJumpOverlay(
+      "참가비 부족",
+      "이 미니게임은 시작할 때 <b>🌰 100k</b>가 필요해.",
+      "ㅠㅠ",
+      "게임 시작",
+      true
+    );
     jumpResultBox.innerHTML = "참가비가 부족해.<br>필요 도토리: <b>100k</b>";
     return;
   }
 
   spendAcorn(MINIGAME_ENTRY_FEE);
-  resetJumpGame();
-  jumpGame.running = true;
-  jumpStateText.textContent = "플레이중";
-  jumpResultBox.innerHTML = "게임 시작!<br>클릭 / 터치 / 스페이스로 점프!";
   render();
   saveCurrent();
-  jumpGame.lastTime = performance.now();
-  jumpGame.raf = requestAnimationFrame(jumpLoop);
+
+  clearJumpCountdown();
+  let count = 3;
+  jumpStateText.textContent = "카운트다운";
+  showJumpOverlay("다람쥐 점프!", "곧 시작해!", String(count), "", false);
+
+  jumpCountdownTimer = setInterval(()=>{
+    count -= 1;
+    if(count > 0){
+      jumpOverlayBig.textContent = String(count);
+      return;
+    }
+
+    if(count === 0){
+      jumpOverlayBig.textContent = "START!";
+      jumpOverlaySub.innerHTML = "장애물을 피해 살아남아!";
+      return;
+    }
+
+    clearJumpCountdown();
+    hideJumpOverlay();
+    resetJumpGame();
+    jumpGame.running = true;
+    jumpStateText.textContent = "플레이중";
+    jumpResultBox.innerHTML = "게임 시작!<br>클릭 / 터치 / 스페이스로 점프!";
+    jumpGame.lastTime = performance.now();
+    jumpGame.raf = requestAnimationFrame(jumpLoop);
+  }, 800);
 }
 
 function stopJumpLoop(){
@@ -3563,24 +3717,24 @@ function stopJumpLoop(){
 
 function jumpInput(){
   if(!currentNick) return;
-  if(currentPage !== "minigame") return;
+  if(currentPage !== "jumpgame") return;
   if(!jumpGame.running) return;
 
-  jumpGame.player.vy -= 220;
-  if(jumpGame.player.vy < -220) jumpGame.player.vy = -220;
+  jumpGame.player.vy -= 440;
+  if(jumpGame.player.vy < -440) jumpGame.player.vy = -440;
 }
 
 function createJumpObstacle(){
-  const minGap = 132;
-  const maxGap = 172;
-  const gap = maxGap - Math.min(40, jumpGame.score * 0.6) + Math.random() * 18;
-  const safeTop = 70;
-  const safeBottom = 70;
+  const minGap = 150;
+  const maxGap = 196;
+  const gap = Math.max(minGap, maxGap - Math.min(48, jumpGame.score * 0.7) + Math.random() * 16);
+  const safeTop = 85;
+  const safeBottom = 85;
   const openY = safeTop + Math.random() * (jumpCanvas.height - safeTop - safeBottom - gap);
-  const width = 34;
+  const width = 32;
 
   jumpGame.obstacles.push({
-    x: jumpCanvas.width + 40,
+    x: jumpCanvas.width + 50,
     w: width,
     gapY: openY,
     gapH: gap,
@@ -3612,12 +3766,19 @@ function endJumpGame(){
   render();
   saveCurrent();
 
+  showJumpOverlay(
+    "게임 오버!",
+    "점수 <b>" + fmtShort(score) + "</b><br>보상을 정산했어.",
+    "☠️",
+    "다시 시작",
+    true
+  );
+
   jumpResultBox.innerHTML =
     "게임 오버!<br>" +
     "점수: <b>" + fmtShort(score) + "</b><br>" +
     "코인 보상: <b>" + fmtShort(coinReward) + "</b><br>" +
-    "트로피 보상: <b>" + fmtShort(trophyReward) + "</b><br>" +
-    "다시 하려면 시작 버튼을 눌러.";
+    "트로피 보상: <b>" + fmtShort(trophyReward) + "</b>";
 }
 
 function jumpLoop(now){
@@ -3630,23 +3791,23 @@ function jumpLoop(now){
   jumpGame.bgOffset += jumpGame.worldSpeed * 0.25 * dt;
   jumpGame.spawnTimer += dt;
 
-  if(jumpGame.spawnTimer >= 1.22){
+  if(jumpGame.spawnTimer >= 1.18){
     jumpGame.spawnTimer = 0;
     createJumpObstacle();
   }
 
-  jumpGame.worldSpeed += dt * 2.2;
-  if(jumpGame.worldSpeed > 290) jumpGame.worldSpeed = 290;
+  jumpGame.worldSpeed += dt * 2.0;
+  if(jumpGame.worldSpeed > 285) jumpGame.worldSpeed = 285;
 
-  jumpGame.player.vy += 520 * dt;
+  jumpGame.player.vy += 650 * dt;
   jumpGame.player.y += jumpGame.player.vy * dt;
 
-  const playerR = jumpGame.player.w * 0.45;
+  const playerR = jumpGame.player.w * 0.44;
   const playerCx = jumpGame.player.x + jumpGame.player.w / 2;
   const playerCy = jumpGame.player.y + jumpGame.player.h / 2;
 
   if(jumpGame.player.y <= 0 || jumpGame.player.y + jumpGame.player.h >= jumpCanvas.height){
-    drawJumpGame();
+    drawJumpGame(true);
     endJumpGame();
     return;
   }
@@ -3659,7 +3820,7 @@ function jumpLoop(now){
 
     if(circleRectCollide(playerCx, playerCy, playerR, topRect.x, topRect.y, topRect.w, topRect.h) ||
        circleRectCollide(playerCx, playerCy, playerR, bottomRect.x, bottomRect.y, bottomRect.w, bottomRect.h)){
-      drawJumpGame();
+      drawJumpGame(true);
       endJumpGame();
       return;
     }
@@ -3671,13 +3832,13 @@ function jumpLoop(now){
     }
   }
 
-  jumpGame.obstacles = jumpGame.obstacles.filter(obs => obs.x + obs.w > -30);
+  jumpGame.obstacles = jumpGame.obstacles.filter(obs => obs.x + obs.w > -40);
 
-  drawJumpGame();
+  drawJumpGame(false);
   jumpGame.raf = requestAnimationFrame(jumpLoop);
 }
 
-function drawJumpGame(){
+function drawJumpGame(darken=false){
   const ctx = jumpCtx;
   const w = jumpCanvas.width;
   const h = jumpCanvas.height;
@@ -3685,44 +3846,48 @@ function drawJumpGame(){
   ctx.clearRect(0, 0, w, h);
 
   const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, "#7fd3ff");
-  sky.addColorStop(0.6, "#9ce7ff");
-  sky.addColorStop(1, "#d8f7ff");
+  sky.addColorStop(0, "#78d7ff");
+  sky.addColorStop(0.55, "#a9ecff");
+  sky.addColorStop(1, "#dcfbff");
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  // 구름
-  ctx.fillStyle = "rgba(255,255,255,.8)";
-  for(let i=0;i<4;i++){
-    const cx = (i * 110 - (jumpGame.bgOffset * 0.35 % 440));
-    const cy = 80 + (i%2)*36;
+  ctx.fillStyle = "rgba(255,255,255,.82)";
+  for(let i=0;i<5;i++){
+    const cx = (i * 130 - (jumpGame.bgOffset * 0.35 % 650));
+    const cy = 90 + (i%2)*48;
     drawCloud(ctx, cx, cy);
   }
 
-  // 산
+  for(let i=0;i<7;i++){
+    const x = (i * 110 - (jumpGame.bgOffset * 0.55 % 770));
+    drawBgTree(ctx, x, h - 110, 0.65);
+  }
+
   ctx.fillStyle = "#7ac28d";
-  drawHill(ctx, 0 - (jumpGame.bgOffset * 0.15 % w), h - 110, 180, 120);
-  drawHill(ctx, 170 - (jumpGame.bgOffset * 0.15 % w), h - 105, 210, 125);
-  drawHill(ctx, 340 - (jumpGame.bgOffset * 0.15 % w), h - 108, 220, 130);
+  drawHill(ctx, 0 - (jumpGame.bgOffset * 0.15 % w), h - 120, 220, 120);
+  drawHill(ctx, 190 - (jumpGame.bgOffset * 0.15 % w), h - 115, 250, 132);
+  drawHill(ctx, 400 - (jumpGame.bgOffset * 0.15 % w), h - 118, 260, 124);
 
-  // 바닥 느낌
-  ctx.fillStyle = "#6cc17b";
-  ctx.fillRect(0, h - 46, w, 46);
+  ctx.fillStyle = "#68bf75";
+  ctx.fillRect(0, h - 54, w, 54);
 
-  // 장애물
   for(const obs of jumpGame.obstacles){
     drawObstacle(ctx, obs);
   }
 
-  // 플레이어
   drawPlayer(ctx, jumpGame.player);
 
-  // HUD
-  ctx.fillStyle = "rgba(0,0,0,.25)";
-  ctx.fillRect(12, 12, 138, 42);
+  ctx.fillStyle = "rgba(0,0,0,.28)";
+  ctx.fillRect(14, 14, 156, 44);
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 22px Malgun Gothic";
-  ctx.fillText("점수 " + jumpGame.score, 22, 40);
+  ctx.font = "bold 24px Malgun Gothic";
+  ctx.fillText("점수 " + jumpGame.score, 26, 44);
+
+  if(darken){
+    ctx.fillStyle = "rgba(0,0,0,.42)";
+    ctx.fillRect(0, 0, w, h);
+  }
 }
 
 function drawCloud(ctx, x, y){
@@ -3741,6 +3906,21 @@ function drawHill(ctx, x, y, width, height){
   ctx.lineTo(x + width, jumpCanvas.height);
   ctx.lineTo(x, jumpCanvas.height);
   ctx.closePath();
+  ctx.fill();
+}
+
+function drawBgTree(ctx, x, groundY, scale){
+  ctx.fillStyle = "#7b5034";
+  ctx.fillRect(x + 12*scale, groundY - 28*scale, 8*scale, 28*scale);
+  ctx.fillStyle = "#3fab58";
+  ctx.beginPath();
+  ctx.arc(x + 16*scale, groundY - 36*scale, 18*scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + 5*scale, groundY - 28*scale, 14*scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + 26*scale, groundY - 26*scale, 14*scale, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -3779,74 +3959,76 @@ function drawPlayer(ctx, p){
   const cx = x + p.w/2;
   const cy = y + p.h/2;
 
-  // 꼬리
   ctx.fillStyle = "#9b6239";
   ctx.beginPath();
-  ctx.ellipse(x - 6, y + 18, 10, 7, -0.8, 0, Math.PI * 2);
+  ctx.ellipse(x - 7, y + 18, 11, 8, -0.8, 0, Math.PI * 2);
   ctx.fill();
 
-  // 몸통
   ctx.fillStyle = "#9b6239";
   ctx.beginPath();
-  ctx.ellipse(cx, cy + 2, 13, 15, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + 3, 14, 16, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 배
   ctx.fillStyle = "#f4d4b0";
   ctx.beginPath();
-  ctx.ellipse(cx + 1, cy + 5, 7, 9, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + 1, cy + 6, 7, 10, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 머리
   ctx.fillStyle = "#9b6239";
   ctx.beginPath();
-  ctx.arc(cx + 3, y + 12, 10, 0, Math.PI * 2);
+  ctx.arc(cx + 4, y + 12, 10.5, 0, Math.PI * 2);
   ctx.fill();
 
-  // 귀
   ctx.fillStyle = "#9b6239";
   ctx.beginPath();
   ctx.moveTo(cx - 2, y + 6);
-  ctx.lineTo(cx + 2, y - 6);
-  ctx.lineTo(cx + 7, y + 5);
+  ctx.lineTo(cx + 2, y - 8);
+  ctx.lineTo(cx + 8, y + 5);
   ctx.fill();
+
   ctx.beginPath();
   ctx.moveTo(cx + 8, y + 6);
-  ctx.lineTo(cx + 12, y - 5);
-  ctx.lineTo(cx + 16, y + 7);
+  ctx.lineTo(cx + 12, y - 7);
+  ctx.lineTo(cx + 17, y + 7);
   ctx.fill();
 
-  // 눈
   ctx.fillStyle = "#111";
   ctx.beginPath();
-  ctx.arc(cx + 6, y + 12, 1.7, 0, Math.PI * 2);
+  ctx.arc(cx + 7, y + 12, 1.8, 0, Math.PI * 2);
   ctx.fill();
 
-  // 코
   ctx.fillStyle = "#3a1d10";
   ctx.beginPath();
-  ctx.arc(cx + 11, y + 16, 1.5, 0, Math.PI * 2);
+  ctx.arc(cx + 12, y + 16, 1.6, 0, Math.PI * 2);
   ctx.fill();
 
-  // 발
   ctx.fillStyle = "#7d4c2b";
-  ctx.fillRect(cx - 7, y + 26, 4, 6);
-  ctx.fillRect(cx + 1, y + 26, 4, 6);
+  ctx.fillRect(cx - 7, y + 28, 4, 6);
+  ctx.fillRect(cx + 1, y + 28, 4, 6);
 }
 
-jumpStartBtn.addEventListener("click", startJumpGame);
+openJumpGameBtn.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  openJumpGameScreen();
+});
+
+jumpStartBtn.addEventListener("click", ()=>{
+  startJumpGame();
+});
+
+jumpExitBtn.addEventListener("click", ()=>{
+  stopJumpLoop();
+  clearJumpCountdown();
+  switchPage("minigame");
+});
 
 jumpCanvas.addEventListener("pointerdown", (e)=>{
   e.preventDefault();
-  if(!jumpGame.running){
-    // 시작 전에는 버튼 사용 유도
-    return;
-  }
-  jumpInput();
+  if(jumpGame.running) jumpInput();
 });
 
 document.addEventListener("keydown", (e)=>{
-  if(currentPage !== "minigame") return;
+  if(currentPage !== "jumpgame") return;
   if(e.code === "Space"){
     e.preventDefault();
     if(jumpGame.running) jumpInput();
@@ -3887,43 +4069,31 @@ function createIrregularStops(totalMs = 3000){
 function runOpening(){
   const totalMs = 3000;
   const stops = createIrregularStops(totalMs);
-
   const start = performance.now();
-  let visualProgress = 0;
-  let stopIndex = 0;
-  let targetProgress = 0;
 
   function tick(now){
     const elapsed = now - start;
 
-    while(stopIndex < stops.length && elapsed >= stops[stopIndex].time){
-      targetProgress = stops[stopIndex].progress;
-      stopIndex++;
+    let target = 0;
+    for(let i = 0; i < stops.length; i++){
+      if(elapsed >= stops[i].time) target = stops[i].progress;
+      else break;
     }
 
-    const diff = targetProgress - visualProgress;
-    const smoothing = diff > 10 ? 0.18 : 0.11;
-    visualProgress += diff * smoothing;
+    if(elapsed >= totalMs) target = 100;
+    introProgressFill.style.width = target + "%";
 
-    if(Math.abs(diff) < 0.08 && targetProgress > visualProgress){
-      visualProgress = targetProgress;
-    }
-
-    introProgressFill.style.width = Math.min(100, visualProgress) + "%";
-
-    if(elapsed < totalMs || visualProgress < 99.95){
+    if(elapsed < totalMs){
       requestAnimationFrame(tick);
       return;
     }
-
-    introProgressFill.style.width = "100%";
 
     setTimeout(()=>{
       introScreen.classList.add("hidden");
       setTimeout(()=>{
         showNicknameOverlay();
       }, 550);
-    }, 100);
+    }, 120);
   }
 
   requestAnimationFrame(tick);
@@ -3934,6 +4104,6 @@ switchPage("home");
 resetJumpGame();
 render();
 runOpening();
-</script>
+  </script>
 </body>
 </html>
