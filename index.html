@@ -210,6 +210,8 @@
       padding:14px;
       padding-top:54px;
       display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
     }
     .shop-panel.show{ display:block; }
 
@@ -1297,7 +1299,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.25</div>
+        <div class="intro-version">v1.26</div>
       </div>
     </div>
   </div>
@@ -1396,6 +1398,21 @@
       <button class="buy" id="buyChipmunk">고용</button>
       <div class="owned" id="csHint"></div>
     </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🌳 도토리 나무</div>
+          <div class="item-desc">
+            1개당 <b>0.1초마다 +50</b> 도토리<br>
+            보유: <b><span id="treeCount">0</span>개</b> · 현재 수익: <b><span id="treeIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="treePrice">5000k</span></div>
+      </div>
+      <button class="buy" id="buyTree">구매</button>
+      <div class="owned" id="treeHint"></div>
+    </div>
   </div>
 
   <div class="achieve-panel" id="achievePanel" aria-label="업적">
@@ -1442,6 +1459,14 @@
       <div class="achievement-reward" id="achievementRewardChipmunk">보상</div>
       <button class="buy" id="claimAchievementChipmunk" disabled>받기</button>
       <div class="owned" id="achievementHintChipmunk"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardTree">
+      <div class="achievement-card-title" id="achievementTitleTree">도토리 나무 업적</div>
+      <div class="achievement-progress" id="achievementProgressTree">진행도</div>
+      <div class="achievement-reward" id="achievementRewardTree">보상</div>
+      <button class="buy" id="claimAchievementTree" disabled>받기</button>
+      <div class="owned" id="achievementHintTree"></div>
     </div>
 
     <div class="item achievement-card" id="achievementCardCoinShop">
@@ -1596,6 +1621,11 @@
     </div>
     <span class="dock-sep">·</span>
     <div class="dock-unit">
+      <span class="emo" id="treeDockEmoji">🌳</span>
+      <span class="label">x <span id="dockTree">0</span></span>
+    </div>
+    <span class="dock-sep">·</span>
+    <div class="dock-unit">
       <span class="label"><span id="dockIncome">0</span>/s</span>
     </div>
   </div>
@@ -1636,7 +1666,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v125";
+const LS_KEY = "dotori_game_profiles_v126";
 
 const SHORT_SUFFIXES = [
   "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
@@ -1717,6 +1747,7 @@ let clickAchievementStep = 1;
 let spentAchievementStep = 1;
 let squirrelAchievementStep = 1;
 let chipmunkAchievementStep = 1;
+let treeAchievementStep = 1;
 let coinShopPurchaseAchievementStep = 1;
 
 let totalClicks = 0;
@@ -1733,6 +1764,10 @@ const SQUIRREL_TICK_MS = 1000;
 let chipmunkNextPayouts = [];
 const CHIPMUNK_INCOME_PER_TICK = 10;
 const CHIPMUNK_TICK_MS = 1000;
+
+let treeNextPayouts = [];
+const TREE_INCOME_PER_TICK = 50;
+const TREE_TICK_MS = 100;
 
 let goldenReady = false;
 let goldenStartedAt = 0;
@@ -1821,6 +1856,9 @@ function getNextSquirrelCost(nextIndex){
 function getNextChipmunkCost(nextIndex){
   return 5000 + (nextIndex - 1) * 500;
 }
+function getNextTreeCost(nextIndex){
+  return 5000000 + (nextIndex - 1) * 500000;
+}
 
 function getGoldenChance(){
   return BASE_GOLDEN_CHANCE + goldenChanceLevel * 0.005;
@@ -1867,6 +1905,14 @@ function getChipmunkAchievementTarget(){
 }
 function getChipmunkAchievementReward(){
   return 14 + chipmunkAchievementStep;
+}
+function getTreeAchievementTarget(){
+  if(treeAchievementStep === 1) return 10;
+  if(treeAchievementStep <= 5) return treeAchievementStep * 10;
+  return 100 + (treeAchievementStep - 6) * 50;
+}
+function getTreeAchievementReward(){
+  return 20 + (treeAchievementStep - 1) * 5;
 }
 function getCoinShopPurchaseTarget(){
   if(coinShopPurchaseAchievementStep === 1) return 2;
@@ -1939,6 +1985,13 @@ const achievementRewardChipmunk = document.getElementById("achievementRewardChip
 const claimAchievementChipmunk = document.getElementById("claimAchievementChipmunk");
 const achievementHintChipmunk = document.getElementById("achievementHintChipmunk");
 
+const achievementCardTree = document.getElementById("achievementCardTree");
+const achievementTitleTree = document.getElementById("achievementTitleTree");
+const achievementProgressTree = document.getElementById("achievementProgressTree");
+const achievementRewardTree = document.getElementById("achievementRewardTree");
+const claimAchievementTree = document.getElementById("claimAchievementTree");
+const achievementHintTree = document.getElementById("achievementHintTree");
+
 const achievementCardCoinShop = document.getElementById("achievementCardCoinShop");
 const achievementTitleCoinShop = document.getElementById("achievementTitleCoinShop");
 const achievementProgressCoinShop = document.getElementById("achievementProgressCoinShop");
@@ -1964,6 +2017,12 @@ const csIncomeEl = document.getElementById("csIncome");
 const csPriceEl = document.getElementById("csPrice");
 const buyChipmunk = document.getElementById("buyChipmunk");
 const csHint = document.getElementById("csHint");
+
+const treeCountEl = document.getElementById("treeCount");
+const treeIncomeEl = document.getElementById("treeIncome");
+const treePriceEl = document.getElementById("treePrice");
+const buyTree = document.getElementById("buyTree");
+const treeHint = document.getElementById("treeHint");
 
 const overlay = document.getElementById("overlay");
 const newNick = document.getElementById("newNick");
@@ -1994,9 +2053,11 @@ const navCoinShop = document.getElementById("navCoinShop");
 
 const dockSq = document.getElementById("dockSq");
 const dockCs = document.getElementById("dockCs");
+const dockTree = document.getElementById("dockTree");
 const dockIncome = document.getElementById("dockIncome");
 const sqDockEmoji = document.getElementById("sqDockEmoji");
 const csDockEmoji = document.getElementById("csDockEmoji");
+const treeDockEmoji = document.getElementById("treeDockEmoji");
 const squirrelDock = document.getElementById("squirrelDock");
 
 const claimFreeCoinBtn = document.getElementById("claimFreeCoinBtn");
@@ -2091,6 +2152,7 @@ function buildSaveData(){
   const nowPerf = performance.now();
   const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
   const chipmunkRemainingMs = chipmunkNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
+  const treeRemainingMs = treeNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
   return {
     acorn,
     clickValue,
@@ -2103,6 +2165,7 @@ function buildSaveData(){
     spentAchievementStep,
     squirrelAchievementStep,
     chipmunkAchievementStep,
+    treeAchievementStep,
     coinShopPurchaseAchievementStep,
     totalClicks,
     totalSpentAcorn,
@@ -2111,6 +2174,7 @@ function buildSaveData(){
     freeCoinNextAt,
     squirrelRemainingMs,
     chipmunkRemainingMs,
+    treeRemainingMs,
     goldenReady,
     goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (nowPerf - goldenStartedAt))) : 0
   };
@@ -2135,6 +2199,7 @@ function applyLoadedProfile(p){
   spentAchievementStep = Number(p.spentAchievementStep ?? 1) || 1;
   squirrelAchievementStep = Number(p.squirrelAchievementStep ?? 1) || 1;
   chipmunkAchievementStep = Number(p.chipmunkAchievementStep ?? 1) || 1;
+  treeAchievementStep = Number(p.treeAchievementStep ?? 1) || 1;
   coinShopPurchaseAchievementStep = Number(p.coinShopPurchaseAchievementStep ?? 1) || 1;
   totalClicks = Number(p.totalClicks ?? 0) || 0;
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
@@ -2149,6 +2214,9 @@ function applyLoadedProfile(p){
 
   const csRemainings = Array.isArray(p.chipmunkRemainingMs) ? p.chipmunkRemainingMs : [];
   chipmunkNextPayouts = csRemainings.map(ms => nowPerf + Math.max(0, Number(ms) || 0));
+
+  const treeRemainings = Array.isArray(p.treeRemainingMs) ? p.treeRemainingMs : [];
+  treeNextPayouts = treeRemainings.map(ms => nowPerf + Math.max(0, Number(ms) || 0));
 
   const goldenRemainingMs = Number(p.goldenRemainingMs ?? 0) || 0;
   goldenStartedAt = nowPerf - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
@@ -2186,6 +2254,7 @@ function createProfile(nick){
   spentAchievementStep = 1;
   squirrelAchievementStep = 1;
   chipmunkAchievementStep = 1;
+  treeAchievementStep = 1;
   coinShopPurchaseAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
@@ -2194,6 +2263,7 @@ function createProfile(nick){
   freeCoinNextAt = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
+  treeNextPayouts = [];
   goldenReady = false;
   goldenStartedAt = 0;
   normalizeByTier();
@@ -2215,6 +2285,7 @@ function resetCurrentNickProgress(){
   spentAchievementStep = 1;
   squirrelAchievementStep = 1;
   chipmunkAchievementStep = 1;
+  treeAchievementStep = 1;
   coinShopPurchaseAchievementStep = 1;
   totalClicks = 0;
   totalSpentAcorn = 0;
@@ -2223,6 +2294,7 @@ function resetCurrentNickProgress(){
   freeCoinNextAt = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
+  treeNextPayouts = [];
   goldenReady = false;
   goldenStartedAt = 0;
   normalizeByTier();
@@ -2265,11 +2337,20 @@ function getSquirrelCount(){
 function getChipmunkCount(){
   return chipmunkNextPayouts.length;
 }
+function getTreeCount(){
+  return treeNextPayouts.length;
+}
 function getSquirrelIncomePerSec(){
   return getSquirrelCount() * SQUIRREL_INCOME_PER_TICK;
 }
 function getChipmunkIncomePerSec(){
   return getChipmunkCount() * CHIPMUNK_INCOME_PER_TICK;
+}
+function getTreeIncomePerSec(){
+  return getTreeCount() * (TREE_INCOME_PER_TICK * (1000 / TREE_TICK_MS));
+}
+function getTotalAutoIncomePerSec(){
+  return getSquirrelIncomePerSec() + getChipmunkIncomePerSec() + getTreeIncomePerSec();
 }
 
 function canClaimAcornAchievement(){ return acorn >= getAcornAchievementTarget(); }
@@ -2277,6 +2358,7 @@ function canClaimClickAchievement(){ return totalClicks >= getClickAchievementTa
 function canClaimSpentAchievement(){ return totalSpentAcorn >= getSpentAchievementTarget(); }
 function canClaimSquirrelAchievement(){ return getSquirrelCount() >= getSquirrelAchievementTarget(); }
 function canClaimChipmunkAchievement(){ return getChipmunkCount() >= getChipmunkAchievementTarget(); }
+function canClaimTreeAchievement(){ return getTreeCount() >= getTreeAchievementTarget(); }
 function canClaimCoinShopPurchaseAchievement(){ return totalCoinShopPurchases >= getCoinShopPurchaseTarget(); }
 
 function canClaimAnyAchievement(){
@@ -2286,6 +2368,7 @@ function canClaimAnyAchievement(){
     canClaimSpentAchievement() ||
     canClaimSquirrelAchievement() ||
     canClaimChipmunkAchievement() ||
+    canClaimTreeAchievement() ||
     canClaimCoinShopPurchaseAchievement()
   );
 }
@@ -2483,6 +2566,20 @@ function renderAchievements(){
     : "청솔모를 더 모아야 해.";
   achievementCardChipmunk.classList.toggle("ready", chipmunkReady);
 
+  const treeTarget = getTreeAchievementTarget();
+  const treeReward = getTreeAchievementReward();
+  const treeReady = canClaimTreeAchievement();
+  achievementTitleTree.textContent = "도토리 나무 Lv." + (treeAchievementStep - 1) + " → Lv." + treeAchievementStep;
+  achievementProgressTree.textContent =
+    "목표: 도토리 나무 " + fmtShort(treeTarget) + "개 · 진행도: " +
+    fmtShort(Math.min(getTreeCount(), treeTarget)) + " / " + fmtShort(treeTarget);
+  achievementRewardTree.textContent = "보상: 트로피 +" + fmtShort(treeReward);
+  claimAchievementTree.disabled = !treeReady;
+  achievementHintTree.textContent = treeReady
+    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
+    : "도토리 나무를 더 구매해야 해.";
+  achievementCardTree.classList.toggle("ready", treeReady);
+
   const coinShopTarget = getCoinShopPurchaseTarget();
   const coinShopReward = getCoinShopPurchaseReward();
   const coinShopReady = canClaimCoinShopPurchaseAchievement();
@@ -2598,9 +2695,21 @@ function render(){
     "다음 가격: " + fmtShort(nextCsCost) +
     " (구매 후 수익 " + fmtShort((csCount + 1) * CHIPMUNK_INCOME_PER_TICK) + "/s)";
 
+  const treeCount = getTreeCount();
+  const treeIncome = getTreeIncomePerSec();
+  treeCountEl.textContent = fmtShort(treeCount);
+  treeIncomeEl.textContent = fmtShort(treeIncome);
+  const nextTreeCost = getNextTreeCost(treeCount + 1);
+  treePriceEl.textContent = fmtShort(nextTreeCost);
+  buyTree.disabled = acorn < nextTreeCost;
+  treeHint.textContent =
+    "다음 가격: " + fmtShort(nextTreeCost) +
+    " (구매 후 수익 " + fmtShort((treeCount + 1) * TREE_INCOME_PER_TICK * (1000 / TREE_TICK_MS)) + "/s)";
+
   dockSq.textContent = fmtShort(sqCount);
   dockCs.textContent = fmtShort(csCount);
-  dockIncome.textContent = fmtShort(sqIncome + csIncome);
+  dockTree.textContent = fmtShort(treeCount);
+  dockIncome.textContent = fmtShort(getTotalAutoIncomePerSec());
 }
 
 function spawnFloatText(x, y, text, color){
@@ -2639,6 +2748,13 @@ function spawnChipmunkFloat(){
   const x = r.left + r.width / 2;
   const y = r.top - 4;
   spawnFloatText(x, y, "+10", "#7bdfff");
+}
+
+function spawnTreeFloat(){
+  const r = treeDockEmoji.getBoundingClientRect();
+  const x = r.left + r.width / 2;
+  const y = r.top - 4;
+  spawnFloatText(x, y, "+50", "#8fff96");
 }
 
 function mean(arr){
@@ -2854,6 +2970,15 @@ setInterval(()=>{
     }
   }
 
+  for(let i = 0; i < treeNextPayouts.length; i++){
+    while(now >= treeNextPayouts[i]){
+      treeNextPayouts[i] += TREE_TICK_MS;
+      acorn += TREE_INCOME_PER_TICK;
+      changed = true;
+      if(currentPage === "home") spawnTreeFloat();
+    }
+  }
+
   if(changed){
     render();
     saveCurrent();
@@ -2976,6 +3101,15 @@ claimAchievementChipmunk.addEventListener("click", ()=>{
   saveCurrent();
 });
 
+claimAchievementTree.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  if(!canClaimTreeAchievement()) return;
+  achievementCount += getTreeAchievementReward();
+  treeAchievementStep += 1;
+  render();
+  saveCurrent();
+});
+
 claimAchievementCoinShop.addEventListener("click", ()=>{
   if(!currentNick) return;
   if(!canClaimCoinShopPurchaseAchievement()) return;
@@ -3054,6 +3188,21 @@ buyChipmunk.addEventListener("click", ()=>{
   render();
   saveCurrent();
   if(currentPage === "home") spawnChipmunkFloat();
+});
+
+buyTree.addEventListener("click", ()=>{
+  if(!currentNick) return;
+
+  const treeCount = getTreeCount();
+  const cost = getNextTreeCost(treeCount + 1);
+  if(acorn < cost) return;
+
+  spendAcorn(cost);
+  treeNextPayouts.push(performance.now() + TREE_TICK_MS);
+
+  render();
+  saveCurrent();
+  if(currentPage === "home") spawnTreeFloat();
 });
 
 claimFreeCoinBtn.addEventListener("click", ()=>{
