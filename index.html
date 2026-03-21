@@ -219,7 +219,7 @@
       position:fixed;
       top:136px;
       left:14px;
-      width:min(395px, 92vw);
+      width:min(400px, 92vw);
       z-index:30;
       background: rgba(15,15,22,.78);
       border:1px solid rgba(255,255,255,.16);
@@ -649,7 +649,7 @@
       z-index:25;
       display:flex;
       align-items:center;
-      gap:16px;
+      gap:14px;
       padding:10px 14px;
       border-radius:999px;
       background: rgba(255,255,255,.05);
@@ -657,6 +657,9 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 14px 40px rgba(0,0,0,.45);
       pointer-events:none;
+      flex-wrap:wrap;
+      justify-content:center;
+      max-width:min(92vw, 760px);
     }
     .dock-unit{
       position:relative;
@@ -847,6 +850,73 @@
       border-radius:20px;
       background: rgba(255,255,255,.04);
       border:1px dashed rgba(255,255,255,.16);
+    }
+
+    .mini-wrap{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    .mini-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .mini-badges{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .mini-badge{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:900;
+      font-size:13px;
+    }
+    .mini-controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .mini-btn{
+      padding:12px 14px;
+      border:none;
+      border-radius:14px;
+      background: var(--accent);
+      color:#fff;
+      font-weight:1000;
+      cursor:pointer;
+    }
+    .mini-btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background: rgba(122,44,255,.35);
+    }
+    .mini-canvas-wrap{
+      border-radius:22px;
+      overflow:hidden;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    #jumpCanvas{
+      width:100%;
+      height:auto;
+      display:block;
+      background:#7fd3ff;
+      touch-action:none;
+    }
+    .mini-log{
+      padding:14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      line-height:1.7;
+      font-size:14px;
     }
 
     .overlay{
@@ -1299,7 +1369,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.26</div>
+        <div class="intro-version">v1.27</div>
       </div>
     </div>
   </div>
@@ -1557,10 +1627,31 @@
     <div class="page" id="pageMinigame">
       <div class="page-wrap">
         <div class="page-card">
-          <div class="page-title">🎮 미니게임</div>
-          <div class="page-sub">여기는 나중에 미니게임이 들어갈 자리야.</div>
-          <div class="placeholder-box">
-            미니게임은 다음에 붙이자.
+          <div class="page-title">🎮 다람쥐 점프!</div>
+          <div class="page-sub">참가비 100K 도토리. 클릭/터치/스페이스로 점프해서 장애물을 피해 봐.</div>
+
+          <div class="mini-wrap">
+            <div class="mini-head">
+              <div class="mini-badges">
+                <div class="mini-badge">참가비: 🌰 100k</div>
+                <div class="mini-badge">현재 점수: <span id="jumpScoreText">0</span></div>
+                <div class="mini-badge">최고 점수: <span id="jumpBestText">0</span></div>
+                <div class="mini-badge">상태: <span id="jumpStateText">대기중</span></div>
+              </div>
+
+              <div class="mini-controls">
+                <button class="mini-btn" id="jumpStartBtn">게임 시작</button>
+              </div>
+            </div>
+
+            <div class="mini-canvas-wrap">
+              <canvas id="jumpCanvas" width="360" height="560"></canvas>
+            </div>
+
+            <div class="mini-log" id="jumpResultBox">
+              아직 플레이하지 않았어.<br>
+              스페이스, 클릭, 터치 중 아무거나 눌러 점프할 수 있어.
+            </div>
           </div>
         </div>
       </div>
@@ -1666,7 +1757,7 @@
   </div>
 
 <script>
-const LS_KEY = "dotori_game_profiles_v126";
+const LS_KEY = "dotori_game_profiles_v127";
 
 const SHORT_SUFFIXES = [
   "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
@@ -2070,6 +2161,46 @@ const goldenChanceMeta = document.getElementById("goldenChanceMeta");
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
 
+// 미니게임 DOM
+const jumpCanvas = document.getElementById("jumpCanvas");
+const jumpCtx = jumpCanvas.getContext("2d");
+const jumpStartBtn = document.getElementById("jumpStartBtn");
+const jumpScoreText = document.getElementById("jumpScoreText");
+const jumpBestText = document.getElementById("jumpBestText");
+const jumpStateText = document.getElementById("jumpStateText");
+const jumpResultBox = document.getElementById("jumpResultBox");
+
+// 플로팅 텍스트 제한
+const FLOAT_LIMIT_PER_TYPE = 20;
+const activeFloatCounts = {
+  click: 0,
+  squirrel: 0,
+  chipmunk: 0,
+  tree: 0
+};
+
+// 미니게임 상태
+const MINIGAME_ENTRY_FEE = 100000;
+let jumpBestScore = 0;
+let jumpGame = {
+  running: false,
+  raf: 0,
+  lastTime: 0,
+  score: 0,
+  worldSpeed: 165,
+  spawnTimer: 0,
+  bgOffset: 0,
+  player: {
+    x: 78,
+    y: 280,
+    w: 34,
+    h: 34,
+    vy: 0
+  },
+  obstacles: [],
+  stars: []
+};
+
 function normalizeByTier(){
   if(tier <= 0){
     tier = 0;
@@ -2128,6 +2259,12 @@ function switchPage(page){
     closeShop();
     closeAchieve();
   }
+
+  if(page !== "minigame"){
+    stopJumpLoop();
+  }else{
+    drawJumpGame();
+  }
 }
 
 function updateGoldenUI(){
@@ -2176,7 +2313,8 @@ function buildSaveData(){
     chipmunkRemainingMs,
     treeRemainingMs,
     goldenReady,
-    goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (nowPerf - goldenStartedAt))) : 0
+    goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (nowPerf - goldenStartedAt))) : 0,
+    jumpBestScore
   };
 }
 
@@ -2206,6 +2344,7 @@ function applyLoadedProfile(p){
   totalCoinShopPurchases = Number(p.totalCoinShopPurchases ?? 0) || 0;
   goldenChanceLevel = Number(p.goldenChanceLevel ?? 0) || 0;
   freeCoinNextAt = Number(p.freeCoinNextAt ?? 0) || 0;
+  jumpBestScore = Number(p.jumpBestScore ?? 0) || 0;
   goldenReady = !!p.goldenReady;
   normalizeByTier();
 
@@ -2222,6 +2361,7 @@ function applyLoadedProfile(p){
   goldenStartedAt = nowPerf - Math.max(0, GOLDEN_MIN_HOLD_MS - goldenRemainingMs);
 
   updateGoldenUI();
+  updateJumpTexts();
 }
 
 function resetAutoState(){
@@ -2266,10 +2406,12 @@ function createProfile(nick){
   treeNextPayouts = [];
   goldenReady = false;
   goldenStartedAt = 0;
+  jumpBestScore = 0;
   normalizeByTier();
   updateGoldenUI();
   resetAutoState();
   saveCurrent();
+  updateJumpTexts();
 }
 
 function resetCurrentNickProgress(){
@@ -2297,10 +2439,12 @@ function resetCurrentNickProgress(){
   treeNextPayouts = [];
   goldenReady = false;
   goldenStartedAt = 0;
+  jumpBestScore = 0;
   normalizeByTier();
   updateGoldenUI();
   resetAutoState();
   saveCurrent();
+  updateJumpTexts();
 }
 
 function showNicknameOverlay(){
@@ -2324,6 +2468,7 @@ function logout(){
   closeNickMenu();
   closeAchieve();
   closeTrophy();
+  stopJumpLoop();
   showNicknameOverlay();
 }
 
@@ -2505,9 +2650,7 @@ function renderAchievements(){
     fmtShort(Math.min(Math.floor(acorn), acornTarget)) + " / " + fmtShort(acornTarget);
   achievementRewardAcorn.textContent = "보상: 트로피 +" + fmtShort(acornReward);
   claimAchievementAcorn.disabled = !acornReady;
-  achievementHintAcorn.textContent = acornReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "도토리를 더 모아야 해.";
+  achievementHintAcorn.textContent = acornReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "도토리를 더 모아야 해.";
   achievementCardAcorn.classList.toggle("ready", acornReady);
 
   const clickTarget = getClickAchievementTarget();
@@ -2519,9 +2662,7 @@ function renderAchievements(){
     fmtShort(Math.min(totalClicks, clickTarget)) + " / " + fmtShort(clickTarget);
   achievementRewardClick.textContent = "보상: 트로피 +" + fmtShort(clickReward);
   claimAchievementClick.disabled = !clickReady;
-  achievementHintClick.textContent = clickReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "더 클릭해야 해.";
+  achievementHintClick.textContent = clickReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "더 클릭해야 해.";
   achievementCardClick.classList.toggle("ready", clickReady);
 
   const spentTarget = getSpentAchievementTarget();
@@ -2533,9 +2674,7 @@ function renderAchievements(){
     fmtShort(Math.min(totalSpentAcorn, spentTarget)) + " / " + fmtShort(spentTarget);
   achievementRewardSpent.textContent = "보상: 트로피 +" + fmtShort(spentReward);
   claimAchievementSpent.disabled = !spentReady;
-  achievementHintSpent.textContent = spentReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "도토리를 더 소비해야 해.";
+  achievementHintSpent.textContent = spentReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "도토리를 더 소비해야 해.";
   achievementCardSpent.classList.toggle("ready", spentReady);
 
   const squirrelTarget = getSquirrelAchievementTarget();
@@ -2547,9 +2686,7 @@ function renderAchievements(){
     fmtShort(Math.min(getSquirrelCount(), squirrelTarget)) + " / " + fmtShort(squirrelTarget);
   achievementRewardSquirrel.textContent = "보상: 트로피 +" + fmtShort(squirrelReward);
   claimAchievementSquirrel.disabled = !squirrelReady;
-  achievementHintSquirrel.textContent = squirrelReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "다람쥐를 더 모아야 해.";
+  achievementHintSquirrel.textContent = squirrelReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "다람쥐를 더 모아야 해.";
   achievementCardSquirrel.classList.toggle("ready", squirrelReady);
 
   const chipmunkTarget = getChipmunkAchievementTarget();
@@ -2561,9 +2698,7 @@ function renderAchievements(){
     fmtShort(Math.min(getChipmunkCount(), chipmunkTarget)) + " / " + fmtShort(chipmunkTarget);
   achievementRewardChipmunk.textContent = "보상: 트로피 +" + fmtShort(chipmunkReward);
   claimAchievementChipmunk.disabled = !chipmunkReady;
-  achievementHintChipmunk.textContent = chipmunkReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "청솔모를 더 모아야 해.";
+  achievementHintChipmunk.textContent = chipmunkReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "청솔모를 더 모아야 해.";
   achievementCardChipmunk.classList.toggle("ready", chipmunkReady);
 
   const treeTarget = getTreeAchievementTarget();
@@ -2575,9 +2710,7 @@ function renderAchievements(){
     fmtShort(Math.min(getTreeCount(), treeTarget)) + " / " + fmtShort(treeTarget);
   achievementRewardTree.textContent = "보상: 트로피 +" + fmtShort(treeReward);
   claimAchievementTree.disabled = !treeReady;
-  achievementHintTree.textContent = treeReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "도토리 나무를 더 구매해야 해.";
+  achievementHintTree.textContent = treeReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "도토리 나무를 더 구매해야 해.";
   achievementCardTree.classList.toggle("ready", treeReady);
 
   const coinShopTarget = getCoinShopPurchaseTarget();
@@ -2589,9 +2722,7 @@ function renderAchievements(){
     fmtShort(Math.min(totalCoinShopPurchases, coinShopTarget)) + " / " + fmtShort(coinShopTarget);
   achievementRewardCoinShop.textContent = "보상: 트로피 +" + fmtShort(coinShopReward);
   claimAchievementCoinShop.disabled = !coinShopReady;
-  achievementHintCoinShop.textContent = coinShopReady
-    ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자."
-    : "코인상점에서 더 구매해야 해.";
+  achievementHintCoinShop.textContent = coinShopReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "코인상점에서 더 구매해야 해.";
   achievementCardCoinShop.classList.toggle("ready", coinShopReady);
 }
 
@@ -2663,6 +2794,7 @@ function render(){
   renderTrophyPanel();
   renderCoinShop();
   updateGoldenUI();
+  updateJumpTexts();
 
   achieveBtn.classList.toggle("alert", canClaimAnyAchievement());
 
@@ -2712,7 +2844,12 @@ function render(){
   dockIncome.textContent = fmtShort(getTotalAutoIncomePerSec());
 }
 
-function spawnFloatText(x, y, text, color){
+function spawnFloatText(x, y, text, color, type){
+  const key = type || "click";
+  if((activeFloatCounts[key] || 0) >= FLOAT_LIMIT_PER_TYPE) return;
+
+  activeFloatCounts[key] = (activeFloatCounts[key] || 0) + 1;
+
   const el = document.createElement("div");
   el.className = "float-text";
   el.textContent = text;
@@ -2720,7 +2857,11 @@ function spawnFloatText(x, y, text, color){
   el.style.top  = y + "px";
   el.style.color = color || "#ffffff";
   document.body.appendChild(el);
-  el.addEventListener("animationend", ()=> el.remove());
+
+  el.addEventListener("animationend", ()=>{
+    el.remove();
+    activeFloatCounts[key] = Math.max(0, (activeFloatCounts[key] || 1) - 1);
+  });
 }
 
 function spawnClickFloat(x, y, value, isGolden=false){
@@ -2733,28 +2874,28 @@ function spawnClickFloat(x, y, value, isGolden=false){
   else if(value >= 512) color = "#ffd36e";
   else if(value >= 256) color = "#9dffb5";
   else if(value >= 128) color = "#9d7bff";
-  spawnFloatText(x, y, "+" + fmtShort(value), color);
+  spawnFloatText(x, y, "+" + fmtShort(value), color, "click");
 }
 
 function spawnSquirrelFloat(){
   const r = sqDockEmoji.getBoundingClientRect();
   const x = r.left + r.width / 2;
   const y = r.top - 4;
-  spawnFloatText(x, y, "+1", "#9dffb5");
+  spawnFloatText(x, y, "+1", "#9dffb5", "squirrel");
 }
 
 function spawnChipmunkFloat(){
   const r = csDockEmoji.getBoundingClientRect();
   const x = r.left + r.width / 2;
   const y = r.top - 4;
-  spawnFloatText(x, y, "+10", "#7bdfff");
+  spawnFloatText(x, y, "+10", "#7bdfff", "chipmunk");
 }
 
 function spawnTreeFloat(){
   const r = treeDockEmoji.getBoundingClientRect();
   const x = r.left + r.width / 2;
   const y = r.top - 4;
-  spawnFloatText(x, y, "+50", "#8fff96");
+  spawnFloatText(x, y, "+50", "#8fff96", "tree");
 }
 
 function mean(arr){
@@ -2788,6 +2929,7 @@ function addSuspicion(points, reason){
     closeNickMenu();
     closeAchieve();
     closeTrophy();
+    stopJumpLoop();
     showToast(reason);
     return false;
   }
@@ -3356,6 +3498,361 @@ navCoinShop.addEventListener("click", ()=>{
   switchPage("coinshop");
 });
 
+// =========================
+// 미니게임: 다람쥐 점프
+// =========================
+function updateJumpTexts(){
+  jumpBestText.textContent = fmtShort(jumpBestScore);
+  jumpScoreText.textContent = fmtShort(jumpGame.score || 0);
+}
+
+function resetJumpGame(){
+  jumpGame.running = false;
+  jumpGame.lastTime = 0;
+  jumpGame.score = 0;
+  jumpGame.worldSpeed = 165;
+  jumpGame.spawnTimer = 0;
+  jumpGame.bgOffset = 0;
+  jumpGame.player = {
+    x: 78,
+    y: 280,
+    w: 34,
+    h: 34,
+    vy: 0
+  };
+  jumpGame.obstacles = [];
+  jumpGame.stars = [];
+  for(let i=0;i<24;i++){
+    jumpGame.stars.push({
+      x: Math.random() * jumpCanvas.width,
+      y: Math.random() * (jumpCanvas.height - 120),
+      s: 1 + Math.random() * 2
+    });
+  }
+  jumpStateText.textContent = "대기중";
+  updateJumpTexts();
+  drawJumpGame();
+}
+
+function startJumpGame(){
+  if(!currentNick) return;
+  if(jumpGame.running) return;
+  if(acorn < MINIGAME_ENTRY_FEE){
+    jumpResultBox.innerHTML = "참가비가 부족해.<br>필요 도토리: <b>100k</b>";
+    return;
+  }
+
+  spendAcorn(MINIGAME_ENTRY_FEE);
+  resetJumpGame();
+  jumpGame.running = true;
+  jumpStateText.textContent = "플레이중";
+  jumpResultBox.innerHTML = "게임 시작!<br>클릭 / 터치 / 스페이스로 점프!";
+  render();
+  saveCurrent();
+  jumpGame.lastTime = performance.now();
+  jumpGame.raf = requestAnimationFrame(jumpLoop);
+}
+
+function stopJumpLoop(){
+  if(jumpGame.raf){
+    cancelAnimationFrame(jumpGame.raf);
+    jumpGame.raf = 0;
+  }
+  jumpGame.running = false;
+}
+
+function jumpInput(){
+  if(!currentNick) return;
+  if(currentPage !== "minigame") return;
+  if(!jumpGame.running) return;
+
+  jumpGame.player.vy -= 220;
+  if(jumpGame.player.vy < -220) jumpGame.player.vy = -220;
+}
+
+function createJumpObstacle(){
+  const minGap = 132;
+  const maxGap = 172;
+  const gap = maxGap - Math.min(40, jumpGame.score * 0.6) + Math.random() * 18;
+  const safeTop = 70;
+  const safeBottom = 70;
+  const openY = safeTop + Math.random() * (jumpCanvas.height - safeTop - safeBottom - gap);
+  const width = 34;
+
+  jumpGame.obstacles.push({
+    x: jumpCanvas.width + 40,
+    w: width,
+    gapY: openY,
+    gapH: gap,
+    scored: false
+  });
+}
+
+function circleRectCollide(cx, cy, r, rx, ry, rw, rh){
+  const testX = Math.max(rx, Math.min(cx, rx + rw));
+  const testY = Math.max(ry, Math.min(cy, ry + rh));
+  const dx = cx - testX;
+  const dy = cy - testY;
+  return (dx*dx + dy*dy) <= r*r;
+}
+
+function endJumpGame(){
+  stopJumpLoop();
+
+  const score = jumpGame.score;
+  const coinReward = Math.round(score * 0.001);
+  const trophyReward = score * 10;
+
+  if(score > jumpBestScore) jumpBestScore = score;
+  coinCount += coinReward;
+  achievementCount += trophyReward;
+
+  jumpStateText.textContent = "게임 종료";
+  updateJumpTexts();
+  render();
+  saveCurrent();
+
+  jumpResultBox.innerHTML =
+    "게임 오버!<br>" +
+    "점수: <b>" + fmtShort(score) + "</b><br>" +
+    "코인 보상: <b>" + fmtShort(coinReward) + "</b><br>" +
+    "트로피 보상: <b>" + fmtShort(trophyReward) + "</b><br>" +
+    "다시 하려면 시작 버튼을 눌러.";
+}
+
+function jumpLoop(now){
+  if(!jumpGame.running) return;
+
+  let dt = (now - jumpGame.lastTime) / 1000;
+  if(dt > 0.03) dt = 0.03;
+  jumpGame.lastTime = now;
+
+  jumpGame.bgOffset += jumpGame.worldSpeed * 0.25 * dt;
+  jumpGame.spawnTimer += dt;
+
+  if(jumpGame.spawnTimer >= 1.22){
+    jumpGame.spawnTimer = 0;
+    createJumpObstacle();
+  }
+
+  jumpGame.worldSpeed += dt * 2.2;
+  if(jumpGame.worldSpeed > 290) jumpGame.worldSpeed = 290;
+
+  jumpGame.player.vy += 520 * dt;
+  jumpGame.player.y += jumpGame.player.vy * dt;
+
+  const playerR = jumpGame.player.w * 0.45;
+  const playerCx = jumpGame.player.x + jumpGame.player.w / 2;
+  const playerCy = jumpGame.player.y + jumpGame.player.h / 2;
+
+  if(jumpGame.player.y <= 0 || jumpGame.player.y + jumpGame.player.h >= jumpCanvas.height){
+    drawJumpGame();
+    endJumpGame();
+    return;
+  }
+
+  for(const obs of jumpGame.obstacles){
+    obs.x -= jumpGame.worldSpeed * dt;
+
+    const topRect = { x: obs.x, y: 0, w: obs.w, h: obs.gapY };
+    const bottomRect = { x: obs.x, y: obs.gapY + obs.gapH, w: obs.w, h: jumpCanvas.height - (obs.gapY + obs.gapH) };
+
+    if(circleRectCollide(playerCx, playerCy, playerR, topRect.x, topRect.y, topRect.w, topRect.h) ||
+       circleRectCollide(playerCx, playerCy, playerR, bottomRect.x, bottomRect.y, bottomRect.w, bottomRect.h)){
+      drawJumpGame();
+      endJumpGame();
+      return;
+    }
+
+    if(!obs.scored && obs.x + obs.w < jumpGame.player.x){
+      obs.scored = true;
+      jumpGame.score += 1;
+      updateJumpTexts();
+    }
+  }
+
+  jumpGame.obstacles = jumpGame.obstacles.filter(obs => obs.x + obs.w > -30);
+
+  drawJumpGame();
+  jumpGame.raf = requestAnimationFrame(jumpLoop);
+}
+
+function drawJumpGame(){
+  const ctx = jumpCtx;
+  const w = jumpCanvas.width;
+  const h = jumpCanvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, "#7fd3ff");
+  sky.addColorStop(0.6, "#9ce7ff");
+  sky.addColorStop(1, "#d8f7ff");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+
+  // 구름
+  ctx.fillStyle = "rgba(255,255,255,.8)";
+  for(let i=0;i<4;i++){
+    const cx = (i * 110 - (jumpGame.bgOffset * 0.35 % 440));
+    const cy = 80 + (i%2)*36;
+    drawCloud(ctx, cx, cy);
+  }
+
+  // 산
+  ctx.fillStyle = "#7ac28d";
+  drawHill(ctx, 0 - (jumpGame.bgOffset * 0.15 % w), h - 110, 180, 120);
+  drawHill(ctx, 170 - (jumpGame.bgOffset * 0.15 % w), h - 105, 210, 125);
+  drawHill(ctx, 340 - (jumpGame.bgOffset * 0.15 % w), h - 108, 220, 130);
+
+  // 바닥 느낌
+  ctx.fillStyle = "#6cc17b";
+  ctx.fillRect(0, h - 46, w, 46);
+
+  // 장애물
+  for(const obs of jumpGame.obstacles){
+    drawObstacle(ctx, obs);
+  }
+
+  // 플레이어
+  drawPlayer(ctx, jumpGame.player);
+
+  // HUD
+  ctx.fillStyle = "rgba(0,0,0,.25)";
+  ctx.fillRect(12, 12, 138, 42);
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 22px Malgun Gothic";
+  ctx.fillText("점수 " + jumpGame.score, 22, 40);
+}
+
+function drawCloud(ctx, x, y){
+  ctx.beginPath();
+  ctx.arc(x + 24, y + 18, 16, 0, Math.PI * 2);
+  ctx.arc(x + 42, y + 10, 18, 0, Math.PI * 2);
+  ctx.arc(x + 62, y + 18, 15, 0, Math.PI * 2);
+  ctx.arc(x + 42, y + 22, 19, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawHill(ctx, x, y, width, height){
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.quadraticCurveTo(x + width * 0.5, y - height, x + width, y);
+  ctx.lineTo(x + width, jumpCanvas.height);
+  ctx.lineTo(x, jumpCanvas.height);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawObstacle(ctx, obs){
+  const x = obs.x;
+  const w = obs.w;
+  const topH = obs.gapY;
+  const bottomY = obs.gapY + obs.gapH;
+  const bottomH = jumpCanvas.height - bottomY;
+
+  const grad = ctx.createLinearGradient(x, 0, x + w, 0);
+  grad.addColorStop(0, "#573521");
+  grad.addColorStop(0.5, "#7d4c2b");
+  grad.addColorStop(1, "#9b6138");
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, 0, w, topH);
+  ctx.fillRect(x, bottomY, w, bottomH);
+
+  ctx.fillStyle = "#3d2415";
+  for(let i=0;i<topH;i+=18){
+    ctx.fillRect(x, i, w, 3);
+  }
+  for(let i=bottomY;i<jumpCanvas.height;i+=18){
+    ctx.fillRect(x, i, w, 3);
+  }
+
+  ctx.fillStyle = "#2aa04e";
+  ctx.fillRect(x - 3, topH - 8, w + 6, 8);
+  ctx.fillRect(x - 3, bottomY, w + 6, 8);
+}
+
+function drawPlayer(ctx, p){
+  const x = p.x;
+  const y = p.y;
+  const cx = x + p.w/2;
+  const cy = y + p.h/2;
+
+  // 꼬리
+  ctx.fillStyle = "#9b6239";
+  ctx.beginPath();
+  ctx.ellipse(x - 6, y + 18, 10, 7, -0.8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 몸통
+  ctx.fillStyle = "#9b6239";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 2, 13, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 배
+  ctx.fillStyle = "#f4d4b0";
+  ctx.beginPath();
+  ctx.ellipse(cx + 1, cy + 5, 7, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 머리
+  ctx.fillStyle = "#9b6239";
+  ctx.beginPath();
+  ctx.arc(cx + 3, y + 12, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 귀
+  ctx.fillStyle = "#9b6239";
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, y + 6);
+  ctx.lineTo(cx + 2, y - 6);
+  ctx.lineTo(cx + 7, y + 5);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx + 8, y + 6);
+  ctx.lineTo(cx + 12, y - 5);
+  ctx.lineTo(cx + 16, y + 7);
+  ctx.fill();
+
+  // 눈
+  ctx.fillStyle = "#111";
+  ctx.beginPath();
+  ctx.arc(cx + 6, y + 12, 1.7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 코
+  ctx.fillStyle = "#3a1d10";
+  ctx.beginPath();
+  ctx.arc(cx + 11, y + 16, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 발
+  ctx.fillStyle = "#7d4c2b";
+  ctx.fillRect(cx - 7, y + 26, 4, 6);
+  ctx.fillRect(cx + 1, y + 26, 4, 6);
+}
+
+jumpStartBtn.addEventListener("click", startJumpGame);
+
+jumpCanvas.addEventListener("pointerdown", (e)=>{
+  e.preventDefault();
+  if(!jumpGame.running){
+    // 시작 전에는 버튼 사용 유도
+    return;
+  }
+  jumpInput();
+});
+
+document.addEventListener("keydown", (e)=>{
+  if(currentPage !== "minigame") return;
+  if(e.code === "Space"){
+    e.preventDefault();
+    if(jumpGame.running) jumpInput();
+  }
+});
+
 function createIrregularStops(totalMs = 3000){
   const stops = [];
   let elapsed = 0;
@@ -3434,6 +3931,7 @@ function runOpening(){
 
 setLocked(true);
 switchPage("home");
+resetJumpGame();
 render();
 runOpening();
 </script>
