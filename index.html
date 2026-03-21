@@ -1426,7 +1426,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v1.29</div>
+        <div class="intro-version">v1.30</div>
       </div>
     </div>
   </div>
@@ -1501,7 +1501,7 @@
         <div>
           <div class="item-name">🐿️ 다람쥐 고용</div>
           <div class="item-desc">
-            1마리당 <b>1초마다 +1</b> 도토리<br>
+            1마리당 <b>1초마다 +<span id="sqPerOne">1</span></b> 도토리<br>
             보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
           </div>
         </div>
@@ -1694,7 +1694,1716 @@
                   <div class="item-name">🐿️ 다람쥐 점프!</div>
                   <div class="item-desc">
                     클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>
-                    참가비: <b>🌰 100k</b> · 보상: <b>코인 = 점수의 0.1%(반올림)</b>, <b>트로피 = 점수 × 10</b>
+                    첫 1회는 <b>무료</b>, 이후 참가비: <b>🌰 100k</b><br>
+                    보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>
+                  </div>
+                </div>
+              </div>
+              <button class="buy" id="openJumpGameBtn">미니게임 시작</button>
+              <div class="owned" id="jumpLobbyInfo">
+                최고 점수: 0
+              </div>
+            </div>
+          </div>
+        </div>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>도토리 게임</title>
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --panel: rgba(255,255,255,.06);
+      --border: rgba(255,255,255,.16);
+      --text:#ffffff;
+      --accent:#7a2cff;
+      --danger:#ff5a7a;
+      --good:#2ecc71;
+      --gold:#ffd84d;
+      --intro-bg-1:#f3d8cf;
+      --intro-bg-2:#d4b9ff;
+      --nav-h:72px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; }
+
+    body{
+      font-family: "Malgun Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(900px 500px at 50% 0%, rgba(122,44,255,.18), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      overflow:hidden;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .topbar{
+      position:fixed;
+      top:0; left:0; right:0;
+      height:72px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      padding:10px 18px 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,.55), rgba(0,0,0,0));
+      z-index:10;
+      pointer-events:none;
+    }
+    .title{
+      pointer-events:auto;
+      font-weight:800;
+      letter-spacing:-0.5px;
+      font-size:22px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+    }
+    .title .badge{ font-size:18px; opacity:.9; }
+
+    .top-right{
+      pointer-events:auto;
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .trophy-stack{
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      gap:6px;
+    }
+
+    .trophy-chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      background: var(--panel);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:900;
+      cursor:pointer;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .trophy-chip:active{ transform: scale(0.98); }
+    .trophy-chip .emoji{
+      font-size:19px;
+      line-height:1;
+    }
+    .trophy-chip .count{
+      min-width:24px;
+      text-align:center;
+    }
+    .trophy-chip.alert{
+      border-color: rgba(255,216,77,.78);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 18px rgba(255,216,77,.22),
+        0 0 36px rgba(255,216,77,.12);
+      animation: buttonGlow 1.15s ease-in-out infinite alternate;
+    }
+
+    .coin-under{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:12px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.28);
+      font-weight:900;
+      font-size:13px;
+      min-height:34px;
+    }
+    .coin-under .emoji{
+      font-size:16px;
+      line-height:1;
+    }
+
+    .counter-chip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: var(--panel);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:800;
+      margin-top:0;
+    }
+    .counter-chip .emoji{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+      transition: color .15s ease, text-shadow .15s ease, filter .15s ease;
+    }
+    .counter-chip .count{
+      font-size:18px;
+      min-width:110px;
+      text-align:right;
+      letter-spacing:0.2px;
+    }
+    .counter-chip.golden .emoji{
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255,216,77,.85), 0 0 22px rgba(255,216,77,.5);
+      filter: drop-shadow(0 0 8px rgba(255,216,77,.65));
+    }
+
+    .shop-btn,
+    .achieve-btn{
+      position:fixed;
+      left:14px;
+      z-index:20;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      cursor:pointer;
+      font-weight:800;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    .shop-btn{ top:84px; }
+    .achieve-btn{ top:136px; }
+    .shop-btn:active,
+    .achieve-btn:active{ transform: scale(0.98); }
+
+    .achieve-btn.alert{
+      border-color: rgba(255,216,77,.78);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        0 0 18px rgba(255,216,77,.22),
+        0 0 36px rgba(255,216,77,.12);
+      animation: buttonGlow 1.15s ease-in-out infinite alternate;
+    }
+
+    @keyframes buttonGlow{
+      from{
+        box-shadow:
+          0 12px 30px rgba(0,0,0,.35),
+          0 0 10px rgba(255,216,77,.14),
+          0 0 20px rgba(255,216,77,.08);
+      }
+      to{
+        box-shadow:
+          0 12px 30px rgba(0,0,0,.35),
+          0 0 18px rgba(255,216,77,.28),
+          0 0 42px rgba(255,216,77,.16);
+      }
+    }
+
+    .shop-panel{
+      position:fixed;
+      top:84px;
+      left:14px;
+      width:min(390px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
+    }
+    .shop-panel.show{ display:block; }
+
+    .achieve-panel{
+      position:fixed;
+      top:136px;
+      left:14px;
+      width:min(400px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
+    }
+    .achieve-panel.show{ display:block; }
+
+    .trophy-panel{
+      position:fixed;
+      top:84px;
+      right:14px;
+      width:min(430px, 92vw);
+      z-index:30;
+      background: rgba(15,15,22,.84);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 24px 90px rgba(0,0,0,.58);
+      padding:14px;
+      padding-top:54px;
+      display:none;
+      max-height:min(78vh, 760px);
+      overflow:auto;
+    }
+    .trophy-panel.show{ display:block; }
+
+    .shop-header,
+    .achieve-header,
+    .trophy-header{
+      display:block;
+      position:relative;
+      margin-bottom:10px;
+      z-index:2;
+    }
+    .shop-title,
+    .achieve-title,
+    .trophy-title{
+      display:block;
+      font-weight:1000;
+      font-size:16px;
+      padding-right:72px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      z-index:1;
+    }
+    .close{
+      cursor:pointer;
+      min-width:56px;
+      height:36px;
+      padding:0 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      font-weight:800;
+      position:absolute;
+      top:-40px;
+      right:0;
+      z-index:5;
+      flex:0 0 auto;
+    }
+
+    .item{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .item:last-child{ margin-bottom:0; }
+
+    .item-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .item-name{ font-weight:900; }
+    .item-desc{
+      opacity:.8;
+      font-size:13px;
+      line-height:1.4;
+      margin-top:4px;
+    }
+    .price{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:900;
+      white-space:nowrap;
+      flex:0 0 auto;
+      text-align:right;
+    }
+    .buy{
+      width:100%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+    }
+    .buy:disabled{
+      cursor:not-allowed;
+      opacity:.45;
+      background: rgba(122,44,255,.35);
+    }
+    .owned{
+      margin-top:10px;
+      font-size:12px;
+      opacity:.8;
+      line-height:1.5;
+    }
+
+    .achievement-card{
+      transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .achievement-card.ready{
+      border-color: rgba(255,216,77,.75);
+      background:
+        linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,216,77,.06)),
+        rgba(255,255,255,.06);
+      box-shadow:
+        0 0 0 1px rgba(255,216,77,.22) inset,
+        0 0 18px rgba(255,216,77,.25),
+        0 0 34px rgba(255,216,77,.12);
+      animation: achievementGlow 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes achievementGlow{
+      from{
+        box-shadow:
+          0 0 0 1px rgba(255,216,77,.18) inset,
+          0 0 10px rgba(255,216,77,.18),
+          0 0 20px rgba(255,216,77,.08);
+      }
+      to{
+        box-shadow:
+          0 0 0 1px rgba(255,216,77,.3) inset,
+          0 0 18px rgba(255,216,77,.34),
+          0 0 42px rgba(255,216,77,.16);
+      }
+    }
+
+    .achievement-card-title{
+      font-size:18px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .achievement-progress{
+      font-size:14px;
+      opacity:.88;
+      margin-bottom:10px;
+    }
+    .achievement-reward{
+      font-size:13px;
+      opacity:.78;
+      margin-bottom:12px;
+    }
+
+    .trophy-summary{
+      background:
+        radial-gradient(circle at top right, rgba(255,216,77,.18), transparent 35%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.16);
+      overflow:hidden;
+    }
+    .trophy-big{
+      font-size:26px;
+      font-weight:1000;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .trophy-sub{
+      font-size:14px;
+      opacity:.9;
+      line-height:1.6;
+    }
+    .trophy-next{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.86;
+    }
+
+    .trophy-panel-progress{
+      margin-top:12px;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.11);
+    }
+    .trophy-panel-progress-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-size:13px;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .trophy-panel-progress-bar{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      overflow:hidden;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.28);
+    }
+    .trophy-panel-progress-fill{
+      width:0%;
+      height:100%;
+      border-radius:inherit;
+      background: linear-gradient(90deg, #c4864d 0%, #d7dce7 15%, #ffd84d 30%, #69ffa8 45%, #7fcbff 60%, #b68cff 75%, #ff7288 100%);
+      transition: width .24s ease;
+      box-shadow: 0 0 14px rgba(255,216,77,.15);
+    }
+    .trophy-panel-progress-sub{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.8;
+      text-align:right;
+      font-weight:800;
+    }
+
+    .rank-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .rank-row{
+      border-radius:16px;
+      padding:13px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+      cursor:default;
+    }
+    .rank-row.cleared{
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    .rank-row.current{
+      transform: translateY(-1px);
+    }
+    .rank-row.claimable{
+      cursor:pointer;
+      box-shadow:
+        0 0 0 1px rgba(255,216,77,.22) inset,
+        0 0 18px rgba(255,216,77,.18);
+      animation: achievementGlow 1.2s ease-in-out infinite alternate;
+    }
+
+    .rank-row.bronze{ background: linear-gradient(180deg, rgba(196,134,77,.18), rgba(255,255,255,.04)); }
+    .rank-row.silver{ background: linear-gradient(180deg, rgba(215,220,231,.16), rgba(255,255,255,.04)); }
+    .rank-row.gold{ background: linear-gradient(180deg, rgba(255,216,77,.16), rgba(255,255,255,.04)); }
+    .rank-row.platinum{ background: linear-gradient(180deg, rgba(233,240,248,.16), rgba(255,255,255,.04)); }
+    .rank-row.emerald{ background: linear-gradient(180deg, rgba(90,220,160,.16), rgba(255,255,255,.04)); }
+    .rank-row.diamond{ background: linear-gradient(180deg, rgba(120,190,255,.16), rgba(255,255,255,.04)); }
+    .rank-row.reddiamond{ background: linear-gradient(180deg, rgba(255,110,130,.18), rgba(255,255,255,.04)); }
+    .rank-row.hero{ background: linear-gradient(180deg, rgba(255,138,76,.22), rgba(255,225,120,.10), rgba(255,255,255,.04)); }
+    .rank-row.myth{ background: linear-gradient(180deg, rgba(184,114,255,.22), rgba(114,177,255,.12), rgba(255,255,255,.04)); }
+    .rank-row.legend{ background: linear-gradient(180deg, rgba(255,214,77,.22), rgba(255,120,180,.12), rgba(255,255,255,.04)); }
+    .rank-row.master{ background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(120,255,233,.12), rgba(162,129,255,.12), rgba(255,255,255,.04)); }
+
+    .rank-row.cleared.bronze{ border-color: rgba(196,134,77,.5); }
+    .rank-row.cleared.silver{ border-color: rgba(215,220,231,.5); }
+    .rank-row.cleared.gold{ border-color: rgba(255,216,77,.5); }
+    .rank-row.cleared.platinum{ border-color: rgba(233,240,248,.5); }
+    .rank-row.cleared.emerald{ border-color: rgba(90,220,160,.5); }
+    .rank-row.cleared.diamond{ border-color: rgba(120,190,255,.5); }
+    .rank-row.cleared.reddiamond{ border-color: rgba(255,110,130,.5); }
+    .rank-row.cleared.hero{ border-color: rgba(255,182,84,.65); }
+    .rank-row.cleared.myth{ border-color: rgba(165,129,255,.65); }
+    .rank-row.cleared.legend{ border-color: rgba(255,205,84,.65); }
+    .rank-row.cleared.master{ border-color: rgba(210,240,255,.7); }
+
+    .rank-row.current.bronze{ border-color: rgba(196,134,77,.9); box-shadow: 0 0 22px rgba(196,134,77,.14); }
+    .rank-row.current.silver{ border-color: rgba(215,220,231,.9); box-shadow: 0 0 22px rgba(215,220,231,.14); }
+    .rank-row.current.gold{ border-color: rgba(255,216,77,.9); box-shadow: 0 0 22px rgba(255,216,77,.14); }
+    .rank-row.current.platinum{ border-color: rgba(233,240,248,.9); box-shadow: 0 0 22px rgba(233,240,248,.14); }
+    .rank-row.current.emerald{ border-color: rgba(90,220,160,.9); box-shadow: 0 0 22px rgba(90,220,160,.14); }
+    .rank-row.current.diamond{ border-color: rgba(120,190,255,.9); box-shadow: 0 0 22px rgba(120,190,255,.14); }
+    .rank-row.current.reddiamond{ border-color: rgba(255,110,130,.9); box-shadow: 0 0 24px rgba(255,110,130,.16); }
+    .rank-row.current.hero{ border-color: rgba(255,188,94,.95); box-shadow: 0 0 24px rgba(255,188,94,.18); }
+    .rank-row.current.myth{ border-color: rgba(176,136,255,.95); box-shadow: 0 0 24px rgba(176,136,255,.18); }
+    .rank-row.current.legend{ border-color: rgba(255,214,92,.95); box-shadow: 0 0 24px rgba(255,214,92,.18); }
+    .rank-row.current.master{ border-color: rgba(240,250,255,.95); box-shadow: 0 0 28px rgba(195,230,255,.2); }
+
+    .rank-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+      font-weight:900;
+    }
+    .rank-name{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:15px;
+    }
+    .rank-stars{
+      opacity:.95;
+      letter-spacing:.5px;
+    }
+    .rank-need{
+      font-size:13px;
+      opacity:.82;
+      line-height:1.5;
+    }
+    .rank-state{
+      font-size:12px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      white-space:nowrap;
+    }
+    .rank-row.cleared .rank-state{
+      border-color: rgba(46,204,113,.35);
+      background: rgba(46,204,113,.14);
+      color: #baffd1;
+    }
+    .rank-row.current .rank-state{
+      border-color: rgba(255,216,77,.38);
+      background: rgba(255,216,77,.14);
+      color: #ffe78b;
+    }
+    .rank-row.claimable .rank-state{
+      border-color: rgba(255,216,77,.55);
+      background: rgba(255,216,77,.18);
+      color:#ffe78b;
+    }
+
+    .pages{
+      position:fixed;
+      inset:72px 0 var(--nav-h) 0;
+      overflow:hidden;
+    }
+    .page{
+      position:absolute;
+      inset:0;
+      display:none;
+    }
+    .page.show{
+      display:block;
+    }
+
+    .stage{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-top:24px;
+    }
+    .acorn-btn{
+      width:min(360px, 72vw);
+      height:min(360px, 72vw);
+      border-radius:28px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+      outline:none;
+      position:relative;
+    }
+    .acorn-btn:active{
+      transform: scale(0.97);
+      background: rgba(255,255,255,.06);
+    }
+    .acorn-svg{
+      width:min(190px, 34vw);
+      height:min(190px, 34vw);
+      display:block;
+      filter: drop-shadow(0 10px 0 rgba(0,0,0,.35));
+      transition: filter .15s ease, transform .15s ease;
+      pointer-events:none;
+    }
+    .acorn-btn.golden{
+      border-color: rgba(255,216,77,.8);
+      box-shadow: 0 22px 70px rgba(0,0,0,.45), 0 0 26px rgba(255,216,77,.22);
+    }
+    .acorn-btn.golden .acorn-svg{
+      filter:
+        drop-shadow(0 0 12px rgba(255,216,77,.7))
+        drop-shadow(0 10px 0 rgba(0,0,0,.35));
+    }
+
+    .float-text{
+      position:fixed;
+      z-index:50;
+      font-weight:1000;
+      font-size:18px;
+      pointer-events:none;
+      text-shadow: 0 6px 18px rgba(0,0,0,.45);
+      animation: floatUp 700ms ease-out forwards;
+      will-change: transform, opacity;
+    }
+    @keyframes floatUp{
+      0%   { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateY(-34px) scale(1.05); opacity: 0; }
+    }
+
+    .squirrel-dock{
+      position:fixed;
+      left:50%;
+      bottom:calc(var(--nav-h) + 12px);
+      transform: translateX(-50%);
+      z-index:25;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      pointer-events:none;
+      flex-wrap:wrap;
+      justify-content:center;
+      max-width:min(92vw, 760px);
+    }
+    .dock-unit{
+      position:relative;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:max-content;
+    }
+    .dock-unit .emo{
+      font-size:22px;
+      line-height:1;
+      filter: drop-shadow(0 2px 0 rgba(0,0,0,.35));
+      position:relative;
+      display:inline-block;
+    }
+    .dock-unit .label{
+      font-weight:900;
+      font-size:14px;
+      opacity:.9;
+      white-space:nowrap;
+    }
+    .dock-sep{
+      font-weight:900;
+      opacity:.45;
+    }
+
+    .bottom-nav{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      height:var(--nav-h);
+      z-index:40;
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.12));
+      backdrop-filter: blur(10px);
+    }
+    .nav-btn{
+      border:none;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color:#fff;
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      transition: transform .08s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .nav-btn:active{ transform:scale(0.98); }
+    .nav-btn.active{
+      background:
+        linear-gradient(180deg, rgba(122,44,255,.22), rgba(122,44,255,.1)),
+        rgba(255,255,255,.06);
+      border-color: rgba(122,44,255,.55);
+      box-shadow: 0 10px 30px rgba(122,44,255,.18);
+    }
+
+    .page-wrap{
+      height:100%;
+      overflow:auto;
+      padding:22px 18px 18px;
+    }
+
+    .page-card{
+      width:min(760px, 100%);
+      margin:0 auto 14px;
+      padding:16px;
+      border-radius:22px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 20px 50px rgba(0,0,0,.28);
+      backdrop-filter: blur(12px);
+    }
+    .page-title{
+      font-size:24px;
+      font-weight:1000;
+      margin-bottom:6px;
+    }
+    .page-sub{
+      font-size:13px;
+      opacity:.76;
+      line-height:1.5;
+      margin-bottom:14px;
+    }
+
+    .coin-free-box{
+      background:
+        radial-gradient(circle at top right, rgba(255,216,77,.22), transparent 38%),
+        rgba(255,255,255,.05);
+    }
+    .coin-free-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .coin-free-title{
+      font-size:20px;
+      font-weight:1000;
+    }
+    .cooldown-chip{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:900;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .free-coin-btn{
+      width:100%;
+      padding:13px 14px;
+      border:none;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,216,77,.95), rgba(255,197,56,.95));
+      color:#222;
+      font-weight:1000;
+      font-size:16px;
+      cursor:pointer;
+      box-shadow: 0 14px 34px rgba(255,216,77,.18);
+    }
+    .free-coin-btn:disabled{
+      cursor:not-allowed;
+      opacity:.5;
+      background: rgba(255,216,77,.4);
+      color:#fff;
+      box-shadow:none;
+    }
+    .cooldown-line{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.82;
+      font-weight:800;
+    }
+
+    .coin-shop-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .perm-card{
+      padding:14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .perm-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .perm-name{
+      font-size:18px;
+      font-weight:1000;
+      margin-bottom:4px;
+    }
+    .perm-desc{
+      font-size:13px;
+      opacity:.8;
+      line-height:1.5;
+    }
+    .perm-cost{
+      text-align:right;
+      font-weight:1000;
+      white-space:nowrap;
+    }
+    .perm-meta{
+      margin-top:10px;
+      font-size:13px;
+      line-height:1.6;
+      opacity:.9;
+    }
+
+    .mini-wrap{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+    }
+    .mini-log{
+      padding:14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      line-height:1.7;
+      font-size:14px;
+    }
+
+    .jump-screen-wrap{
+      position:relative;
+      width:min(760px, 100%);
+      margin:0 auto;
+      height:calc(100vh - 130px);
+      min-height:520px;
+      border-radius:24px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      box-shadow: 0 20px 50px rgba(0,0,0,.28);
+    }
+    #jumpCanvas{
+      width:100%;
+      height:100%;
+      display:block;
+      background:#7fd3ff;
+      touch-action:none;
+    }
+    .jump-top-ui{
+      position:absolute;
+      top:14px;
+      left:14px;
+      right:14px;
+      z-index:3;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      pointer-events:none;
+    }
+    .jump-badge-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      pointer-events:none;
+    }
+    .jump-badge{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(8px);
+      font-weight:900;
+      font-size:13px;
+    }
+    .jump-action-row{
+      display:flex;
+      gap:8px;
+      pointer-events:auto;
+    }
+    .jump-ui-btn{
+      padding:10px 12px;
+      border:none;
+      border-radius:14px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.16);
+      color:#fff;
+      cursor:pointer;
+      font-weight:1000;
+    }
+    .jump-overlay{
+      position:absolute;
+      inset:0;
+      z-index:4;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:20px;
+      background: rgba(0,0,0,.0);
+      color:#fff;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, background .18s ease;
+    }
+    .jump-overlay.show{
+      opacity:1;
+      background: rgba(0,0,0,.52);
+      pointer-events:auto;
+    }
+    .jump-overlay-card{
+      width:min(460px, 92%);
+      padding:22px 18px;
+      border-radius:24px;
+      background: rgba(15,15,22,.78);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 28px 110px rgba(0,0,0,.45);
+      backdrop-filter: blur(12px);
+    }
+    .jump-overlay-title{
+      font-size:34px;
+      font-weight:1000;
+      margin-bottom:8px;
+    }
+    .jump-overlay-sub{
+      font-size:15px;
+      opacity:.92;
+      line-height:1.7;
+      margin-bottom:16px;
+    }
+    .jump-overlay-big{
+      font-size:64px;
+      font-weight:1000;
+      line-height:1;
+      margin:8px 0 14px;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(10px);
+      z-index:100;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+    .modal{
+      width:min(520px, 96vw);
+      border-radius:22px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 28px 110px rgba(0,0,0,.6);
+      padding:18px;
+    }
+    .modal h2{
+      margin:0 0 6px;
+      font-size:20px;
+      letter-spacing:-.3px;
+    }
+    .modal .sub{
+      margin:0 0 14px;
+      opacity:.75;
+      font-size:13px;
+      line-height:1.5;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .section{
+      padding:12px;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+    }
+    .section-title{
+      font-weight:900;
+      margin-bottom:8px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    input[type="text"]{
+      flex:1;
+      min-width:200px;
+      padding:11px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      color:#fff;
+      outline:none;
+    }
+    .btn{
+      padding:11px 12px;
+      border-radius:14px;
+      border:none;
+      cursor:pointer;
+      font-weight:900;
+      background: var(--accent);
+      color:#fff;
+      min-width:110px;
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      background: rgba(122,44,255,.35);
+    }
+    .msg{
+      margin-top:8px;
+      font-size:12px;
+      opacity:.85;
+    }
+    .msg.good{ color: rgba(46, 204, 113, .95); }
+    .msg.bad{ color: rgba(255, 90, 122, .95); }
+    .tiny{
+      margin-top:10px;
+      opacity:.6;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .locked{ pointer-events:none; opacity:.75; }
+
+    .nick-wrap{
+      position:fixed;
+      top:84px;
+      right:14px;
+      z-index:20;
+      display:none;
+    }
+    .nick-chip{
+      padding:9px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nick-chip:active{ transform: scale(0.98); }
+
+    .nick-menu{
+      position:absolute;
+      top:44px;
+      right:0;
+      width:220px;
+      border-radius:16px;
+      background: rgba(15,15,22,.86);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      padding:8px;
+      display:none;
+    }
+    .nick-menu.show{ display:block; }
+
+    .menu-btn{
+      width:100%;
+      text-align:left;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      cursor:pointer;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+    .menu-btn:last-child{ margin-bottom:0; }
+    .menu-btn.danger{
+      border-color: rgba(255,90,122,.25);
+      background: rgba(255,90,122,.10);
+    }
+    .menu-btn:active{ transform: scale(0.99); }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      top:92px;
+      transform: translateX(-50%);
+      z-index:200;
+      min-width:min(420px, 92vw);
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid rgba(255,90,122,.35);
+      background: rgba(255,90,122,.14);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+      display:none;
+      font-weight:900;
+    }
+    .toast small{
+      display:block;
+      margin-top:4px;
+      opacity:.8;
+      font-weight:700;
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .intro{
+      position:fixed;
+      inset:0;
+      z-index:500;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,241,198,.98), rgba(255,241,198,.72) 16%, rgba(255,241,198,.18) 38%, transparent 62%),
+        radial-gradient(circle at 50% 100%, rgba(255,255,255,.12), transparent 45%),
+        linear-gradient(180deg, var(--intro-bg-1), var(--intro-bg-2));
+      transition: opacity .6s ease, visibility .6s ease;
+    }
+    .intro.hidden{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+    .intro::before{
+      content:"";
+      position:absolute;
+      inset:-15%;
+      background:
+        radial-gradient(circle, rgba(255,255,255,.18) 0 2px, transparent 3px) 0 0/52px 52px,
+        radial-gradient(circle, rgba(255,255,255,.14) 0 1.5px, transparent 2.5px) 18px 12px/42px 42px;
+      opacity:.45;
+      animation: introSparkle 8s linear infinite;
+    }
+    .intro::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,.82), rgba(255,255,255,.2) 20%, transparent 52%);
+      opacity:0;
+      animation: introBrighten 3s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes introSparkle{
+      from{ transform:translateY(0); }
+      to{ transform:translateY(30px); }
+    }
+    @keyframes introBrighten{
+      0%{ opacity:.05; }
+      28%{ opacity:.28; }
+      58%{ opacity:.5; }
+      100%{ opacity:.68; }
+    }
+
+    .intro-core{
+      position:relative;
+      width:min(760px, 94vw);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:26px;
+      transform:translateY(-12px);
+      z-index:2;
+    }
+
+    .intro-logo-wrap{
+      width:min(270px, 52vw);
+      height:min(270px, 52vw);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      animation:introLogoFloat 2.5s ease-in-out infinite;
+    }
+    @keyframes introLogoFloat{
+      0%,100%{ transform:translateY(0); }
+      50%{ transform:translateY(-6px); }
+    }
+
+    .intro-burst{
+      position:absolute;
+      width:min(520px, 90vw);
+      height:min(520px, 90vw);
+      border-radius:50%;
+      background:
+        repeating-conic-gradient(
+          from 0deg,
+          rgba(255,247,214,.52) 0deg 10deg,
+          rgba(255,247,214,0) 10deg 24deg
+        );
+      filter: blur(1px);
+      opacity:.42;
+      transform:scale(.72);
+      animation:introBurst 3s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes introBurst{
+      0%{ opacity:.08; transform:scale(.45) rotate(0deg); }
+      30%{ opacity:.24; }
+      65%{ opacity:.4; }
+      100%{ opacity:.52; transform:scale(1.03) rotate(22deg); }
+    }
+
+    .intro-logo{
+      width:100%;
+      height:100%;
+      display:block;
+      filter:
+        drop-shadow(0 18px 32px rgba(126,63,18,.18))
+        drop-shadow(0 4px 0 rgba(255,255,255,.22));
+      opacity:0;
+      transform:scale(.85);
+      animation:introLogoAppear .9s ease forwards;
+    }
+    @keyframes introLogoAppear{
+      0%{ opacity:0; transform:scale(.72); }
+      45%{ opacity:.78; }
+      100%{ opacity:1; transform:scale(1); }
+    }
+
+    .intro-progress-wrap{
+      width:min(760px, 82vw);
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:10px;
+      margin-top:-8px;
+      opacity:0;
+      animation:introBarAppear .25s ease forwards;
+    }
+    @keyframes introBarAppear{
+      to{ opacity:1; }
+    }
+
+    .intro-progress{
+      width:100%;
+      height:30px;
+      border-radius:999px;
+      padding:4px;
+      background: rgba(255,239,228,.55);
+      border:1px solid rgba(255,255,255,.48);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.45),
+        0 6px 20px rgba(154,113,189,.16);
+      overflow:hidden;
+    }
+    .intro-progress-fill{
+      width:0%;
+      height:100%;
+      border-radius:999px;
+      background:
+        linear-gradient(90deg, #d34cff 0%, #8a50ff 35%, #5a74ff 70%, #34c8ff 100%);
+      box-shadow:
+        inset 0 0 8px rgba(255,255,255,.32),
+        0 0 16px rgba(136,83,255,.38);
+      position:relative;
+      will-change: width;
+    }
+    .intro-progress-fill::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,0));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+
+    .intro-version{
+      font-weight:900;
+      font-size:20px;
+      color:rgba(255,255,255,.95);
+      text-shadow:0 4px 18px rgba(0,0,0,.12);
+      letter-spacing:.3px;
+      margin-right:8px;
+    }
+
+    @media (max-width: 560px){
+      .top-right{
+        gap:8px;
+      }
+      .trophy-chip{
+        padding:10px 10px;
+      }
+      .coin-under{
+        padding:6px 8px;
+        font-size:12px;
+      }
+      .counter-chip{
+        padding:10px 11px;
+      }
+      .counter-chip .count{
+        min-width:82px;
+        font-size:16px;
+      }
+      .bottom-nav{
+        gap:8px;
+        padding-left:10px;
+        padding-right:10px;
+      }
+      .jump-overlay-title{
+        font-size:28px;
+      }
+      .jump-overlay-big{
+        font-size:52px;
+      }
+    }
+
+    @media (max-width: 480px){
+      .shop-panel,
+      .achieve-panel,
+      .trophy-panel{
+        width:min(390px, calc(100vw - 28px));
+      }
+      .intro-progress{
+        height:26px;
+      }
+      .intro-version{
+        font-size:18px;
+      }
+      .achieve-btn{ top:134px; }
+      .page-title{
+        font-size:22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="intro" id="introScreen" aria-hidden="true">
+    <div class="intro-core">
+      <div class="intro-logo-wrap">
+        <div class="intro-burst"></div>
+        <svg class="intro-logo" viewBox="0 0 512 512" aria-hidden="true">
+          <defs>
+            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f3af55"/>
+              <stop offset="60%" stop-color="#d98a33"/>
+              <stop offset="100%" stop-color="#bf6421"/>
+            </linearGradient>
+            <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6d392b"/>
+              <stop offset="55%" stop-color="#4d261e"/>
+              <stop offset="100%" stop-color="#2f1612"/>
+            </linearGradient>
+          </defs>
+
+          <path d="M256 182
+                   C176 182, 116 242, 116 322
+                   C116 414, 183 470, 256 470
+                   C329 470, 396 414, 396 322
+                   C396 242, 336 182, 256 182Z"
+                fill="url(#bodyGrad)"/>
+
+          <path d="M210 214
+                   C172 240, 150 284, 154 330
+                   C158 372, 182 405, 214 426"
+                fill="none"
+                stroke="rgba(255,248,214,.5)"
+                stroke-width="18"
+                stroke-linecap="round"/>
+
+          <path d="M140 218
+                   C152 145, 209 105, 256 105
+                   C303 105, 360 145, 372 218
+                   C334 242, 292 254, 256 254
+                   C220 254, 178 242, 140 218Z"
+                fill="url(#capGrad)"/>
+
+          <path d="M188 146 L256 210 L324 146" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="24"/>
+          <path d="M162 184 L228 240" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>
+          <path d="M350 184 L284 240" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>
+
+          <path d="M259 102 C258 68, 273 43, 301 21"
+                fill="none"
+                stroke="#533028"
+                stroke-width="22"
+                stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="intro-progress-wrap">
+        <div class="intro-progress" aria-label="로딩 게이지">
+          <div class="intro-progress-fill" id="introProgressFill"></div>
+        </div>
+        <div class="intro-version">v1.30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <div class="title">
+      <span class="badge">🌰</span>
+      <span>도토리 게임</span>
+    </div>
+
+    <div class="top-right">
+      <div class="trophy-stack">
+        <div class="trophy-chip" id="trophyChip" aria-label="트로피 현황 보기">
+          <span class="emoji">🏆</span>
+          <span id="achievementCountTop" class="count">0</span>
+        </div>
+        <div class="coin-under" aria-label="코인 수">
+          <span class="emoji">🪙</span>
+          <span>코인</span>
+          <span id="coinCountTop">0</span>
+        </div>
+      </div>
+
+      <div class="counter-chip" id="counterChip" aria-label="도토리 수">
+        <span class="emoji">🌰</span>
+        <span id="count" class="count">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    ⚠️ 핵 감지: 계정이 초기화되었습니다.
+    <small id="toastDetail">비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.</small>
+  </div>
+
+  <div class="nick-wrap" id="nickWrap">
+    <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
+    <div class="nick-menu" id="nickMenu">
+      <button class="menu-btn" id="btnLogout">로그아웃</button>
+      <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
+    </div>
+  </div>
+
+  <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
+    🛒 상점
+  </div>
+
+  <div class="achieve-btn locked" id="achieveBtn" aria-label="업적 열기">
+    🏆 업적
+  </div>
+
+  <div class="shop-panel" id="shopPanel" aria-label="상점">
+    <div class="shop-header">
+      <div class="shop-title">🛒 상점</div>
+      <button class="close" id="shopClose">닫기</button>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name" id="upgName">클릭 업그레이드</div>
+          <div class="item-desc" id="upgDesc">설명</div>
+        </div>
+        <div class="price"><span id="upgPricePrefix">🌰</span><span id="upgPrice">0</span></div>
+      </div>
+      <button class="buy" id="buyUpgrade">구매</button>
+      <div class="owned" id="upgHint"></div>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🐿️ 다람쥐 고용</div>
+          <div class="item-desc">
+            1마리당 <b>1초마다 +<span id="sqPerOne">1</span></b> 도토리<br>
+            보유: <b><span id="sqCount">0</span>마리</b> · 현재 수익: <b><span id="sqIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="sqPrice">10</span></div>
+      </div>
+      <button class="buy" id="buySquirrel">고용</button>
+      <div class="owned" id="sqHint"></div>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🌲 청솔모 고용</div>
+          <div class="item-desc">
+            1마리당 <b>1초마다 +10</b> 도토리<br>
+            보유: <b><span id="csCount">0</span>마리</b> · 현재 수익: <b><span id="csIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="csPrice">5000</span></div>
+      </div>
+      <button class="buy" id="buyChipmunk">고용</button>
+      <div class="owned" id="csHint"></div>
+    </div>
+
+    <div class="item">
+      <div class="item-top">
+        <div>
+          <div class="item-name">🌳 도토리 나무</div>
+          <div class="item-desc">
+            1개당 <b>0.1초마다 +50</b> 도토리<br>
+            보유: <b><span id="treeCount">0</span>개</b> · 현재 수익: <b><span id="treeIncome">0</span>/s</b>
+          </div>
+        </div>
+        <div class="price"><span>🌰</span><span id="treePrice">1m</span></div>
+      </div>
+      <button class="buy" id="buyTree">구매</button>
+      <div class="owned" id="treeHint"></div>
+    </div>
+  </div>
+
+  <div class="achieve-panel" id="achievePanel" aria-label="업적">
+    <div class="achieve-header">
+      <div class="achieve-title">🏆 업적</div>
+      <button class="close" id="achieveClose">닫기</button>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardAcorn">
+      <div class="achievement-card-title" id="achievementTitleAcorn">도토리 수집</div>
+      <div class="achievement-progress" id="achievementProgressAcorn">진행도</div>
+      <div class="achievement-reward" id="achievementRewardAcorn">보상</div>
+      <button class="buy" id="claimAchievementAcorn" disabled>받기</button>
+      <div class="owned" id="achievementHintAcorn"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardClick">
+      <div class="achievement-card-title" id="achievementTitleClick">클릭 업적</div>
+      <div class="achievement-progress" id="achievementProgressClick">진행도</div>
+      <div class="achievement-reward" id="achievementRewardClick">보상</div>
+      <button class="buy" id="claimAchievementClick" disabled>받기</button>
+      <div class="owned" id="achievementHintClick"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardSpent">
+      <div class="achievement-card-title" id="achievementTitleSpent">소비 업적</div>
+      <div class="achievement-progress" id="achievementProgressSpent">진행도</div>
+      <div class="achievement-reward" id="achievementRewardSpent">보상</div>
+      <button class="buy" id="claimAchievementSpent" disabled>받기</button>
+      <div class="owned" id="achievementHintSpent"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardSquirrel">
+      <div class="achievement-card-title" id="achievementTitleSquirrel">다람쥐 업적</div>
+      <div class="achievement-progress" id="achievementProgressSquirrel">진행도</div>
+      <div class="achievement-reward" id="achievementRewardSquirrel">보상</div>
+      <button class="buy" id="claimAchievementSquirrel" disabled>받기</button>
+      <div class="owned" id="achievementHintSquirrel"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardChipmunk">
+      <div class="achievement-card-title" id="achievementTitleChipmunk">청솔모 업적</div>
+      <div class="achievement-progress" id="achievementProgressChipmunk">진행도</div>
+      <div class="achievement-reward" id="achievementRewardChipmunk">보상</div>
+      <button class="buy" id="claimAchievementChipmunk" disabled>받기</button>
+      <div class="owned" id="achievementHintChipmunk"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardTree">
+      <div class="achievement-card-title" id="achievementTitleTree">도토리 나무 업적</div>
+      <div class="achievement-progress" id="achievementProgressTree">진행도</div>
+      <div class="achievement-reward" id="achievementRewardTree">보상</div>
+      <button class="buy" id="claimAchievementTree" disabled>받기</button>
+      <div class="owned" id="achievementHintTree"></div>
+    </div>
+
+    <div class="item achievement-card" id="achievementCardCoinShop">
+      <div class="achievement-card-title" id="achievementTitleCoinShop">코인상점 구매 업적</div>
+      <div class="achievement-progress" id="achievementProgressCoinShop">진행도</div>
+      <div class="achievement-reward" id="achievementRewardCoinShop">보상</div>
+      <button class="buy" id="claimAchievementCoinShop" disabled>받기</button>
+      <div class="owned" id="achievementHintCoinShop"></div>
+    </div>
+  </div>
+
+  <div class="trophy-panel" id="trophyPanel" aria-label="트로피 현황">
+    <div class="trophy-header">
+      <div class="trophy-title">🏆 트로피 현황</div>
+      <button class="close" id="trophyClose">닫기</button>
+    </div>
+
+    <div class="item trophy-summary">
+      <div class="trophy-big">
+        <span id="trophyMedalBig">🥉</span>
+        <span id="trophyRankName">무등급</span>
+      </div>
+      <div class="trophy-sub" id="trophySummaryText">
+        현재 트로피: 0
+      </div>
+      <div class="trophy-next" id="trophyNextText">
+        다음 등급까지 30 필요
+      </div>
+
+      <div class="trophy-panel-progress">
+        <div class="trophy-panel-progress-top">
+          <span id="panelProgressLabel">다음 등급 진행도</span>
+          <span id="panelProgressMeta">0 / 30</span>
+        </div>
+        <div class="trophy-panel-progress-bar">
+          <div class="trophy-panel-progress-fill" id="panelTrophyBarFill"></div>
+        </div>
+        <div class="trophy-panel-progress-sub" id="panelProgressSub">0%</div>
+      </div>
+    </div>
+
+    <div class="rank-list" id="trophyRankList"></div>
+  </div>
+
+  <div class="pages">
+    <div class="page show" id="pageHome">
+      <div class="stage">
+        <button class="acorn-btn locked" id="acornBtn" aria-label="도토리 클릭">
+          <svg class="acorn-svg" viewBox="0 0 256 256" aria-hidden="true">
+            <path d="M128 92
+                     C88 92, 58 122, 58 162
+                     C58 208, 92 236, 128 236
+                     C164 236, 198 208, 198 162
+                     C198 122, 168 92, 128 92Z"
+                  fill="#a85f2a"/>
+            <path d="M101 118
+                     C82 131, 72 152, 74 174
+                     C76 194, 88 210, 102 220"
+                  fill="none"
+                  stroke="rgba(255,255,255,.18)"
+                  stroke-width="10"
+                  stroke-linecap="round"/>
+            <path d="M72 114
+                     C78 78, 106 58, 128 58
+                     C150 58, 178 78, 184 114
+                     C166 126, 146 132, 128 132
+                     C110 132, 90 126, 72 114Z"
+                  fill="#6c3f1f"/>
+            <circle cx="92" cy="92" r="5" fill="#8a5229"/>
+            <circle cx="110" cy="80" r="5" fill="#8a5229"/>
+            <circle cx="128" cy="74" r="5" fill="#8a5229"/>
+            <circle cx="146" cy="80" r="5" fill="#8a5229"/>
+            <circle cx="164" cy="92" r="5" fill="#8a5229"/>
+            <circle cx="102" cy="104" r="5" fill="#8a5229"/>
+            <circle cx="128" cy="100" r="5" fill="#8a5229"/>
+            <circle cx="154" cy="104" r="5" fill="#8a5229"/>
+            <path d="M129 57
+                     C128 42, 135 30, 147 22"
+                  fill="none"
+                  stroke="#5f8f3a"
+                  stroke-width="10"
+                  stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="page" id="pageMinigame">
+      <div class="page-wrap">
+        <div class="page-card">
+          <div class="page-title">🎮 미니게임</div>
+          <div class="page-sub">원하는 미니게임을 골라 시작해.</div>
+
+          <div class="mini-wrap">
+            <div class="item">
+              <div class="item-top">
+                <div>
+                  <div class="item-name">🐿️ 다람쥐 점프!</div>
+                  <div class="item-desc">
+                    클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>
+                    첫 1회는 <b>무료</b>, 이후 참가비: <b>🌰 100k</b><br>
+                    보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>
                   </div>
                 </div>
               </div>
@@ -1706,8 +3415,6 @@
           </div>
         </div>
       </div>
-    </div>
-
     <div class="page" id="pageJumpGame">
       <div class="page-wrap" style="padding-top:14px;">
         <div class="jump-screen-wrap">
@@ -1729,10 +3436,10 @@
             <div class="jump-overlay-card">
               <div class="jump-overlay-title" id="jumpOverlayTitle">다람쥐 점프!</div>
               <div class="jump-overlay-sub" id="jumpOverlaySub">
-                참가비 100k를 내고 시작할까?
+                첫 1회 무료!
               </div>
               <div class="jump-overlay-big" id="jumpOverlayBig">준비</div>
-              <button class="mini-btn" id="jumpStartBtn">게임 시작</button>
+              <button class="buy" id="jumpStartBtn">게임 시작</button>
             </div>
           </div>
         </div>
@@ -1781,6 +3488,25 @@
               <div class="perm-meta" id="goldenChanceMeta">
                 현재 확률: 3.0%<br>
                 다음 확률: 3.5%
+              </div>
+            </div>
+
+            <div class="perm-card">
+              <div class="perm-top">
+                <div>
+                  <div class="perm-name">🐿️ 다람쥐 수익률 증가</div>
+                  <div class="perm-desc">
+                    다람쥐 1마리당 도토리 생산량을 영구적으로 올려줘.
+                  </div>
+                </div>
+                <div class="perm-cost">
+                  🪙 <span id="squirrelIncomeUpgradeCost">3</span>
+                </div>
+              </div>
+              <button class="buy" id="buySquirrelIncomeUpgrade">업그레이드</button>
+              <div class="perm-meta" id="squirrelIncomeMeta">
+                현재 수익률: 0%<br>
+                다음 수익률: 10%
               </div>
             </div>
           </div>
@@ -1846,7 +3572,7 @@
   </div>
 
   <script>
-const LS_KEY = "dotori_game_profiles_v129";
+const LS_KEY = "dotori_game_profiles_v130";
 
 const SHORT_SUFFIXES = [
   "", "k", "m", "b", "t", "qd", "qt", "sex", "sep", "oct", "non", "dec",
@@ -1912,7 +3638,6 @@ function fmtAcorn(n){
 
 let profiles = loadProfiles();
 let currentNick = null;
-
 let currentPage = "home";
 
 let acorn = 0;
@@ -1935,10 +3660,13 @@ let totalSpentAcorn = 0;
 let totalCoinShopPurchases = 0;
 
 let goldenChanceLevel = 0;
+let squirrelIncomeUpgradeLevel = 0;
 let freeCoinNextAt = 0;
 
+let jumpPlayCount = 0;
+
 let squirrelNextPayouts = [];
-const SQUIRREL_INCOME_PER_TICK = 1;
+const SQUIRREL_BASE_INCOME_PER_TICK = 1;
 const SQUIRREL_TICK_MS = 1000;
 
 let chipmunkNextPayouts = [];
@@ -2051,6 +3779,19 @@ function getGoldenChancePercent(level = goldenChanceLevel){
   return (BASE_GOLDEN_CHANCE + level * 0.005) * 100;
 }
 
+function getSquirrelIncomeMultiplier(){
+  return 1 + squirrelIncomeUpgradeLevel * 0.1;
+}
+function getSquirrelIncomePerTick(){
+  return SQUIRREL_BASE_INCOME_PER_TICK * getSquirrelIncomeMultiplier();
+}
+function getSquirrelIncomeUpgradeCost(){
+  return 3 + squirrelIncomeUpgradeLevel * 2;
+}
+function getSquirrelIncomeUpgradePercent(level = squirrelIncomeUpgradeLevel){
+  return level * 10;
+}
+
 function getAcornAchievementTarget(){
   return Math.pow(10, acornAchievementStage + 2);
 }
@@ -2101,7 +3842,6 @@ function getCoinShopPurchaseTarget(){
 function getCoinShopPurchaseReward(){
   return coinShopPurchaseAchievementStep * 20;
 }
-
 const countEl = document.getElementById("count");
 const acornBtn = document.getElementById("acornBtn");
 const counterChip = document.getElementById("counterChip");
@@ -2189,6 +3929,7 @@ const upgHint = document.getElementById("upgHint");
 const sqCountEl = document.getElementById("sqCount");
 const sqIncomeEl = document.getElementById("sqIncome");
 const sqPriceEl = document.getElementById("sqPrice");
+const sqPerOneEl = document.getElementById("sqPerOne");
 const buySquirrel = document.getElementById("buySquirrel");
 const sqHint = document.getElementById("sqHint");
 
@@ -2247,6 +3988,10 @@ const freeCoinCooldownText = document.getElementById("freeCoinCooldownText");
 const buyGoldenChanceUpgrade = document.getElementById("buyGoldenChanceUpgrade");
 const goldenChanceUpgradeCost = document.getElementById("goldenChanceUpgradeCost");
 const goldenChanceMeta = document.getElementById("goldenChanceMeta");
+
+const buySquirrelIncomeUpgrade = document.getElementById("buySquirrelIncomeUpgrade");
+const squirrelIncomeUpgradeCostEl = document.getElementById("squirrelIncomeUpgradeCost");
+const squirrelIncomeMeta = document.getElementById("squirrelIncomeMeta");
 
 const introScreen = document.getElementById("introScreen");
 const introProgressFill = document.getElementById("introProgressFill");
@@ -2326,6 +4071,7 @@ function getUnclaimedRankCount(){
   }
   return count;
 }
+
 function showToast(detail){
   toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
   toast.style.display = "block";
@@ -2403,7 +4149,9 @@ function buildSaveData(){
     totalSpentAcorn,
     totalCoinShopPurchases,
     goldenChanceLevel,
+    squirrelIncomeUpgradeLevel,
     freeCoinNextAt,
+    jumpPlayCount,
     squirrelRemainingMs,
     chipmunkRemainingMs,
     treeRemainingMs,
@@ -2438,7 +4186,9 @@ function applyLoadedProfile(p){
   totalSpentAcorn = Number(p.totalSpentAcorn ?? 0) || 0;
   totalCoinShopPurchases = Number(p.totalCoinShopPurchases ?? 0) || 0;
   goldenChanceLevel = Number(p.goldenChanceLevel ?? 0) || 0;
+  squirrelIncomeUpgradeLevel = Number(p.squirrelIncomeUpgradeLevel ?? 0) || 0;
   freeCoinNextAt = Number(p.freeCoinNextAt ?? 0) || 0;
+  jumpPlayCount = Number(p.jumpPlayCount ?? 0) || 0;
   jumpBestScore = Number(p.jumpBestScore ?? 0) || 0;
   goldenReady = !!p.goldenReady;
   normalizeByTier();
@@ -2495,7 +4245,9 @@ function createProfile(nick){
   totalSpentAcorn = 0;
   totalCoinShopPurchases = 0;
   goldenChanceLevel = 0;
+  squirrelIncomeUpgradeLevel = 0;
   freeCoinNextAt = 0;
+  jumpPlayCount = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   treeNextPayouts = [];
@@ -2528,7 +4280,9 @@ function resetCurrentNickProgress(){
   totalSpentAcorn = 0;
   totalCoinShopPurchases = 0;
   goldenChanceLevel = 0;
+  squirrelIncomeUpgradeLevel = 0;
   freeCoinNextAt = 0;
+  jumpPlayCount = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   treeNextPayouts = [];
@@ -2572,27 +4326,14 @@ function getNextUpgrade(){
   if(tier >= 13) return null;
   return UPGRADE_STEPS[tier];
 }
-function getSquirrelCount(){
-  return squirrelNextPayouts.length;
-}
-function getChipmunkCount(){
-  return chipmunkNextPayouts.length;
-}
-function getTreeCount(){
-  return treeNextPayouts.length;
-}
-function getSquirrelIncomePerSec(){
-  return getSquirrelCount() * SQUIRREL_INCOME_PER_TICK;
-}
-function getChipmunkIncomePerSec(){
-  return getChipmunkCount() * CHIPMUNK_INCOME_PER_TICK;
-}
-function getTreeIncomePerSec(){
-  return getTreeCount() * (TREE_INCOME_PER_TICK * (1000 / TREE_TICK_MS));
-}
-function getTotalAutoIncomePerSec(){
-  return getSquirrelIncomePerSec() + getChipmunkIncomePerSec() + getTreeIncomePerSec();
-}
+function getSquirrelCount(){ return squirrelNextPayouts.length; }
+function getChipmunkCount(){ return chipmunkNextPayouts.length; }
+function getTreeCount(){ return treeNextPayouts.length; }
+
+function getSquirrelIncomePerSec(){ return getSquirrelCount() * getSquirrelIncomePerTick(); }
+function getChipmunkIncomePerSec(){ return getChipmunkCount() * CHIPMUNK_INCOME_PER_TICK; }
+function getTreeIncomePerSec(){ return getTreeCount() * (TREE_INCOME_PER_TICK * (1000 / TREE_TICK_MS)); }
+function getTotalAutoIncomePerSec(){ return getSquirrelIncomePerSec() + getChipmunkIncomePerSec() + getTreeIncomePerSec(); }
 
 function canClaimAcornAchievement(){ return acorn >= getAcornAchievementTarget(); }
 function canClaimClickAchievement(){ return totalClicks >= getClickAchievementTarget(); }
@@ -2627,6 +4368,7 @@ function getNextTrophyRank(){
   }
   return null;
 }
+
 function getTrophyProgressInfo(){
   const current = getCurrentTrophyRank();
   const next = getNextTrophyRank();
@@ -2678,9 +4420,7 @@ function renderTrophyPanel(){
   const unclaimedCount = getUnclaimedRankCount();
 
   trophyMedalBig.textContent = current ? current.medal : "🥉";
-  trophyRankName.textContent = current
-    ? current.name + " " + current.stars
-    : "무등급";
+  trophyRankName.textContent = current ? current.name + " " + current.stars : "무등급";
 
   trophySummaryText.innerHTML =
     "현재 트로피: <b>" + fmtShort(achievementCount) + "</b>" +
@@ -2689,9 +4429,7 @@ function renderTrophyPanel(){
     "<br>수령 가능한 등급 코인: <b>" + fmtShort(unclaimedCount * 2) + "</b>";
 
   if(next){
-    trophyNextText.textContent =
-      "다음 등급: " + next.name + " " + next.stars + " · 앞으로 " +
-      fmtShort(next.need - achievementCount) + " 필요";
+    trophyNextText.textContent = "다음 등급: " + next.name + " " + next.stars + " · 앞으로 " + fmtShort(next.need - achievementCount) + " 필요";
   }else{
     trophyNextText.textContent = "최고 등급 달성 완료!";
   }
@@ -2741,9 +4479,7 @@ function renderAchievements(){
   const acornReward = getAcornAchievementReward();
   const acornReady = canClaimAcornAchievement();
   achievementTitleAcorn.textContent = "도토리 수집 Lv." + (acornAchievementStage - 1) + " → Lv." + acornAchievementStage;
-  achievementProgressAcorn.textContent =
-    "목표: 도토리 " + fmtShort(acornTarget) + "개 · 진행도: " +
-    fmtShort(Math.min(Math.floor(acorn), acornTarget)) + " / " + fmtShort(acornTarget);
+  achievementProgressAcorn.textContent = "목표: 도토리 " + fmtShort(acornTarget) + "개 · 진행도: " + fmtShort(Math.min(Math.floor(acorn), acornTarget)) + " / " + fmtShort(acornTarget);
   achievementRewardAcorn.textContent = "보상: 트로피 +" + fmtShort(acornReward);
   claimAchievementAcorn.disabled = !acornReady;
   achievementHintAcorn.textContent = acornReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "도토리를 더 모아야 해.";
@@ -2753,9 +4489,7 @@ function renderAchievements(){
   const clickReward = getClickAchievementReward();
   const clickReady = canClaimClickAchievement();
   achievementTitleClick.textContent = "클릭 Lv." + (clickAchievementStep - 1) + " → Lv." + clickAchievementStep;
-  achievementProgressClick.textContent =
-    "목표: 클릭 " + fmtShort(clickTarget) + "번 · 진행도: " +
-    fmtShort(Math.min(totalClicks, clickTarget)) + " / " + fmtShort(clickTarget);
+  achievementProgressClick.textContent = "목표: 클릭 " + fmtShort(clickTarget) + "번 · 진행도: " + fmtShort(Math.min(totalClicks, clickTarget)) + " / " + fmtShort(clickTarget);
   achievementRewardClick.textContent = "보상: 트로피 +" + fmtShort(clickReward);
   claimAchievementClick.disabled = !clickReady;
   achievementHintClick.textContent = clickReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "더 클릭해야 해.";
@@ -2765,9 +4499,7 @@ function renderAchievements(){
   const spentReward = getSpentAchievementReward();
   const spentReady = canClaimSpentAchievement();
   achievementTitleSpent.textContent = "도토리 소비 Lv." + (spentAchievementStep - 1) + " → Lv." + spentAchievementStep;
-  achievementProgressSpent.textContent =
-    "목표: " + fmtShort(spentTarget) + " 소비 · 진행도: " +
-    fmtShort(Math.min(totalSpentAcorn, spentTarget)) + " / " + fmtShort(spentTarget);
+  achievementProgressSpent.textContent = "목표: " + fmtShort(spentTarget) + " 소비 · 진행도: " + fmtShort(Math.min(totalSpentAcorn, spentTarget)) + " / " + fmtShort(spentTarget);
   achievementRewardSpent.textContent = "보상: 트로피 +" + fmtShort(spentReward);
   claimAchievementSpent.disabled = !spentReady;
   achievementHintSpent.textContent = spentReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "도토리를 더 소비해야 해.";
@@ -2777,9 +4509,7 @@ function renderAchievements(){
   const squirrelReward = getSquirrelAchievementReward();
   const squirrelReady = canClaimSquirrelAchievement();
   achievementTitleSquirrel.textContent = "다람쥐 Lv." + (squirrelAchievementStep - 1) + " → Lv." + squirrelAchievementStep;
-  achievementProgressSquirrel.textContent =
-    "목표: 다람쥐 " + fmtShort(squirrelTarget) + "마리 · 진행도: " +
-    fmtShort(Math.min(getSquirrelCount(), squirrelTarget)) + " / " + fmtShort(squirrelTarget);
+  achievementProgressSquirrel.textContent = "목표: 다람쥐 " + fmtShort(squirrelTarget) + "마리 · 진행도: " + fmtShort(Math.min(getSquirrelCount(), squirrelTarget)) + " / " + fmtShort(squirrelTarget);
   achievementRewardSquirrel.textContent = "보상: 트로피 +" + fmtShort(squirrelReward);
   claimAchievementSquirrel.disabled = !squirrelReady;
   achievementHintSquirrel.textContent = squirrelReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "다람쥐를 더 모아야 해.";
@@ -2789,9 +4519,7 @@ function renderAchievements(){
   const chipmunkReward = getChipmunkAchievementReward();
   const chipmunkReady = canClaimChipmunkAchievement();
   achievementTitleChipmunk.textContent = "청솔모 Lv." + (chipmunkAchievementStep - 1) + " → Lv." + chipmunkAchievementStep;
-  achievementProgressChipmunk.textContent =
-    "목표: 청솔모 " + fmtShort(chipmunkTarget) + "마리 · 진행도: " +
-    fmtShort(Math.min(getChipmunkCount(), chipmunkTarget)) + " / " + fmtShort(chipmunkTarget);
+  achievementProgressChipmunk.textContent = "목표: 청솔모 " + fmtShort(chipmunkTarget) + "마리 · 진행도: " + fmtShort(Math.min(getChipmunkCount(), chipmunkTarget)) + " / " + fmtShort(chipmunkTarget);
   achievementRewardChipmunk.textContent = "보상: 트로피 +" + fmtShort(chipmunkReward);
   claimAchievementChipmunk.disabled = !chipmunkReady;
   achievementHintChipmunk.textContent = chipmunkReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "청솔모를 더 모아야 해.";
@@ -2801,9 +4529,7 @@ function renderAchievements(){
   const treeReward = getTreeAchievementReward();
   const treeReady = canClaimTreeAchievement();
   achievementTitleTree.textContent = "도토리 나무 Lv." + (treeAchievementStep - 1) + " → Lv." + treeAchievementStep;
-  achievementProgressTree.textContent =
-    "목표: 도토리 나무 " + fmtShort(treeTarget) + "개 · 진행도: " +
-    fmtShort(Math.min(getTreeCount(), treeTarget)) + " / " + fmtShort(treeTarget);
+  achievementProgressTree.textContent = "목표: 도토리 나무 " + fmtShort(treeTarget) + "개 · 진행도: " + fmtShort(Math.min(getTreeCount(), treeTarget)) + " / " + fmtShort(treeTarget);
   achievementRewardTree.textContent = "보상: 트로피 +" + fmtShort(treeReward);
   claimAchievementTree.disabled = !treeReady;
   achievementHintTree.textContent = treeReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "도토리 나무를 더 구매해야 해.";
@@ -2813,9 +4539,7 @@ function renderAchievements(){
   const coinShopReward = getCoinShopPurchaseReward();
   const coinShopReady = canClaimCoinShopPurchaseAchievement();
   achievementTitleCoinShop.textContent = "코인상점 구매 Lv." + (coinShopPurchaseAchievementStep - 1) + " → Lv." + coinShopPurchaseAchievementStep;
-  achievementProgressCoinShop.textContent =
-    "목표: 코인상점 " + fmtShort(coinShopTarget) + "회 구매 · 진행도: " +
-    fmtShort(Math.min(totalCoinShopPurchases, coinShopTarget)) + " / " + fmtShort(coinShopTarget);
+  achievementProgressCoinShop.textContent = "목표: 코인상점 " + fmtShort(coinShopTarget) + "회 구매 · 진행도: " + fmtShort(Math.min(totalCoinShopPurchases, coinShopTarget)) + " / " + fmtShort(coinShopTarget);
   achievementRewardCoinShop.textContent = "보상: 트로피 +" + fmtShort(coinShopReward);
   claimAchievementCoinShop.disabled = !coinShopReady;
   achievementHintCoinShop.textContent = coinShopReady ? "업적 달성! 받기를 눌러 다음 레벨로 올라가자." : "코인상점에서 더 구매해야 해.";
@@ -2844,11 +4568,7 @@ function renderUpgradeUI(next){
     const canBuyByCoin = coinCount >= next.coinCost;
     buyUpgrade.disabled = !(canBuyByAcorn || canBuyByCoin);
     buyUpgrade.textContent = canBuyByCoin ? "코인으로 구매" : "구매";
-    upgHint.textContent =
-      "현재 클릭당 +" + fmtShort(clickValue) +
-      " → 업그레이드 후 +" + fmtShort(next.toValue) +
-      " / 필요: 도토리 " + fmtShort(next.cost) +
-      " 또는 코인 " + fmtShort(next.coinCost);
+    upgHint.textContent = "현재 클릭당 +" + fmtShort(clickValue) + " → 업그레이드 후 +" + fmtShort(next.toValue) + " / 필요: 도토리 " + fmtShort(next.cost) + " 또는 코인 " + fmtShort(next.coinCost);
   }else{
     upgPricePrefix.textContent = "🌰";
     upgPrice.textContent = fmtShort(next.cost);
@@ -2865,14 +4585,11 @@ function renderCoinShop(){
 
   claimFreeCoinBtn.disabled = !canClaim;
   freeCoinStateChip.textContent = canClaim ? "지금 받기 가능" : formatCooldown(remain);
-  freeCoinCooldownText.textContent = canClaim
-    ? "지금 바로 받을 수 있어."
-    : "다음 무료 코인까지 " + formatCooldown(remain);
+  freeCoinCooldownText.textContent = canClaim ? "지금 바로 받을 수 있어." : "다음 무료 코인까지 " + formatCooldown(remain);
 
   const cost = getGoldenChanceCost();
   const currentPct = getGoldenChancePercent(goldenChanceLevel);
   const nextPct = getGoldenChancePercent(goldenChanceLevel + 1);
-
   goldenChanceUpgradeCost.textContent = fmtShort(cost);
   buyGoldenChanceUpgrade.disabled = coinCount < cost;
   goldenChanceMeta.innerHTML =
@@ -2880,6 +4597,16 @@ function renderCoinShop(){
     "다음 확률: <b>" + nextPct.toFixed(1) + "%</b><br>" +
     "현재 단계: <b>" + fmtShort(goldenChanceLevel) + "</b><br>" +
     "누적 코인상점 구매: <b>" + fmtShort(totalCoinShopPurchases) + "</b>회";
+
+  const sqCost = getSquirrelIncomeUpgradeCost();
+  const sqCurrent = getSquirrelIncomeUpgradePercent();
+  const sqNext = getSquirrelIncomeUpgradePercent(squirrelIncomeUpgradeLevel + 1);
+  squirrelIncomeUpgradeCostEl.textContent = fmtShort(sqCost);
+  buySquirrelIncomeUpgrade.disabled = coinCount < sqCost;
+  squirrelIncomeMeta.innerHTML =
+    "현재 수익률: <b>" + sqCurrent + "%</b><br>" +
+    "다음 수익률: <b>" + sqNext + "%</b><br>" +
+    "다람쥐 1마리당: <b>+" + fmtShort(getSquirrelIncomePerTick()) + "</b>";
 }
 
 function render(){
@@ -2907,12 +4634,11 @@ function render(){
   const sqIncome = getSquirrelIncomePerSec();
   sqCountEl.textContent = fmtShort(sqCount);
   sqIncomeEl.textContent = fmtShort(sqIncome);
+  sqPerOneEl.textContent = fmtShort(getSquirrelIncomePerTick());
   const nextSqCost = getNextSquirrelCost(sqCount + 1);
   sqPriceEl.textContent = fmtShort(nextSqCost);
   buySquirrel.disabled = acorn < nextSqCost;
-  sqHint.textContent =
-    "다음 가격: " + fmtShort(nextSqCost) +
-    " (구매 후 수익 " + fmtShort((sqCount + 1) * SQUIRREL_INCOME_PER_TICK) + "/s)";
+  sqHint.textContent = "다음 가격: " + fmtShort(nextSqCost) + " (구매 후 수익 " + fmtShort((sqCount + 1) * getSquirrelIncomePerTick()) + "/s)";
 
   const csCount = getChipmunkCount();
   const csIncome = getChipmunkIncomePerSec();
@@ -2921,9 +4647,7 @@ function render(){
   const nextCsCost = getNextChipmunkCost(csCount + 1);
   csPriceEl.textContent = fmtShort(nextCsCost);
   buyChipmunk.disabled = acorn < nextCsCost;
-  csHint.textContent =
-    "다음 가격: " + fmtShort(nextCsCost) +
-    " (구매 후 수익 " + fmtShort((csCount + 1) * CHIPMUNK_INCOME_PER_TICK) + "/s)";
+  csHint.textContent = "다음 가격: " + fmtShort(nextCsCost) + " (구매 후 수익 " + fmtShort((csCount + 1) * CHIPMUNK_INCOME_PER_TICK) + "/s)";
 
   const treeCount = getTreeCount();
   const treeIncome = getTreeIncomePerSec();
@@ -2932,16 +4656,14 @@ function render(){
   const nextTreeCost = getNextTreeCost(treeCount + 1);
   treePriceEl.textContent = fmtShort(nextTreeCost);
   buyTree.disabled = acorn < nextTreeCost;
-  treeHint.textContent =
-    "다음 가격: " + fmtShort(nextTreeCost) +
-    " (구매 후 수익 " + fmtShort((treeCount + 1) * TREE_INCOME_PER_TICK * (1000 / TREE_TICK_MS)) + "/s)";
+  treeHint.textContent = "다음 가격: " + fmtShort(nextTreeCost) + " (구매 후 수익 " + fmtShort((treeCount + 1) * TREE_INCOME_PER_TICK * (1000 / TREE_TICK_MS)) + "/s)";
 
   dockSq.textContent = fmtShort(sqCount);
   dockCs.textContent = fmtShort(csCount);
   dockTree.textContent = fmtShort(treeCount);
   dockIncome.textContent = fmtShort(getTotalAutoIncomePerSec());
 
-  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b>";
+  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b><br>플레이 횟수: <b>" + fmtShort(jumpPlayCount) + "</b>회";
 }
 
 function spawnFloatText(x, y, text, color, type){
@@ -2949,7 +4671,6 @@ function spawnFloatText(x, y, text, color, type){
   if((activeFloatCounts[key] || 0) >= FLOAT_LIMIT_PER_TYPE) return;
 
   activeFloatCounts[key] = (activeFloatCounts[key] || 0) + 1;
-
   const el = document.createElement("div");
   el.className = "float-text";
   el.textContent = text;
@@ -2979,29 +4700,18 @@ function spawnClickFloat(x, y, value, isGolden=false){
 
 function spawnSquirrelFloat(){
   const r = sqDockEmoji.getBoundingClientRect();
-  const x = r.left + r.width / 2;
-  const y = r.top - 4;
-  spawnFloatText(x, y, "+1", "#9dffb5", "squirrel");
+  spawnFloatText(r.left + r.width / 2, r.top - 4, "+" + fmtShort(getSquirrelIncomePerTick()), "#9dffb5", "squirrel");
 }
-
 function spawnChipmunkFloat(){
   const r = csDockEmoji.getBoundingClientRect();
-  const x = r.left + r.width / 2;
-  const y = r.top - 4;
-  spawnFloatText(x, y, "+10", "#7bdfff", "chipmunk");
+  spawnFloatText(r.left + r.width / 2, r.top - 4, "+10", "#7bdfff", "chipmunk");
 }
-
 function spawnTreeFloat(){
   const r = treeDockEmoji.getBoundingClientRect();
-  const x = r.left + r.width / 2;
-  const y = r.top - 4;
-  spawnFloatText(x, y, "+50", "#8fff96", "tree");
+  spawnFloatText(r.left + r.width / 2, r.top - 4, "+50", "#8fff96", "tree");
 }
 
-function mean(arr){
-  if(!arr.length) return 0;
-  return arr.reduce((a,b)=>a+b,0)/arr.length;
-}
+function mean(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
 function stddev(arr){
   if(arr.length < 2) return 9999;
   const m = mean(arr);
@@ -3015,11 +4725,10 @@ function dominantRoundedCount(arr){
     counts.set(r, (counts.get(r)||0)+1);
   }
   let max = 0;
-  for(const v of counts.values()){
-    if(v > max) max = v;
-  }
+  for(const v of counts.values()) if(v > max) max = v;
   return max;
 }
+
 function addSuspicion(points, reason){
   suspiciousScore += points;
   if(suspiciousScore >= 4){
@@ -3048,62 +4757,43 @@ function decaySuspicion(now){
 function runAutoChecks(now){
   const clickCutoff = now - CLICK_HISTORY_WINDOW_MS;
   while(clickTimes.length && clickTimes[0] < clickCutoff) clickTimes.shift();
-
-  const intervalLimit = 40;
-  while(clickIntervals.length > intervalLimit) clickIntervals.shift();
+  while(clickIntervals.length > 40) clickIntervals.shift();
 
   const oneSecCount = clickTimes.filter(t => now - t <= HARD_CPS_WINDOW_MS).length;
-  if(oneSecCount > HARD_CPS_LIMIT){
-    return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
-  }
+  if(oneSecCount > HARD_CPS_LIMIT) return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
 
   if(clickIntervals.length >= 16){
     const last16 = clickIntervals.slice(-16);
-    const avg16 = mean(last16);
-    const std16 = stddev(last16);
-    if(avg16 < 120 && std16 < 3.2){
-      return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.");
-    }
+    if(mean(last16) < 120 && stddev(last16) < 3.2) return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.");
   }
 
   if(clickIntervals.length >= 20){
     const last20 = clickIntervals.slice(-20);
-    const avg20 = mean(last20);
-    const dom = dominantRoundedCount(last20);
-    if(avg20 < 130 && dom >= 15){
-      return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.");
-    }
+    if(mean(last20) < 130 && dominantRoundedCount(last20) >= 15) return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.");
   }
 
   if(clickTimes.length >= 35 && clickIntervals.length >= 30){
     const recent = clickIntervals.slice(-30);
     const avg = mean(recent);
-    const std = stddev(recent);
     const cps = 1000 / Math.max(avg, 1);
-    if(cps > 11.5 && std < 5){
-      return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.");
-    }
+    if(cps > 11.5 && stddev(recent) < 5) return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.");
   }
 
   if(clickIntervals.length >= 12){
     const last12 = clickIntervals.slice(-12);
-    const tooFast = last12.filter(v => v < 45).length;
-    if(tooFast >= 10){
-      return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.");
-    }
+    if(last12.filter(v => v < 45).length >= 10) return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.");
   }
 
   return true;
 }
+
 function processHackCheck(now){
   decaySuspicion(now);
   const interval = lastClickTime ? (now - lastClickTime) : null;
   if(interval !== null && interval < CLICK_COOLDOWN_MS) return false;
-
   lastClickTime = now;
   clickTimes.push(now);
   if(interval !== null) clickIntervals.push(interval);
-
   return runAutoChecks(now);
 }
 
@@ -3114,23 +4804,16 @@ function triggerGolden(now){
   saveCurrent();
 }
 function tryTriggerGolden(now){
-  if(goldenReady) return;
-  if(Math.random() < getGoldenChance()){
-    triggerGolden(now);
-  }
+  if(!goldenReady && Math.random() < getGoldenChance()) triggerGolden(now);
 }
 function canConsumeGolden(now){
   return goldenReady && (now - goldenStartedAt >= GOLDEN_MIN_HOLD_MS);
 }
 
-function addManualClickProgress(){
-  totalClicks += 1;
-}
+function addManualClickProgress(){ totalClicks += 1; }
 
 function clickAcornFromPointer(e){
-  if(!currentNick) return;
-  if(currentPage !== "home") return;
-
+  if(!currentNick || currentPage !== "home") return;
   const now = performance.now();
   if(!processHackCheck(now)) return;
 
@@ -3150,20 +4833,14 @@ function clickAcornFromPointer(e){
   acorn += gain;
   render();
   saveCurrent();
-
   spawnClickFloat(e.clientX, e.clientY, gain, isGoldenClick);
 }
 
-acornBtn.addEventListener("pointerdown", (e)=>{
-  e.preventDefault();
-  clickAcornFromPointer(e);
-});
-
+acornBtn.addEventListener("pointerdown", (e)=>{ e.preventDefault(); clickAcornFromPointer(e); });
 acornBtn.addEventListener("keydown", (e)=>{
   if(e.key === " " || e.key === "Enter"){
     e.preventDefault();
     if(!currentNick || currentPage !== "home") return;
-
     const now = performance.now();
     if(!processHackCheck(now)) return;
 
@@ -3191,14 +4868,13 @@ acornBtn.addEventListener("keydown", (e)=>{
 
 setInterval(()=>{
   if(!currentNick) return;
-
   const now = performance.now();
   let changed = false;
 
   for(let i = 0; i < squirrelNextPayouts.length; i++){
     if(now >= squirrelNextPayouts[i]){
       squirrelNextPayouts[i] += SQUIRREL_TICK_MS;
-      acorn += SQUIRREL_INCOME_PER_TICK;
+      acorn += getSquirrelIncomePerTick();
       if(currentPage === "home") spawnSquirrelFloat();
       changed = true;
     }
@@ -3228,147 +4904,45 @@ setInterval(()=>{
   }
 }, 50);
 
-setInterval(()=>{
-  if(!currentNick) return;
-  renderCoinShop();
-}, 250);
+setInterval(()=>{ if(currentNick) renderCoinShop(); }, 250);
 
-function openShop(){
-  if(currentPage !== "home") return;
-  closeAchieve();
-  closeTrophy();
-  shopPanel.classList.add("show");
-}
-function closeShop(){
-  shopPanel.classList.remove("show");
-}
-function openAchieve(){
-  if(currentPage !== "home") return;
-  closeShop();
-  closeTrophy();
-  achievePanel.classList.add("show");
-}
-function closeAchieve(){
-  achievePanel.classList.remove("show");
-}
-function openTrophy(){
-  closeShop();
-  closeAchieve();
-  trophyPanel.classList.add("show");
-}
-function closeTrophy(){
-  trophyPanel.classList.remove("show");
-}
+function openShop(){ if(currentPage === "home"){ closeAchieve(); closeTrophy(); shopPanel.classList.add("show"); } }
+function closeShop(){ shopPanel.classList.remove("show"); }
+function openAchieve(){ if(currentPage === "home"){ closeShop(); closeTrophy(); achievePanel.classList.add("show"); } }
+function closeAchieve(){ achievePanel.classList.remove("show"); }
+function openTrophy(){ closeShop(); closeAchieve(); trophyPanel.classList.add("show"); }
+function closeTrophy(){ trophyPanel.classList.remove("show"); }
 
-shopBtn.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(shopPanel.classList.contains("show")) closeShop();
-  else openShop();
-});
+shopBtn.addEventListener("click", ()=>{ if(currentNick) shopPanel.classList.contains("show") ? closeShop() : openShop(); });
 shopClose.addEventListener("click", closeShop);
-
-achieveBtn.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(achievePanel.classList.contains("show")) closeAchieve();
-  else openAchieve();
-});
+achieveBtn.addEventListener("click", ()=>{ if(currentNick) achievePanel.classList.contains("show") ? closeAchieve() : openAchieve(); });
 achieveClose.addEventListener("click", closeAchieve);
-
-trophyChip.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(trophyPanel.classList.contains("show")) closeTrophy();
-  else openTrophy();
-});
+trophyChip.addEventListener("click", ()=>{ if(currentNick) trophyPanel.classList.contains("show") ? closeTrophy() : openTrophy(); });
 trophyClose.addEventListener("click", closeTrophy);
 
 trophyRankList.addEventListener("click", (e)=>{
   const row = e.target.closest(".rank-row");
   if(!row || !currentNick) return;
-
   const idx = Number(row.dataset.rankIndex);
   if(Number.isNaN(idx)) return;
-
   const rank = TROPHY_RANKS[idx];
-  if(!rank) return;
-  if(achievementCount < rank.need) return;
-  if(claimedCoinRankIndices.includes(idx)) return;
-
+  if(!rank || achievementCount < rank.need || claimedCoinRankIndices.includes(idx)) return;
   claimedCoinRankIndices.push(idx);
   coinCount += 2;
   render();
   saveCurrent();
 });
 
-claimAchievementAcorn.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimAcornAchievement()) return;
-  achievementCount += getAcornAchievementReward();
-  acornAchievementStage += 1;
-  render();
-  saveCurrent();
-});
+claimAchievementAcorn.addEventListener("click", ()=>{ if(currentNick && canClaimAcornAchievement()){ achievementCount += getAcornAchievementReward(); acornAchievementStage += 1; render(); saveCurrent(); }});
+claimAchievementClick.addEventListener("click", ()=>{ if(currentNick && canClaimClickAchievement()){ achievementCount += getClickAchievementReward(); clickAchievementStep += 1; render(); saveCurrent(); }});
+claimAchievementSpent.addEventListener("click", ()=>{ if(currentNick && canClaimSpentAchievement()){ achievementCount += getSpentAchievementReward(); spentAchievementStep += 1; render(); saveCurrent(); }});
+claimAchievementSquirrel.addEventListener("click", ()=>{ if(currentNick && canClaimSquirrelAchievement()){ achievementCount += getSquirrelAchievementReward(); squirrelAchievementStep += 1; render(); saveCurrent(); }});
+claimAchievementChipmunk.addEventListener("click", ()=>{ if(currentNick && canClaimChipmunkAchievement()){ achievementCount += getChipmunkAchievementReward(); chipmunkAchievementStep += 1; render(); saveCurrent(); }});
+claimAchievementTree.addEventListener("click", ()=>{ if(currentNick && canClaimTreeAchievement()){ achievementCount += getTreeAchievementReward(); treeAchievementStep += 1; render(); saveCurrent(); }});
+claimAchievementCoinShop.addEventListener("click", ()=>{ if(currentNick && canClaimCoinShopPurchaseAchievement()){ achievementCount += getCoinShopPurchaseReward(); coinShopPurchaseAchievementStep += 1; render(); saveCurrent(); }});
 
-claimAchievementClick.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimClickAchievement()) return;
-  achievementCount += getClickAchievementReward();
-  clickAchievementStep += 1;
-  render();
-  saveCurrent();
-});
-
-claimAchievementSpent.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimSpentAchievement()) return;
-  achievementCount += getSpentAchievementReward();
-  spentAchievementStep += 1;
-  render();
-  saveCurrent();
-});
-
-claimAchievementSquirrel.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimSquirrelAchievement()) return;
-  achievementCount += getSquirrelAchievementReward();
-  squirrelAchievementStep += 1;
-  render();
-  saveCurrent();
-});
-
-claimAchievementChipmunk.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimChipmunkAchievement()) return;
-  achievementCount += getChipmunkAchievementReward();
-  chipmunkAchievementStep += 1;
-  render();
-  saveCurrent();
-});
-
-claimAchievementTree.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimTreeAchievement()) return;
-  achievementCount += getTreeAchievementReward();
-  treeAchievementStep += 1;
-  render();
-  saveCurrent();
-});
-
-claimAchievementCoinShop.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  if(!canClaimCoinShopPurchaseAchievement()) return;
-  achievementCount += getCoinShopPurchaseReward();
-  coinShopPurchaseAchievementStep += 1;
-  render();
-  saveCurrent();
-});
-
-function spendAcorn(cost){
-  acorn -= cost;
-  totalSpentAcorn += cost;
-}
-function spendCoin(cost){
-  coinCount -= cost;
-}
+function spendAcorn(cost){ acorn -= cost; totalSpentAcorn += cost; }
+function spendCoin(cost){ coinCount -= cost; }
 
 buyUpgrade.addEventListener("click", ()=>{
   if(!currentNick) return;
@@ -3390,7 +4964,6 @@ buyUpgrade.addEventListener("click", ()=>{
       normalizeByTier();
       render();
       saveCurrent();
-      return;
     }
     return;
   }
@@ -3405,14 +4978,11 @@ buyUpgrade.addEventListener("click", ()=>{
 
 buySquirrel.addEventListener("click", ()=>{
   if(!currentNick) return;
-
   const sqCount = getSquirrelCount();
   const cost = getNextSquirrelCost(sqCount + 1);
   if(acorn < cost) return;
-
   spendAcorn(cost);
   squirrelNextPayouts.push(performance.now() + SQUIRREL_TICK_MS);
-
   render();
   saveCurrent();
   if(currentPage === "home") spawnSquirrelFloat();
@@ -3420,14 +4990,11 @@ buySquirrel.addEventListener("click", ()=>{
 
 buyChipmunk.addEventListener("click", ()=>{
   if(!currentNick) return;
-
   const csCount = getChipmunkCount();
   const cost = getNextChipmunkCost(csCount + 1);
   if(acorn < cost) return;
-
   spendAcorn(cost);
   chipmunkNextPayouts.push(performance.now() + CHIPMUNK_TICK_MS);
-
   render();
   saveCurrent();
   if(currentPage === "home") spawnChipmunkFloat();
@@ -3435,14 +5002,11 @@ buyChipmunk.addEventListener("click", ()=>{
 
 buyTree.addEventListener("click", ()=>{
   if(!currentNick) return;
-
   const treeCount = getTreeCount();
   const cost = getNextTreeCost(treeCount + 1);
   if(acorn < cost) return;
-
   spendAcorn(cost);
   treeNextPayouts.push(performance.now() + TREE_TICK_MS);
-
   render();
   saveCurrent();
   if(currentPage === "home") spawnTreeFloat();
@@ -3452,7 +5016,6 @@ claimFreeCoinBtn.addEventListener("click", ()=>{
   if(!currentNick) return;
   const now = Date.now();
   if(now < freeCoinNextAt) return;
-
   coinCount += 2;
   freeCoinNextAt = now + FREE_COIN_COOLDOWN_MS;
   render();
@@ -3463,7 +5026,6 @@ buyGoldenChanceUpgrade.addEventListener("click", ()=>{
   if(!currentNick) return;
   const cost = getGoldenChanceCost();
   if(coinCount < cost) return;
-
   spendCoin(cost);
   goldenChanceLevel += 1;
   totalCoinShopPurchases += 1;
@@ -3471,27 +5033,25 @@ buyGoldenChanceUpgrade.addEventListener("click", ()=>{
   saveCurrent();
 });
 
+buySquirrelIncomeUpgrade.addEventListener("click", ()=>{
+  if(!currentNick) return;
+  const cost = getSquirrelIncomeUpgradeCost();
+  if(coinCount < cost) return;
+  spendCoin(cost);
+  squirrelIncomeUpgradeLevel += 1;
+  totalCoinShopPurchases += 1;
+  render();
+  saveCurrent();
+});
+
 function openNickMenu(){ nickMenu.classList.add("show"); }
 function closeNickMenu(){ nickMenu.classList.remove("show"); }
-function toggleNickMenu(){
-  if(nickMenu.classList.contains("show")) closeNickMenu();
-  else openNickMenu();
-}
+function toggleNickMenu(){ nickMenu.classList.contains("show") ? closeNickMenu() : openNickMenu(); }
 
-nickChip.addEventListener("click", (e)=>{
-  e.stopPropagation();
-  toggleNickMenu();
-});
+nickChip.addEventListener("click", (e)=>{ e.stopPropagation(); toggleNickMenu(); });
+document.addEventListener("click", ()=>{ closeNickMenu(); });
 
-document.addEventListener("click", ()=>{
-  closeNickMenu();
-});
-
-btnLogout.addEventListener("click", (e)=>{
-  e.stopPropagation();
-  logout();
-});
-
+btnLogout.addEventListener("click", (e)=>{ e.stopPropagation(); logout(); });
 btnResetNick.addEventListener("click", (e)=>{
   e.stopPropagation();
   resetCurrentNickProgress();
@@ -3510,11 +5070,7 @@ function setMsg(el, text, kind){
 
 function updateNewNickUI(){
   const nick = sanitizeNick(newNick.value);
-  if(!isValidNick(nick)){
-    newStart.disabled = true;
-    setMsg(newMsg, "", null);
-    return;
-  }
+  if(!isValidNick(nick)){ newStart.disabled = true; setMsg(newMsg, "", null); return; }
   if(profiles[nick]){
     newStart.disabled = true;
     setMsg(newMsg, "이미 사용중인 닉네임", "bad");
@@ -3523,14 +5079,9 @@ function updateNewNickUI(){
     setMsg(newMsg, "사용 가능한 닉네임", "good");
   }
 }
-
 function updateOldNickUI(){
   const nick = sanitizeNick(oldNick.value);
-  if(!isValidNick(nick)){
-    oldEnter.disabled = true;
-    setMsg(oldMsg, "", null);
-    return;
-  }
+  if(!isValidNick(nick)){ oldEnter.disabled = true; setMsg(oldMsg, "", null); return; }
   if(profiles[nick]){
     oldEnter.disabled = false;
     setMsg(oldMsg, "이미 사용중인 닉네임", "good");
@@ -3546,13 +5097,11 @@ oldNick.addEventListener("input", updateOldNickUI);
 newStart.addEventListener("click", ()=>{
   const nick = sanitizeNick(newNick.value);
   if(!isValidNick(nick)) return;
-
   if(profiles[nick]){
     setMsg(newMsg, "이미 사용중인 닉네임", "bad");
     newStart.disabled = true;
     return;
   }
-
   createProfile(nick);
   overlay.style.display = "none";
   setLocked(false);
@@ -3564,13 +5113,11 @@ newStart.addEventListener("click", ()=>{
 oldEnter.addEventListener("click", ()=>{
   const nick = sanitizeNick(oldNick.value);
   if(!isValidNick(nick)) return;
-
   if(!profiles[nick]){
     setMsg(oldMsg, "이미 사용중인 닉네임이 아닙니다", "bad");
     oldEnter.disabled = true;
     return;
   }
-
   loadProfile(nick);
   overlay.style.display = "none";
   setLocked(false);
@@ -3579,30 +5126,17 @@ oldEnter.addEventListener("click", ()=>{
   render();
 });
 
-newNick.addEventListener("keydown", (e)=>{
-  if(e.key === "Enter" && !newStart.disabled) newStart.click();
-});
-oldNick.addEventListener("keydown", (e)=>{
-  if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click();
-});
+newNick.addEventListener("keydown", (e)=>{ if(e.key === "Enter" && !newStart.disabled) newStart.click(); });
+oldNick.addEventListener("keydown", (e)=>{ if(e.key === "Enter" && !oldEnter.disabled) oldEnter.click(); });
 
-navHome.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  switchPage("home");
-});
-navMinigame.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  switchPage("minigame");
-});
-navCoinShop.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  switchPage("coinshop");
-});
+navHome.addEventListener("click", ()=>{ if(currentNick) switchPage("home"); });
+navMinigame.addEventListener("click", ()=>{ if(currentNick) switchPage("minigame"); });
+navCoinShop.addEventListener("click", ()=>{ if(currentNick) switchPage("coinshop"); });
 
 function updateJumpTexts(){
   jumpBestText.textContent = fmtShort(jumpBestScore);
   jumpScoreText.textContent = fmtShort(jumpGame.score || 0);
-  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b>";
+  jumpLobbyInfo.innerHTML = "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b><br>플레이 횟수: <b>" + fmtShort(jumpPlayCount) + "</b>회";
 }
 
 function showJumpOverlay(title, sub, big, buttonText, buttonVisible=true){
@@ -3613,10 +5147,7 @@ function showJumpOverlay(title, sub, big, buttonText, buttonVisible=true){
   if(buttonVisible) jumpStartBtn.textContent = buttonText || "게임 시작";
   jumpOverlay.classList.add("show");
 }
-
-function hideJumpOverlay(){
-  jumpOverlay.classList.remove("show");
-}
+function hideJumpOverlay(){ jumpOverlay.classList.remove("show"); }
 
 function clearJumpCountdown(){
   if(jumpCountdownTimer){
@@ -3632,13 +5163,7 @@ function resetJumpGame(){
   jumpGame.worldSpeed = 165;
   jumpGame.spawnTimer = 0;
   jumpGame.bgOffset = 0;
-  jumpGame.player = {
-    x: 86,
-    y: 330,
-    w: 36,
-    h: 36,
-    vy: 0
-  };
+  jumpGame.player = { x: 86, y: 330, w: 36, h: 36, vy: 0 };
   jumpGame.obstacles = [];
   jumpStateText.textContent = "대기중";
   updateJumpTexts();
@@ -3649,9 +5174,12 @@ function openJumpGameScreen(){
   if(!currentNick) return;
   switchPage("jumpgame");
   resetJumpGame();
+  const firstFree = jumpPlayCount === 0;
   showJumpOverlay(
     "다람쥐 점프!",
-    "참가비 <b>🌰 100k</b><br>시작 버튼을 누르면 3초 뒤 게임이 시작돼.",
+    firstFree
+      ? "첫 1회는 <b>무료</b>야!<br>시작 버튼을 누르면 3초 뒤 게임이 시작돼."
+      : "참가비 <b>🌰 100k</b><br>시작 버튼을 누르면 3초 뒤 게임이 시작돼.",
     "준비",
     "게임 시작",
     true
@@ -3660,21 +5188,18 @@ function openJumpGameScreen(){
 }
 
 function startJumpGame(){
-  if(!currentNick) return;
-  if(jumpGame.running) return;
-  if(acorn < MINIGAME_ENTRY_FEE){
-    showJumpOverlay(
-      "참가비 부족",
-      "이 미니게임은 시작할 때 <b>🌰 100k</b>가 필요해.",
-      "ㅠㅠ",
-      "게임 시작",
-      true
-    );
-    jumpResultBox.innerHTML = "참가비가 부족해.<br>필요 도토리: <b>100k</b>";
+  if(!currentNick || jumpGame.running) return;
+  const firstFree = jumpPlayCount === 0;
+  const entryFee = firstFree ? 0 : MINIGAME_ENTRY_FEE;
+
+  if(acorn < entryFee){
+    showJumpOverlay("참가비 부족", "이 미니게임은 시작할 때 <b>🌰 " + fmtShort(entryFee) + "</b>가 필요해.", "ㅠㅠ", "게임 시작", true);
+    jumpResultBox.innerHTML = "참가비가 부족해.<br>필요 도토리: <b>" + fmtShort(entryFee) + "</b>";
     return;
   }
 
-  spendAcorn(MINIGAME_ENTRY_FEE);
+  if(entryFee > 0) spendAcorn(entryFee);
+  jumpPlayCount += 1;
   render();
   saveCurrent();
 
@@ -3685,11 +5210,7 @@ function startJumpGame(){
 
   jumpCountdownTimer = setInterval(()=>{
     count -= 1;
-    if(count > 0){
-      jumpOverlayBig.textContent = String(count);
-      return;
-    }
-
+    if(count > 0){ jumpOverlayBig.textContent = String(count); return; }
     if(count === 0){
       jumpOverlayBig.textContent = "START!";
       jumpOverlaySub.innerHTML = "장애물을 피해 살아남아!";
@@ -3716,10 +5237,7 @@ function stopJumpLoop(){
 }
 
 function jumpInput(){
-  if(!currentNick) return;
-  if(currentPage !== "jumpgame") return;
-  if(!jumpGame.running) return;
-
+  if(!currentNick || currentPage !== "jumpgame" || !jumpGame.running) return;
   jumpGame.player.vy -= 440;
   if(jumpGame.player.vy < -440) jumpGame.player.vy = -440;
 }
@@ -3731,11 +5249,9 @@ function createJumpObstacle(){
   const safeTop = 85;
   const safeBottom = 85;
   const openY = safeTop + Math.random() * (jumpCanvas.height - safeTop - safeBottom - gap);
-  const width = 32;
-
   jumpGame.obstacles.push({
     x: jumpCanvas.width + 50,
-    w: width,
+    w: 32,
     gapY: openY,
     gapH: gap,
     scored: false
@@ -3752,9 +5268,8 @@ function circleRectCollide(cx, cy, r, rx, ry, rw, rh){
 
 function endJumpGame(){
   stopJumpLoop();
-
   const score = jumpGame.score;
-  const coinReward = Math.round(score * 0.001);
+  const coinReward = Math.round(score * 0.1);
   const trophyReward = score * 10;
 
   if(score > jumpBestScore) jumpBestScore = score;
@@ -3766,14 +5281,7 @@ function endJumpGame(){
   render();
   saveCurrent();
 
-  showJumpOverlay(
-    "게임 오버!",
-    "점수 <b>" + fmtShort(score) + "</b><br>보상을 정산했어.",
-    "☠️",
-    "다시 시작",
-    true
-  );
-
+  showJumpOverlay("게임 오버!", "점수 <b>" + fmtShort(score) + "</b><br>보상을 정산했어.", "☠️", "다시 시작", true);
   jumpResultBox.innerHTML =
     "게임 오버!<br>" +
     "점수: <b>" + fmtShort(score) + "</b><br>" +
@@ -3790,7 +5298,6 @@ function jumpLoop(now){
 
   jumpGame.bgOffset += jumpGame.worldSpeed * 0.25 * dt;
   jumpGame.spawnTimer += dt;
-
   if(jumpGame.spawnTimer >= 1.18){
     jumpGame.spawnTimer = 0;
     createJumpObstacle();
@@ -3818,8 +5325,10 @@ function jumpLoop(now){
     const topRect = { x: obs.x, y: 0, w: obs.w, h: obs.gapY };
     const bottomRect = { x: obs.x, y: obs.gapY + obs.gapH, w: obs.w, h: jumpCanvas.height - (obs.gapY + obs.gapH) };
 
-    if(circleRectCollide(playerCx, playerCy, playerR, topRect.x, topRect.y, topRect.w, topRect.h) ||
-       circleRectCollide(playerCx, playerCy, playerR, bottomRect.x, bottomRect.y, bottomRect.w, bottomRect.h)){
+    if(
+      circleRectCollide(playerCx, playerCy, playerR, topRect.x, topRect.y, topRect.w, topRect.h) ||
+      circleRectCollide(playerCx, playerCy, playerR, bottomRect.x, bottomRect.y, bottomRect.w, bottomRect.h)
+    ){
       drawJumpGame(true);
       endJumpGame();
       return;
@@ -3833,7 +5342,6 @@ function jumpLoop(now){
   }
 
   jumpGame.obstacles = jumpGame.obstacles.filter(obs => obs.x + obs.w > -40);
-
   drawJumpGame(false);
   jumpGame.raf = requestAnimationFrame(jumpLoop);
 }
@@ -3842,7 +5350,6 @@ function drawJumpGame(darken=false){
   const ctx = jumpCtx;
   const w = jumpCanvas.width;
   const h = jumpCanvas.height;
-
   ctx.clearRect(0, 0, w, h);
 
   const sky = ctx.createLinearGradient(0, 0, 0, h);
@@ -3872,10 +5379,7 @@ function drawJumpGame(darken=false){
   ctx.fillStyle = "#68bf75";
   ctx.fillRect(0, h - 54, w, 54);
 
-  for(const obs of jumpGame.obstacles){
-    drawObstacle(ctx, obs);
-  }
-
+  for(const obs of jumpGame.obstacles) drawObstacle(ctx, obs);
   drawPlayer(ctx, jumpGame.player);
 
   ctx.fillStyle = "rgba(0,0,0,.28)";
@@ -3898,7 +5402,6 @@ function drawCloud(ctx, x, y){
   ctx.arc(x + 42, y + 22, 19, 0, Math.PI * 2);
   ctx.fill();
 }
-
 function drawHill(ctx, x, y, width, height){
   ctx.beginPath();
   ctx.moveTo(x, y);
@@ -3908,125 +5411,55 @@ function drawHill(ctx, x, y, width, height){
   ctx.closePath();
   ctx.fill();
 }
-
 function drawBgTree(ctx, x, groundY, scale){
   ctx.fillStyle = "#7b5034";
   ctx.fillRect(x + 12*scale, groundY - 28*scale, 8*scale, 28*scale);
   ctx.fillStyle = "#3fab58";
-  ctx.beginPath();
-  ctx.arc(x + 16*scale, groundY - 36*scale, 18*scale, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 5*scale, groundY - 28*scale, 14*scale, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x + 26*scale, groundY - 26*scale, 14*scale, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 16*scale, groundY - 36*scale, 18*scale, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 5*scale, groundY - 28*scale, 14*scale, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + 26*scale, groundY - 26*scale, 14*scale, 0, Math.PI * 2); ctx.fill();
 }
-
 function drawObstacle(ctx, obs){
-  const x = obs.x;
-  const w = obs.w;
-  const topH = obs.gapY;
-  const bottomY = obs.gapY + obs.gapH;
-  const bottomH = jumpCanvas.height - bottomY;
-
+  const x = obs.x, w = obs.w, topH = obs.gapY, bottomY = obs.gapY + obs.gapH, bottomH = jumpCanvas.height - bottomY;
   const grad = ctx.createLinearGradient(x, 0, x + w, 0);
   grad.addColorStop(0, "#573521");
   grad.addColorStop(0.5, "#7d4c2b");
   grad.addColorStop(1, "#9b6138");
-
   ctx.fillStyle = grad;
   ctx.fillRect(x, 0, w, topH);
   ctx.fillRect(x, bottomY, w, bottomH);
-
   ctx.fillStyle = "#3d2415";
-  for(let i=0;i<topH;i+=18){
-    ctx.fillRect(x, i, w, 3);
-  }
-  for(let i=bottomY;i<jumpCanvas.height;i+=18){
-    ctx.fillRect(x, i, w, 3);
-  }
-
+  for(let i=0;i<topH;i+=18) ctx.fillRect(x, i, w, 3);
+  for(let i=bottomY;i<jumpCanvas.height;i+=18) ctx.fillRect(x, i, w, 3);
   ctx.fillStyle = "#2aa04e";
   ctx.fillRect(x - 3, topH - 8, w + 6, 8);
   ctx.fillRect(x - 3, bottomY, w + 6, 8);
 }
-
 function drawPlayer(ctx, p){
-  const x = p.x;
-  const y = p.y;
-  const cx = x + p.w/2;
-  const cy = y + p.h/2;
-
+  const x = p.x, y = p.y, cx = x + p.w/2, cy = y + p.h/2;
   ctx.fillStyle = "#9b6239";
-  ctx.beginPath();
-  ctx.ellipse(x - 7, y + 18, 11, 8, -0.8, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#9b6239";
-  ctx.beginPath();
-  ctx.ellipse(cx, cy + 3, 14, 16, 0, 0, Math.PI * 2);
-  ctx.fill();
-
+  ctx.beginPath(); ctx.ellipse(x - 7, y + 18, 11, 8, -0.8, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx, cy + 3, 14, 16, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#f4d4b0";
-  ctx.beginPath();
-  ctx.ellipse(cx + 1, cy + 6, 7, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-
+  ctx.beginPath(); ctx.ellipse(cx + 1, cy + 6, 7, 10, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#9b6239";
-  ctx.beginPath();
-  ctx.arc(cx + 4, y + 12, 10.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#9b6239";
-  ctx.beginPath();
-  ctx.moveTo(cx - 2, y + 6);
-  ctx.lineTo(cx + 2, y - 8);
-  ctx.lineTo(cx + 8, y + 5);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(cx + 8, y + 6);
-  ctx.lineTo(cx + 12, y - 7);
-  ctx.lineTo(cx + 17, y + 7);
-  ctx.fill();
-
+  ctx.beginPath(); ctx.arc(cx + 4, y + 12, 10.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - 2, y + 6); ctx.lineTo(cx + 2, y - 8); ctx.lineTo(cx + 8, y + 5); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx + 8, y + 6); ctx.lineTo(cx + 12, y - 7); ctx.lineTo(cx + 17, y + 7); ctx.fill();
   ctx.fillStyle = "#111";
-  ctx.beginPath();
-  ctx.arc(cx + 7, y + 12, 1.8, 0, Math.PI * 2);
-  ctx.fill();
-
+  ctx.beginPath(); ctx.arc(cx + 7, y + 12, 1.8, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#3a1d10";
-  ctx.beginPath();
-  ctx.arc(cx + 12, y + 16, 1.6, 0, Math.PI * 2);
-  ctx.fill();
-
+  ctx.beginPath(); ctx.arc(cx + 12, y + 16, 1.6, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#7d4c2b";
   ctx.fillRect(cx - 7, y + 28, 4, 6);
   ctx.fillRect(cx + 1, y + 28, 4, 6);
 }
 
-openJumpGameBtn.addEventListener("click", ()=>{
-  if(!currentNick) return;
-  openJumpGameScreen();
-});
+openJumpGameBtn.addEventListener("click", ()=>{ if(currentNick) openJumpGameScreen(); });
+jumpStartBtn.addEventListener("click", ()=>{ startJumpGame(); });
+jumpExitBtn.addEventListener("click", ()=>{ stopJumpLoop(); clearJumpCountdown(); switchPage("minigame"); });
 
-jumpStartBtn.addEventListener("click", ()=>{
-  startJumpGame();
-});
-
-jumpExitBtn.addEventListener("click", ()=>{
-  stopJumpLoop();
-  clearJumpCountdown();
-  switchPage("minigame");
-});
-
-jumpCanvas.addEventListener("pointerdown", (e)=>{
-  e.preventDefault();
-  if(jumpGame.running) jumpInput();
-});
-
+jumpCanvas.addEventListener("pointerdown", (e)=>{ e.preventDefault(); if(jumpGame.running) jumpInput(); });
 document.addEventListener("keydown", (e)=>{
   if(currentPage !== "jumpgame") return;
   if(e.code === "Space"){
@@ -4045,17 +5478,11 @@ function createIrregularStops(totalMs = 3000){
     const dur = Math.min(remain, 120 + Math.random() * 300);
 
     let jump;
-    if(progress < 12){
-      jump = 5 + Math.random() * 9;
-    }else if(progress < 35){
-      jump = 4 + Math.random() * 7;
-    }else if(progress < 65){
-      jump = 3 + Math.random() * 5.5;
-    }else if(progress < 88){
-      jump = 1.2 + Math.random() * 3;
-    }else{
-      jump = 0.5 + Math.random() * 1.6;
-    }
+    if(progress < 12) jump = 5 + Math.random() * 9;
+    else if(progress < 35) jump = 4 + Math.random() * 7;
+    else if(progress < 65) jump = 3 + Math.random() * 5.5;
+    else if(progress < 88) jump = 1.2 + Math.random() * 3;
+    else jump = 0.5 + Math.random() * 1.6;
 
     progress = Math.min(99, progress + jump);
     elapsed += dur;
@@ -4073,13 +5500,11 @@ function runOpening(){
 
   function tick(now){
     const elapsed = now - start;
-
     let target = 0;
     for(let i = 0; i < stops.length; i++){
       if(elapsed >= stops[i].time) target = stops[i].progress;
       else break;
     }
-
     if(elapsed >= totalMs) target = 100;
     introProgressFill.style.width = target + "%";
 
@@ -4090,9 +5515,7 @@ function runOpening(){
 
     setTimeout(()=>{
       introScreen.classList.add("hidden");
-      setTimeout(()=>{
-        showNicknameOverlay();
-      }, 550);
+      setTimeout(()=>{ showNicknameOverlay(); }, 550);
     }, 120);
   }
 
@@ -4107,3 +5530,5 @@ runOpening();
   </script>
 </body>
 </html>
+      </div>
+    </div>
