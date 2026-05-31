@@ -1479,8 +1479,8 @@
   </div>
 
   <div class="toast" id="toast">
-    ⚠️ 핵 감지: 계정이 초기화되었습니다.
-    <small id="toastDetail">비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.</small>
+    ⚠️ 핵 감지: 10초간 수익 생산이 정지됩니다.
+    <small id="toastDetail">비정상 클릭 패턴이 감지되어 클릭/자동 수익이 10초간 정지돼요.</small>
   </div>
 
   <div class="nick-wrap" id="nickWrap">
@@ -1983,6 +1983,7 @@ let totalCoinShopPurchases = 0;
 let goldenChanceLevel = 0;
 let squirrelIncomeBoostLevel = 0;
 let freeCoinNextAt = 0;
+let incomePausedUntil = 0;
 
 let squirrelNextPayouts = [];
 const SQUIRREL_BASE_INCOME_PER_TICK = 1;
@@ -2066,6 +2067,52 @@ const UPGRADE_STEPS = [
   { toTier: 13, toValue: 10000, cost: 2000000, coinCost: 7, name: "클릭 수익 +5000", desc: "구매 후: 클릭당 <b>+10000</b>" }
 ];
 
+
+function getClickValueByTier(targetTier){
+  if(targetTier <= 0) return 1;
+
+  const fixed = UPGRADE_STEPS.find(step => step.toTier === targetTier);
+  if(fixed) return fixed.toValue;
+
+  // 10k 이후: 50k -> 100k -> 500k -> 1m -> 5m -> 10m -> 50m...
+  let value = 10000;
+  for(let t = 14; t <= targetTier; t++){
+    value *= (t % 2 === 0) ? 5 : 2;
+  }
+  return value;
+}
+
+function getClickUpgradeCoinCost(toTier){
+  if(toTier < 12) return 0;
+  if(toTier === 12) return 5;
+  return 7 + (toTier - 13) * 3;
+}
+
+function getClickUpgradeAcornCost(toTier){
+  if(toTier <= 13){
+    const fixed = UPGRADE_STEPS.find(step => step.toTier === toTier);
+    return fixed ? fixed.cost : 0;
+  }
+
+  return Math.floor(2000000 * Math.pow(5, toTier - 13));
+}
+
+function makeDynamicClickUpgradeStep(toTier){
+  const beforeValue = getClickValueByTier(toTier - 1);
+  const toValue = getClickValueByTier(toTier);
+  const cost = getClickUpgradeAcornCost(toTier);
+  const coinCost = getClickUpgradeCoinCost(toTier);
+
+  return {
+    toTier,
+    toValue,
+    cost,
+    coinCost,
+    name: "클릭 수익 +" + fmtShort(toValue - beforeValue),
+    desc: "구매 후: 클릭당 <b>+" + fmtShort(toValue) + "</b>"
+  };
+}
+
 const CLICK_COOLDOWN_MS = 10;
 const CLICK_HISTORY_WINDOW_MS = 5000;
 const HARD_CPS_WINDOW_MS = 1000;
@@ -2107,7 +2154,7 @@ function getSquirrelBoostPercent(level = squirrelIncomeBoostLevel){
   return level * 10;
 }
 function getSquirrelBoostCost(){
-  return 3 + squirrelIncomeBoostLevel * 2;
+  return 5 + squirrelIncomeBoostLevel * 3;
 }
 function getSquirrelIncomePerUnit(){
   return SQUIRREL_BASE_INCOME_PER_TICK * getSquirrelIncomeMultiplier();
@@ -2366,21 +2413,7 @@ function normalizeByTier(){
     return;
   }
 
-  const matched = UPGRADE_STEPS.find(step => step.toTier === tier);
-  if(matched){
-    clickValue = matched.toValue;
-    return;
-  }
-
-  const maxTier = UPGRADE_STEPS[UPGRADE_STEPS.length - 1];
-  if(tier > maxTier.toTier){
-    tier = maxTier.toTier;
-    clickValue = maxTier.toValue;
-    return;
-  }
-
-  tier = 0;
-  clickValue = 1;
+  clickValue = getClickValueByTier(tier);
 }
 
 function getUnclaimedRankCount(){
@@ -2391,8 +2424,41 @@ function getUnclaimedRankCount(){
   return count;
 }
 
+
+function isIncomePaused(){
+  return performance.now() < incomePausedUntil;
+}
+
+function getIncomePauseRemainingText(){
+  const remain = Math.max(0, incomePausedUntil - performance.now());
+  return Math.ceil(remain / 1000) + "초";
+}
+
+function pauseAllIncome(reason){
+  incomePausedUntil = performance.now() + 10000;
+  suspiciousScore = 0;
+  lastClickTime = 0;
+  clickTimes = [];
+  clickIntervals = [];
+
+  const now = performance.now();
+  for(let i = 0; i < squirrelNextPayouts.length; i++){
+    if(squirrelNextPayouts[i] < now + SQUIRREL_TICK_MS) squirrelNextPayouts[i] = now + SQUIRREL_TICK_MS;
+  }
+  for(let i = 0; i < chipmunkNextPayouts.length; i++){
+    if(chipmunkNextPayouts[i] < now + CHIPMUNK_TICK_MS) chipmunkNextPayouts[i] = now + CHIPMUNK_TICK_MS;
+  }
+  for(let i = 0; i < treeNextPayouts.length; i++){
+    if(treeNextPayouts[i] < now + TREE_TICK_MS) treeNextPayouts[i] = now + TREE_TICK_MS;
+  }
+
+  render();
+  saveCurrent();
+  showToast(reason || "비정상 클릭 패턴이 감지되어 클릭/자동 수익이 10초간 정지돼요.");
+}
+
 function showToast(detail){
-  toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 진행 상황을 초기화했어요.";
+  toastDetail.textContent = detail || "비정상 클릭 패턴이 감지되어 클릭/자동 수익이 10초간 정지돼요.";
   toast.style.display = "block";
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>{ toast.style.display = "none"; }, 2600);
@@ -2470,6 +2536,7 @@ function buildSaveData(){
     goldenChanceLevel,
     squirrelIncomeBoostLevel,
     freeCoinNextAt,
+    incomePauseRemainingMs: Math.max(0, Math.round(incomePausedUntil - nowPerf)),
     squirrelRemainingMs,
     chipmunkRemainingMs,
     treeRemainingMs,
@@ -2507,6 +2574,7 @@ function applyLoadedProfile(p){
   goldenChanceLevel = Number(p.goldenChanceLevel ?? 0) || 0;
   squirrelIncomeBoostLevel = Number(p.squirrelIncomeBoostLevel ?? 0) || 0;
   freeCoinNextAt = Number(p.freeCoinNextAt ?? 0) || 0;
+  incomePausedUntil = nowPerf + Math.max(0, Number(p.incomePauseRemainingMs ?? 0) || 0);
   jumpBestScore = Number(p.jumpBestScore ?? 0) || 0;
   jumpPlayedOnce = !!p.jumpPlayedOnce;
   goldenReady = !!p.goldenReady;
@@ -2566,6 +2634,7 @@ function createProfile(nick){
   goldenChanceLevel = 0;
   squirrelIncomeBoostLevel = 0;
   freeCoinNextAt = 0;
+  incomePausedUntil = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   treeNextPayouts = [];
@@ -2601,6 +2670,7 @@ function resetCurrentNickProgress(){
   goldenChanceLevel = 0;
   squirrelIncomeBoostLevel = 0;
   freeCoinNextAt = 0;
+  incomePausedUntil = 0;
   squirrelNextPayouts = [];
   chipmunkNextPayouts = [];
   treeNextPayouts = [];
@@ -2642,8 +2712,8 @@ function logout(){
 }
 
 function getNextUpgrade(){
-  if(tier >= 13) return null;
-  return UPGRADE_STEPS[tier];
+  if(tier < UPGRADE_STEPS.length) return UPGRADE_STEPS[tier];
+  return makeDynamicClickUpgradeStep(tier + 1);
 }
 function getSquirrelCount(){
   return squirrelNextPayouts.length;
@@ -3027,7 +3097,7 @@ function render(){
   dockSq.textContent = fmtShort(sqCount);
   dockCs.textContent = fmtShort(csCount);
   dockTree.textContent = fmtShort(treeCount);
-  dockIncome.textContent = fmtShort(getTotalAutoIncomePerSec());
+  dockIncome.textContent = isIncomePaused() ? "정지 " + getIncomePauseRemainingText() : fmtShort(getTotalAutoIncomePerSec());
 
   jumpLobbyInfo.innerHTML =
     "최고 점수: <b>" + fmtShort(jumpBestScore) + "</b><br>" +
@@ -3118,15 +3188,7 @@ function dominantRoundedCount(arr){
 function addSuspicion(points, reason){
   suspiciousScore += points;
   if(suspiciousScore >= 4){
-    resetCurrentNickProgress();
-    render();
-    closeShop();
-    closeNickMenu();
-    closeAchieve();
-    closeTrophy();
-    stopJumpLoop();
-    clearJumpCountdown();
-    showToast(reason);
+    pauseAllIncome(reason);
     return false;
   }
   return true;
@@ -3227,6 +3289,10 @@ function clickAcornFromPointer(e){
   if(currentPage !== "home") return;
 
   const now = performance.now();
+  if(isIncomePaused()){
+    showToast("수익 생산 정지 중입니다. 남은 시간: " + getIncomePauseRemainingText());
+    return;
+  }
   if(!processHackCheck(now)) return;
 
   let gain = clickValue;
@@ -3260,6 +3326,10 @@ acornBtn.addEventListener("keydown", (e)=>{
     if(!currentNick || currentPage !== "home") return;
 
     const now = performance.now();
+    if(isIncomePaused()){
+      showToast("수익 생산 정지 중입니다. 남은 시간: " + getIncomePauseRemainingText());
+      return;
+    }
     if(!processHackCheck(now)) return;
 
     let gain = clickValue;
@@ -3288,6 +3358,38 @@ setInterval(()=>{
   if(!currentNick) return;
 
   const now = performance.now();
+
+  if(isIncomePaused()){
+    let pausedChanged = false;
+
+    for(let i = 0; i < squirrelNextPayouts.length; i++){
+      if(now >= squirrelNextPayouts[i]){
+        squirrelNextPayouts[i] = now + SQUIRREL_TICK_MS;
+        pausedChanged = true;
+      }
+    }
+
+    for(let i = 0; i < chipmunkNextPayouts.length; i++){
+      if(now >= chipmunkNextPayouts[i]){
+        chipmunkNextPayouts[i] = now + CHIPMUNK_TICK_MS;
+        pausedChanged = true;
+      }
+    }
+
+    for(let i = 0; i < treeNextPayouts.length; i++){
+      if(now >= treeNextPayouts[i]){
+        treeNextPayouts[i] = now + TREE_TICK_MS;
+        pausedChanged = true;
+      }
+    }
+
+    if(pausedChanged){
+      render();
+      saveCurrent();
+    }
+    return;
+  }
+
   let changed = false;
   const squirrelUnitIncome = getSquirrelIncomePerUnit();
 
@@ -3845,22 +3947,115 @@ function jumpInput(){
   if(jumpGame.player.vy < -440) jumpGame.player.vy = -440;
 }
 
-function createJumpObstacle(){
-  const minGap = 150;
-  const maxGap = 196;
-  const gap = Math.max(minGap, maxGap - Math.min(48, jumpGame.score * 0.7) + Math.random() * 16);
-  const safeTop = 85;
-  const safeBottom = 85;
-  const openY = safeTop + Math.random() * (jumpCanvas.height - safeTop - safeBottom - gap);
-  const width = 32;
+function getJumpSpawnInterval(){
+  const score = jumpGame.score;
+  const speedExtra = Math.max(0, jumpGame.worldSpeed - 165);
 
-  jumpGame.obstacles.push({
-    x: jumpCanvas.width + 50,
+  // 속도 증가에 맞춰 간격을 조금 늘리되, 너무 쉬워지지 않게 상한을 낮춤
+  let interval = 1.24 + speedExtra / 260;
+
+  if(score >= 80) interval += 0.08;
+  else if(score >= 40) interval += 0.05;
+  else if(score >= 20) interval += 0.03;
+
+  return Math.min(1.62, interval);
+}
+
+function createJumpObstacle(){
+  const score = jumpGame.score;
+
+  // 기존 기둥 UI를 유지하고, 중간중간 새 장애물만 섞음.
+  // 구멍은 너무 크지 않게 줄이되 점프/낙하로 피할 수 있는 범위 안에서만 생성.
+  const minGap = score >= 80 ? 112 : score >= 60 ? 118 : score >= 40 ? 124 : score >= 20 ? 132 : 142;
+  const maxGap = score >= 80 ? 148 : score >= 60 ? 156 : score >= 40 ? 166 : score >= 20 ? 176 : 188;
+  const gap = minGap + Math.random() * (maxGap - minGap);
+
+  const safeTop = 72;
+  const safeBottom = 78;
+  const width = score >= 60 ? 34 : 32;
+  const maxOpenY = jumpCanvas.height - safeTop - safeBottom - gap;
+  const openY = safeTop + Math.random() * Math.max(1, maxOpenY);
+
+  let type = "normal";
+
+  // 기존 기둥이 기본. 점수가 올라갈수록 가끔만 변형 장애물 출현.
+  if(score >= 80 && Math.random() < 0.12) type = "fullMove";
+  else if(score >= 60 && Math.random() < 0.18) type = "moving";
+  else if(score >= 40 && Math.random() < 0.18) type = "double";
+  else if(score >= 20 && Math.random() < 0.18) type = "stone";
+
+  const base = {
+    x: jumpCanvas.width + 60,
     w: width,
     gapY: openY,
     gapH: gap,
-    scored: false
-  });
+    scored: false,
+    type,
+    phase: Math.random() * Math.PI * 2,
+    moveAmp: type === "fullMove" ? 70 : type === "moving" ? 34 : 0,
+    moveSpeed: type === "fullMove" ? 1.08 : type === "moving" ? 0.95 : 0
+  };
+
+  jumpGame.obstacles.push(base);
+
+  if(type === "double"){
+    // 2개 기둥은 따닥이어도 높이차를 크게 만들지 않음.
+    const delta = (Math.random() - 0.5) * 56;
+    const secondGapY = Math.max(safeTop, Math.min(jumpCanvas.height - safeBottom - gap, base.gapY + delta));
+
+    jumpGame.obstacles.push({
+      ...base,
+      x: base.x + 132,
+      gapY: secondGapY,
+      scored: true,
+      type: "normal",
+      phase: Math.random() * Math.PI * 2,
+      moveAmp: 0,
+      moveSpeed: 0
+    });
+  }
+}
+
+function getJumpTheme(){
+  const stage = Math.floor(jumpGame.score / 20);
+
+  if(stage >= 4){
+    return { sky1:"#1b1440", sky2:"#3c2d6f", sky3:"#12091f", ground:"#2c213f", hill:"#473a68", cloud:"rgba(220,210,255,.5)", tree:"#8369b6" };
+  }
+  if(stage === 3){
+    return { sky1:"#ff9b71", sky2:"#ffc46b", sky3:"#5d2f4f", ground:"#8d5c3c", hill:"#b97955", cloud:"rgba(255,242,210,.7)", tree:"#7b6b3d" };
+  }
+  if(stage === 2){
+    return { sky1:"#7d8cff", sky2:"#b8c5ff", sky3:"#e6eeff", ground:"#5b83d6", hill:"#7ea0ec", cloud:"rgba(255,255,255,.72)", tree:"#4666bd" };
+  }
+  if(stage === 1){
+    return { sky1:"#73e6b7", sky2:"#b9f7d4", sky3:"#ecfff4", ground:"#48b878", hill:"#6ed79b", cloud:"rgba(255,255,255,.8)", tree:"#2e9e60" };
+  }
+
+  return { sky1:"#78d7ff", sky2:"#a9ecff", sky3:"#dcfbff", ground:"#68bf75", hill:"#7ac28d", cloud:"rgba(255,255,255,.82)", tree:"#3fab58" };
+}
+
+function updateJumpObstacle(obs, dt){
+  if(obs.type === "moving" || obs.type === "fullMove"){
+    obs.phase += obs.moveSpeed * dt;
+    const center = (jumpCanvas.height - obs.gapH) / 2;
+    const moved = center + Math.sin(obs.phase) * obs.moveAmp;
+    obs.gapY = Math.max(65, Math.min(jumpCanvas.height - 65 - obs.gapH, moved));
+  }
+}
+
+function getObstacleRects(obs){
+  if(obs.type === "stone"){
+    return [
+      { x: obs.x, y: obs.gapY - 32, w: obs.w + 14, h: 32 },
+      { x: obs.x, y: obs.gapY + obs.gapH, w: obs.w + 14, h: 32 }
+    ];
+  }
+
+  return [
+    { x: obs.x, y: 0, w: obs.w, h: obs.gapY },
+    { x: obs.x, y: obs.gapY + obs.gapH, w: obs.w, h: jumpCanvas.height - (obs.gapY + obs.gapH) }
+  ];
 }
 
 function circleRectCollide(cx, cy, r, rx, ry, rw, rh){
@@ -3876,7 +4071,10 @@ function endJumpGame(){
 
   const score = jumpGame.score;
   const coinReward = Math.round(score * 0.1);
-  const trophyReward = score * 10;
+  const baseTrophyReward = score * 10;
+  const milestoneCount = Math.floor(score / 10);
+  const milestoneTrophyReward = milestoneCount * 100;
+  const trophyReward = baseTrophyReward + milestoneTrophyReward;
 
   if(score > jumpBestScore) jumpBestScore = score;
   coinCount += coinReward;
@@ -3899,7 +4097,9 @@ function endJumpGame(){
     "게임 오버!<br>" +
     "점수: <b>" + fmtShort(score) + "</b><br>" +
     "코인 보상: <b>" + fmtShort(coinReward) + "</b><br>" +
-    "트로피 보상: <b>" + fmtShort(trophyReward) + "</b>";
+    "기본 트로피: <b>" + fmtShort(baseTrophyReward) + "</b><br>" +
+    "10점 단위 추가 트로피: <b>" + fmtShort(milestoneTrophyReward) + "</b><br>" +
+    "트로피 총 보상: <b>" + fmtShort(trophyReward) + "</b>";
 }
 
 function jumpLoop(now){
@@ -3912,13 +4112,13 @@ function jumpLoop(now){
   jumpGame.bgOffset += jumpGame.worldSpeed * 0.25 * dt;
   jumpGame.spawnTimer += dt;
 
-  if(jumpGame.spawnTimer >= 1.18){
+  if(jumpGame.spawnTimer >= getJumpSpawnInterval()){
     jumpGame.spawnTimer = 0;
     createJumpObstacle();
   }
 
-  jumpGame.worldSpeed += dt * 2.0;
-  if(jumpGame.worldSpeed > 285) jumpGame.worldSpeed = 285;
+  jumpGame.worldSpeed += dt * 1.35;
+  if(jumpGame.worldSpeed > 260) jumpGame.worldSpeed = 260;
 
   jumpGame.player.vy += 650 * dt;
   jumpGame.player.y += jumpGame.player.vy * dt;
@@ -3935,15 +4135,15 @@ function jumpLoop(now){
 
   for(const obs of jumpGame.obstacles){
     obs.x -= jumpGame.worldSpeed * dt;
+    updateJumpObstacle(obs, dt);
 
-    const topRect = { x: obs.x, y: 0, w: obs.w, h: obs.gapY };
-    const bottomRect = { x: obs.x, y: obs.gapY + obs.gapH, w: obs.w, h: jumpCanvas.height - (obs.gapY + obs.gapH) };
-
-    if(circleRectCollide(playerCx, playerCy, playerR, topRect.x, topRect.y, topRect.w, topRect.h) ||
-       circleRectCollide(playerCx, playerCy, playerR, bottomRect.x, bottomRect.y, bottomRect.w, bottomRect.h)){
-      drawJumpGame(true);
-      endJumpGame();
-      return;
+    const rects = getObstacleRects(obs);
+    for(const rect of rects){
+      if(circleRectCollide(playerCx, playerCy, playerR, rect.x, rect.y, rect.w, rect.h)){
+        drawJumpGame(true);
+        endJumpGame();
+        return;
+      }
     }
 
     if(!obs.scored && obs.x + obs.w < jumpGame.player.x){
@@ -3966,14 +4166,15 @@ function drawJumpGame(darken=false){
 
   ctx.clearRect(0, 0, w, h);
 
+  const theme = getJumpTheme();
   const sky = ctx.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, "#78d7ff");
-  sky.addColorStop(0.55, "#a9ecff");
-  sky.addColorStop(1, "#dcfbff");
+  sky.addColorStop(0, theme.sky1);
+  sky.addColorStop(0.55, theme.sky2);
+  sky.addColorStop(1, theme.sky3);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = "rgba(255,255,255,.82)";
+  ctx.fillStyle = theme.cloud;
   for(let i=0;i<5;i++){
     const cx = (i * 130 - (jumpGame.bgOffset * 0.35 % 650));
     const cy = 90 + (i%2)*48;
@@ -3982,15 +4183,15 @@ function drawJumpGame(darken=false){
 
   for(let i=0;i<7;i++){
     const x = (i * 110 - (jumpGame.bgOffset * 0.55 % 770));
-    drawBgTree(ctx, x, h - 110, 0.65);
+    drawBgTree(ctx, x, h - 110, 0.65, theme.tree);
   }
 
-  ctx.fillStyle = "#7ac28d";
+  ctx.fillStyle = theme.hill;
   drawHill(ctx, 0 - (jumpGame.bgOffset * 0.15 % w), h - 120, 220, 120);
   drawHill(ctx, 190 - (jumpGame.bgOffset * 0.15 % w), h - 115, 250, 132);
   drawHill(ctx, 400 - (jumpGame.bgOffset * 0.15 % w), h - 118, 260, 124);
 
-  ctx.fillStyle = "#68bf75";
+  ctx.fillStyle = theme.ground;
   ctx.fillRect(0, h - 54, w, 54);
 
   for(const obs of jumpGame.obstacles){
@@ -4030,10 +4231,10 @@ function drawHill(ctx, x, y, width, height){
   ctx.fill();
 }
 
-function drawBgTree(ctx, x, groundY, scale){
+function drawBgTree(ctx, x, groundY, scale, leafColor="#3fab58"){
   ctx.fillStyle = "#7b5034";
   ctx.fillRect(x + 12*scale, groundY - 28*scale, 8*scale, 28*scale);
-  ctx.fillStyle = "#3fab58";
+  ctx.fillStyle = leafColor;
   ctx.beginPath();
   ctx.arc(x + 16*scale, groundY - 36*scale, 18*scale, 0, Math.PI * 2);
   ctx.fill();
@@ -4046,32 +4247,43 @@ function drawBgTree(ctx, x, groundY, scale){
 }
 
 function drawObstacle(ctx, obs){
-  const x = obs.x;
-  const w = obs.w;
-  const topH = obs.gapY;
-  const bottomY = obs.gapY + obs.gapH;
-  const bottomH = jumpCanvas.height - bottomY;
+  const rects = getObstacleRects(obs);
 
-  const grad = ctx.createLinearGradient(x, 0, x + w, 0);
-  grad.addColorStop(0, "#573521");
-  grad.addColorStop(0.5, "#7d4c2b");
-  grad.addColorStop(1, "#9b6138");
+  let c1 = "#573521";
+  let c2 = "#7d4c2b";
+  let c3 = "#9b6138";
+  let cap = "#2aa04e";
 
-  ctx.fillStyle = grad;
-  ctx.fillRect(x, 0, w, topH);
-  ctx.fillRect(x, bottomY, w, bottomH);
-
-  ctx.fillStyle = "#3d2415";
-  for(let i=0;i<topH;i+=18){
-    ctx.fillRect(x, i, w, 3);
-  }
-  for(let i=bottomY;i<jumpCanvas.height;i+=18){
-    ctx.fillRect(x, i, w, 3);
+  // 새 장애물도 기존 기둥 UI를 유지하는 선에서만 살짝 구분
+  if(obs.type === "stone"){
+    c1 = "#4f3829"; c2 = "#7a5439"; c3 = "#a06f4b"; cap = "#2aa04e";
+  }else if(obs.type === "moving"){
+    c1 = "#4d3326"; c2 = "#7b4f2d"; c3 = "#ad7040"; cap = "#3bb85d";
+  }else if(obs.type === "fullMove"){
+    c1 = "#5a2e24"; c2 = "#8c4b2f"; c3 = "#bf693d"; cap = "#47c569";
   }
 
-  ctx.fillStyle = "#2aa04e";
-  ctx.fillRect(x - 3, topH - 8, w + 6, 8);
-  ctx.fillRect(x - 3, bottomY, w + 6, 8);
+  for(const rect of rects){
+    const grad = ctx.createLinearGradient(rect.x, 0, rect.x + rect.w, 0);
+    grad.addColorStop(0, c1);
+    grad.addColorStop(0.5, c2);
+    grad.addColorStop(1, c3);
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+    ctx.fillStyle = "rgba(0,0,0,.28)";
+    for(let i=rect.y;i<rect.y + rect.h;i+=18){
+      ctx.fillRect(rect.x, i, rect.w, 3);
+    }
+
+    ctx.fillStyle = cap;
+    if(rect.y === 0){
+      ctx.fillRect(rect.x - 3, rect.y + rect.h - 8, rect.w + 6, 8);
+    }else{
+      ctx.fillRect(rect.x - 3, rect.y, rect.w + 6, 8);
+    }
+  }
 }
 
 function drawPlayer(ctx, p){
@@ -4195,5 +4407,3 @@ runOpening();
   </script>
 </body>
 </html>
-const buyTree = document.getElementById("buyTree");
-const treeHint = document.getElementById("treeHint");
