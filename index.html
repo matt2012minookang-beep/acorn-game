@@ -1428,6 +1428,27 @@
     @media(max-width:480px){.ranking-values{grid-template-columns:repeat(2,minmax(0,1fr));}.ranking-value:last-child{grid-column:1/-1;}.ranking-sort button{padding:10px 5px;font-size:12px;min-width:0;line-height:1.5;}}
     @media(max-width:640px){#pageRanking .page-wrap{padding-top:64px;}}
     @media(max-width:360px){.bottom-nav{gap:5px!important;padding-left:7px!important;padding-right:7px!important;}.bottom-nav .nav-btn{font-size:12px;}.ranking-table{font-size:12px;}.ranking-table th:first-child{width:32px;}.ranking-table th:nth-child(2){width:28%;}}
+
+    .nick-chip{display:flex;align-items:center;gap:8px;color:var(--text);font:inherit;font-weight:900;max-width:min(300px,72vw);}
+    #nickText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;}
+    .avatar-frame{--rank-color:#8c849b;position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:42px;height:42px;border:3px solid var(--rank-color);border-radius:50%;overflow:hidden;background:#21192e;box-shadow:0 0 14px color-mix(in srgb,var(--rank-color) 28%,transparent);vertical-align:middle;}
+    .avatar-frame img{width:100%;height:100%;object-fit:cover;display:block;}
+    .avatar-fallback{font-size:22px;line-height:1;}
+    .avatar-small{width:30px;height:30px;border-width:2px;}.avatar-small .avatar-fallback{font-size:17px;}
+    .avatar-large{width:116px;height:116px;border-width:5px;}.avatar-large .avatar-fallback{font-size:56px;}
+    .avatar-champion{width:80px;height:80px;margin:4px 0 12px;}.avatar-champion .avatar-fallback{font-size:38px;}
+    .tier-badge{--rank-color:#8c849b;display:inline-block;color:var(--rank-color);border:1px solid var(--rank-color);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:900;margin-top:10px;}
+    .profile-identity{text-align:center;margin:26px 0 14px;}.profile-identity h2{font-size:27px;margin:16px 0 0;overflow-wrap:anywhere;}
+    .profile-trophies{margin:12px 0 0;color:#d9d0e8;font-size:14px;overflow-wrap:anywhere;}
+    .profile-section h2{font-size:18px;margin:0 0 10px;}.profile-section .auth-field{max-width:520px;}
+    .profile-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}.profile-actions .menu-btn{width:auto;flex:1;margin:0;min-width:120px;text-align:center;}
+    .profile-secondary{padding:11px 14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.05);color:var(--text);font:inherit;cursor:pointer;}
+    .profile-section button:disabled{opacity:.45;cursor:not-allowed;}
+    .rank-person{display:flex;align-items:center;gap:10px;}.rank-person-name{overflow-wrap:anywhere;min-width:0;line-height:1.5;}
+    .rank-tier{display:block;font-size:11px;line-height:1.5;margin-top:5px;color:var(--rank-color,#b9abc9);}.rank-trophy-count{display:block;font-weight:900;overflow-wrap:anywhere;}
+    .ranking-table-wrap{overflow-x:auto;overscroll-behavior-x:contain;}.ranking-table{min-width:600px;}.ranking-table th:nth-child(2),.ranking-table td:nth-child(2){width:32%;}
+    .ranking-scroll-hint{display:none;font-size:11px;color:#aaa;}
+    @media(max-width:640px){#pageProfile .page-wrap{padding-top:70px;}.ranking-scroll-hint{display:block;}}
   </style>
 </head>
 <body>
@@ -1525,12 +1546,11 @@
   </div>
 
   <div class="nick-wrap" id="nickWrap">
-    <div class="nick-chip" id="nickChip">👤 <span id="nickText"></span></div>
-    <div class="nick-menu" id="nickMenu">
-      <div class="online-status" id="onlineSaveStatus" role="status">서버에 연결하고 있어요…</div>
-      <button class="menu-btn" id="btnLogout">로그아웃</button>
-      <button class="menu-btn danger" id="btnResetNick">닉네임 초기화</button>
-    </div>
+    <button type="button" class="nick-chip" id="nickChip" aria-label="내 프로필 열기">
+      <span class="avatar-frame avatar-small" id="nickAvatarFrame"><img id="nickAvatar" alt="내 프로필 사진" hidden><span class="avatar-fallback" aria-hidden="true">🌰</span></span>
+      <span id="nickText"></span>
+    </button>
+    <div class="nick-menu" id="nickMenu" hidden></div>
   </div>
 
   <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
@@ -1887,7 +1907,9 @@
           <div class="ranking-champion" id="rankingChampion" hidden>
             <div class="ranking-crown" aria-hidden="true">👑</div>
             <div class="ranking-place">전체 1위</div>
+            <span class="avatar-frame avatar-champion" id="rankingChampionAvatarFrame"><img id="rankingChampionAvatar" alt="1위 프로필 사진" hidden><span class="avatar-fallback" aria-hidden="true">🌰</span></span>
             <div class="ranking-name" id="rankingChampionNick"></div>
+            <span class="tier-badge" id="rankingChampionTier"></span>
             <div class="ranking-values">
               <div class="ranking-value"><span>🌰 보유 도토리</span><strong id="rankingChampionAcorns">0</strong></div>
               <div class="ranking-value"><span>🏆 트로피</span><strong id="rankingChampionTrophies">0</strong></div>
@@ -1896,11 +1918,54 @@
           </div>
           <div class="ranking-empty" id="rankingEmpty">아직 등록된 기록이 없어요.</div>
           <div class="ranking-meta" id="rankingPlayers"></div>
-          <table class="ranking-table" aria-label="전체 유저 랭킹">
-            <thead><tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">🌰 도토리</th><th scope="col">🏆 트로피</th><th scope="col">🐿️ 점프 최고</th></tr></thead>
+          <div class="ranking-table-wrap"><table class="ranking-table" aria-label="전체 유저 랭킹">
+            <thead><tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">🌰 도토리</th><th scope="col">🏆 트로피 · 등급</th><th scope="col">🐿️ 점프 최고</th></tr></thead>
             <tbody id="rankingRows"></tbody>
-          </table>
+          </table></div>
+          <p class="ranking-scroll-hint">좌우로 밀어서 모든 기록을 확인할 수 있어요.</p>
           <p class="ranking-meta" id="rankingStatus" role="status" aria-live="polite">서버에 연결하면 전체 랭킹을 볼 수 있어요.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="pageProfile">
+      <div class="page-wrap">
+        <div class="page-card profile-summary">
+          <div class="ranking-heading"><h1 class="page-title">내 프로필</h1><button class="close" type="button" id="profileBack">돌아가기</button></div>
+          <div class="profile-identity">
+            <span class="avatar-frame avatar-large" id="profileAvatarFrame"><img id="profileAvatar" alt="프로필 사진 미리보기" hidden><span class="avatar-fallback" aria-hidden="true">🌰</span></span>
+            <h2 id="profileDisplayNick"></h2>
+            <span class="tier-badge" id="profileTier"></span>
+            <p class="profile-trophies" id="profileTrophies"></p>
+          </div>
+          <p class="online-status" id="onlineSaveStatus" role="status">서버에 연결하고 있어요…</p>
+        </div>
+        <div class="page-card profile-section">
+          <h2>프로필 사진</h2>
+          <p class="page-sub">기기에서 사진을 골라 바꿀 수 있어요. 저장한 사진은 프로필과 랭킹에 공개돼요.</p>
+          <input id="profilePhotoInput" type="file" accept="image/*" hidden>
+          <div class="profile-actions"><button class="btn" type="button" id="profileChoosePhoto">사진 선택</button><button class="profile-secondary" type="button" id="profileDefaultPhoto">기본 사진</button><button class="btn" type="button" id="profileSavePhoto" disabled>사진 저장</button></div>
+          <p class="msg" id="profilePhotoMessage" role="status" aria-live="polite"></p>
+        </div>
+        <div class="page-card profile-section">
+          <h2>닉네임 변경</h2>
+          <label class="auth-field" for="profileNickname">새 닉네임<input id="profileNickname" type="text" placeholder="1자 이상" autocomplete="off"></label>
+          <p class="msg" id="profileNicknameMessage" role="status" aria-live="polite"></p>
+          <button class="btn" type="button" id="profileSaveNickname" disabled>닉네임 변경</button>
+        </div>
+        <div class="page-card profile-section">
+          <h2>비밀번호 변경</h2>
+          <label class="auth-field" for="profileCurrentPassword">현재 비밀번호<input id="profileCurrentPassword" type="password" autocomplete="current-password" minlength="4"></label>
+          <label class="auth-field" for="profileNewPassword">새 비밀번호<input id="profileNewPassword" type="password" autocomplete="new-password" minlength="4" placeholder="4자 이상"></label>
+          <label class="auth-field" for="profileConfirmPassword">새 비밀번호 확인<input id="profileConfirmPassword" type="password" autocomplete="new-password" minlength="4"></label>
+          <button class="btn" type="button" id="profileSavePassword" disabled>비밀번호 변경</button>
+          <p class="msg" id="profilePasswordMessage" role="status" aria-live="polite"></p>
+          <p class="tiny">비밀번호를 바꾸면 다른 기기에서는 다시 로그인해야 해요.</p>
+        </div>
+        <div class="page-card profile-section">
+          <p class="page-sub" id="profileOnlineHint" hidden>닉네임·비밀번호 변경은 온라인 로그인 후 사용할 수 있어요.</p>
+          <div class="profile-actions"><button class="menu-btn" type="button" id="btnLogout">로그아웃</button><button class="menu-btn danger" type="button" id="btnResetNick">게임 진행 초기화</button></div>
+          <p class="msg" id="profileAccountMessage" role="status" aria-live="polite"></p>
         </div>
       </div>
     </div>
@@ -2432,6 +2497,7 @@ const pageMinigame = document.getElementById("pageMinigame");
 const pageJumpGame = document.getElementById("pageJumpGame");
 const pageCoinShop = document.getElementById("pageCoinShop");
 const pageRanking = document.getElementById("pageRanking");
+const pageProfile = document.getElementById("pageProfile");
 const navHome = document.getElementById("navHome");
 const navMinigame = document.getElementById("navMinigame");
 const navCoinShop = document.getElementById("navCoinShop");
@@ -2569,6 +2635,7 @@ function switchPage(page){
   pageJumpGame.classList.toggle("show", page === "jumpgame");
   pageCoinShop.classList.toggle("show", page === "coinshop");
   pageRanking.classList.toggle("show", page === "ranking");
+  pageProfile.classList.toggle("show", page === "profile");
 
   navHome.classList.toggle("active", page === "home");
   navMinigame.classList.toggle("active", page === "minigame" || page === "jumpgame");
@@ -3218,6 +3285,7 @@ function render(){
     "클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>" +
     "참가비: <b>" + (jumpPlayedOnce ? "🌰 100k" : "첫 1회 무료") + "</b><br>" +
     "보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>";
+  window.AcornOnline?.onRender();
 }
 
 function spawnFloatText(x, y, text, color, type){
@@ -3801,7 +3869,7 @@ function toggleNickMenu(){
 
 nickChip.addEventListener("click", (e)=>{
   e.stopPropagation();
-  toggleNickMenu();
+  window.AcornOnline?.openProfile();
 });
 
 document.addEventListener("click", ()=>{
@@ -3815,12 +3883,9 @@ btnLogout.addEventListener("click", (e)=>{
 
 btnResetNick.addEventListener("click", (e)=>{
   e.stopPropagation();
-  resetCurrentNickProgress();
-  render();
-  closeNickMenu();
-  closeShop();
-  closeAchieve();
-  closeTrophy();
+  if(!currentNick) return;
+  if(!confirm("정말 초기화하시겠습니까?\n도토리·트로피·점프 최고기록을 포함한 게임 진행상황이 초기화됩니다.\n초기화한 진행상황은 되돌릴 수 없습니다.")) return;
+  window.AcornOnline?.resetProgress();
 });
 
 function setMsg(el, text, kind){
@@ -4137,6 +4202,7 @@ function endJumpGame(){
   updateJumpTexts();
   render();
   saveCurrent();
+  window.AcornOnline?.saveJumpRecord();
 
   showJumpOverlay(
     "게임 오버!",
