@@ -1413,7 +1413,7 @@
     .ranking-crown{font-size:42px;line-height:1.2;}
     .ranking-place{color:var(--gold);font-size:13px;font-weight:900;margin:8px 0;}
     .ranking-name{font-size:clamp(22px,5vw,32px);font-weight:1000;overflow-wrap:anywhere;}
-    .ranking-values{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+    .ranking-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px;}
     .ranking-value{background:rgba(255,255,255,.06);border-radius:14px;padding:14px 8px;}
     .ranking-value span{display:block;color:#bbb;font-size:12px;margin-bottom:7px;}
     .ranking-value strong{font-size:clamp(20px,5vw,28px);color:#fff;overflow-wrap:anywhere;}
@@ -1423,10 +1423,11 @@
     .ranking-table th{color:#a99cbf;font-size:12px;font-weight:600;padding:12px 4px;text-align:right;border-bottom:1px solid var(--border);}
     .ranking-table td{padding:14px 4px;text-align:right;border-bottom:1px solid rgba(255,255,255,.07);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;}
     .ranking-table th:first-child,.ranking-table td:first-child{width:42px;text-align:center;}
-    .ranking-table th:nth-child(2),.ranking-table td:nth-child(2){text-align:left;width:38%;}
+    .ranking-table th:nth-child(2),.ranking-table td:nth-child(2){text-align:left;width:28%;}
     .ranking-table tr.is-me{background:rgba(122,44,255,.14);}
+    @media(max-width:480px){.ranking-values{grid-template-columns:repeat(2,minmax(0,1fr));}.ranking-value:last-child{grid-column:1/-1;}.ranking-sort button{padding:10px 5px;font-size:12px;min-width:0;line-height:1.5;}}
     @media(max-width:640px){#pageRanking .page-wrap{padding-top:64px;}}
-    @media(max-width:360px){.bottom-nav{gap:5px!important;padding-left:7px!important;padding-right:7px!important;}.bottom-nav .nav-btn{font-size:12px;}.ranking-table{font-size:12px;}.ranking-table th:nth-child(2){width:33%;}}
+    @media(max-width:360px){.bottom-nav{gap:5px!important;padding-left:7px!important;padding-right:7px!important;}.bottom-nav .nav-btn{font-size:12px;}.ranking-table{font-size:12px;}.ranking-table th:first-child{width:32px;}.ranking-table th:nth-child(2){width:28%;}}
   </style>
 </head>
 <body>
@@ -1877,10 +1878,11 @@
             <h1 class="page-title">🏅 전체 랭킹</h1>
             <button class="close" id="rankingRefresh" type="button">새로고침</button>
           </div>
-          <p class="page-sub">전체 유저의 도토리와 트로피 기록을 확인해 봐!</p>
+          <p class="page-sub">전체 유저의 도토리, 트로피, 도토리 점프 최고 점수를 확인해 봐!</p>
           <div class="ranking-sort" aria-label="랭킹 정렬 기준">
             <button type="button" class="active" data-ranking-metric="acorns" aria-pressed="true">🌰 보유 도토리순</button>
             <button type="button" data-ranking-metric="trophies" aria-pressed="false">🏆 트로피순</button>
+            <button type="button" data-ranking-metric="jump" aria-pressed="false">🐿️ 점프 최고점수순</button>
           </div>
           <div class="ranking-champion" id="rankingChampion" hidden>
             <div class="ranking-crown" aria-hidden="true">👑</div>
@@ -1889,12 +1891,13 @@
             <div class="ranking-values">
               <div class="ranking-value"><span>🌰 보유 도토리</span><strong id="rankingChampionAcorns">0</strong></div>
               <div class="ranking-value"><span>🏆 트로피</span><strong id="rankingChampionTrophies">0</strong></div>
+              <div class="ranking-value"><span>🐿️ 도토리 점프 최고 점수</span><strong id="rankingChampionJump">0</strong></div>
             </div>
           </div>
           <div class="ranking-empty" id="rankingEmpty">아직 등록된 기록이 없어요.</div>
           <div class="ranking-meta" id="rankingPlayers"></div>
           <table class="ranking-table" aria-label="전체 유저 랭킹">
-            <thead><tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">🌰 도토리</th><th scope="col">🏆 트로피</th></tr></thead>
+            <thead><tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">🌰 도토리</th><th scope="col">🏆 트로피</th><th scope="col">🐿️ 점프 최고</th></tr></thead>
             <tbody id="rankingRows"></tbody>
           </table>
           <p class="ranking-meta" id="rankingStatus" role="status" aria-live="polite">서버에 연결하면 전체 랭킹을 볼 수 있어요.</p>
