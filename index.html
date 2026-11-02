@@ -1449,6 +1449,45 @@
     .ranking-table-wrap{overflow-x:auto;overscroll-behavior-x:contain;}.ranking-table{min-width:600px;}.ranking-table th:nth-child(2),.ranking-table td:nth-child(2){width:32%;}
     .ranking-scroll-hint{display:none;font-size:11px;color:#aaa;}
     @media(max-width:640px){#pageProfile .page-wrap{padding-top:70px;}.ranking-scroll-hint{display:block;}}
+    @property --rank-angle{syntax:'<angle>';initial-value:0deg;inherits:false;}
+    @keyframes rankOrbit{to{--rank-angle:360deg;}}
+    @keyframes infinityGlow{0%,100%{filter:drop-shadow(0 0 4px #ba8fff);}50%{filter:drop-shadow(0 0 11px #80ecff);}}
+    @keyframes flarePulse{0%,100%{box-shadow:0 0 12px #ff71394d;}50%{box-shadow:0 0 24px #ffd17199;}}
+    .avatar-frame{overflow:visible;isolation:isolate;}
+    .avatar-frame img{border-radius:50%;}
+    .avatar-frame img[hidden]{display:none!important;}
+    [data-rank="pro"],[data-rank="omega"],[data-rank="flare"],[data-rank="immortal"],[data-rank="infinity"]{--rank-spectrum:#78edff,#c375ff,#ff8ddc,#78edff;}
+    [data-rank="omega"]{--rank-spectrum:#302153,#8980ff,#65d9ff,#d2b2ff,#302153;}
+    [data-rank="flare"]{--rank-spectrum:#ff506d,#ff923c,#fff3a1,#e74c37,#ff506d;}
+    [data-rank="immortal"]{--rank-spectrum:#50dcb2,#eafff6,#e8c66a,#8e94dd,#50dcb2;}
+    [data-rank="infinity"]{--rank-spectrum:#ff78c6,#b999ff,#70d9ff,#8effd1,#fff4a0,#ffac77,#ff78c6;}
+    .avatar-frame:is([data-rank="pro"],[data-rank="omega"],[data-rank="flare"],[data-rank="immortal"],[data-rank="infinity"]){border-color:transparent;background:linear-gradient(#21192e,#21192e) padding-box,conic-gradient(from var(--rank-angle),var(--rank-spectrum)) border-box;animation:rankOrbit 7s linear infinite;box-shadow:0 0 18px color-mix(in srgb,var(--rank-color) 50%,transparent);}
+    .avatar-frame[data-rank="flare"]{animation:rankOrbit 6s linear infinite,flarePulse 2.6s ease-in-out infinite;}
+    .avatar-frame[data-rank="infinity"]{animation:rankOrbit 3.5s linear infinite,infinityGlow 3s ease-in-out infinite;outline:1px solid #e9e0ff80;outline-offset:3px;}
+    .avatar-frame[data-rank="infinity"]::after{content:'✧';position:absolute;right:-7px;top:-9px;color:#fff8d4;font-size:17px;text-shadow:0 0 8px #fff;pointer-events:none;}
+    .infinity-mark{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);z-index:3;padding:2px 7px;border:1px solid #d6bdff;border-radius:8px;background:linear-gradient(110deg,#49305e,#192b48);color:#fff1ff;font-size:10px;font-weight:1000;line-height:1.2;letter-spacing:.5px;white-space:nowrap;box-shadow:0 0 10px #ce91ff80;}
+    .avatar-small .infinity-mark{font-size:7px;bottom:-8px;padding:1px 3px;letter-spacing:0;}
+    .avatar-large .infinity-mark{font-size:14px;bottom:-10px;padding:3px 10px;}
+    .avatar-champion .infinity-mark{font-size:11px;bottom:-9px;}
+    .tier-badge:is([data-rank="pro"],[data-rank="omega"],[data-rank="flare"],[data-rank="immortal"],[data-rank="infinity"]){border-color:transparent;background:linear-gradient(#211b2c,#211b2c) padding-box,conic-gradient(from var(--rank-angle),var(--rank-spectrum)) border-box;color:var(--rank-color);animation:rankOrbit 8s linear infinite;box-shadow:0 0 12px #bf98ff25;}
+    .tier-badge .infinity-mark{display:none;}
+    .rank-medal{position:relative;display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;border:3px solid var(--rank-color,#a999c2);border-radius:50%;background:#251f30;font-size:37px;flex-shrink:0;}
+    .rank-medal:is([data-rank="pro"],[data-rank="omega"],[data-rank="flare"],[data-rank="immortal"],[data-rank="infinity"]){border-color:transparent;background:linear-gradient(#21192e,#21192e) padding-box,conic-gradient(from var(--rank-angle),var(--rank-spectrum)) border-box;animation:rankOrbit 6s linear infinite;box-shadow:0 0 15px #a787ff66;}
+    .rank-mini-emblem{display:inline-flex;align-items:center;justify-content:center;border-radius:8px;min-width:28px;min-height:28px;color:#fff;background:conic-gradient(var(--rank-spectrum,#5d536d,#88769b));text-shadow:0 1px 4px #000;font-size:19px;}
+    .rank-row:is(.pro,.omega,.flare,.immortal,.infinity){border-color:color-mix(in srgb,var(--rank-color) 48%,#352842);background:linear-gradient(120deg,color-mix(in srgb,var(--rank-color) 10%,#191521),#181520);}
+    .rank-row.infinity.current{box-shadow:0 0 20px #ac83e544;}
+    .rank-row .rank-need small{display:block;color:#aeb3c6;margin-top:4px;}
+    .rank-actions{display:flex;align-items:center;gap:10px;padding:0 14px 14px;flex-wrap:wrap;}
+    .rank-actions p{font-size:11px;color:#b5adc5;line-height:1.6;margin:0;flex:1;min-width:160px;}
+    .rank-actions .btn{font-size:12px;padding:10px 14px;}
+    .offline-income-open{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:35;display:flex;gap:10px;align-items:center;padding:10px 17px;border-radius:999px;border:1px solid #b0d9aa66;background:linear-gradient(110deg,#24352e,#282136);color:#edffe6;font:700 12px/1.4 inherit;box-shadow:0 8px 32px #0008;cursor:pointer;}
+    .offline-income-open[hidden]{display:none;}.offline-income-open strong{color:#ffe4a1;font-size:15px;}
+    .offline-dialog{width:min(440px,calc(100vw - 32px));max-height:85dvh;overflow:auto;padding:30px 26px 22px;border:1px solid #9ba58f77;border-radius:26px;color:#eee8f7;background:radial-gradient(ellipse at 50% 0,#364537 0,transparent 65%),#17161e;box-shadow:0 30px 100px #000a;}
+    .offline-dialog::backdrop{background:#08070bc7;backdrop-filter:blur(9px);}.offline-dialog header{text-align:center;}.offline-dialog .offline-eyebrow{font-size:11px;letter-spacing:3px;color:#b1d2a7;margin:0 0 14px;}.offline-hero{font-size:42px;margin:4px 0 13px;}.offline-dialog h2{font-size:25px;margin:0 0 10px;}.offline-dialog .offline-time{color:#c2bccd;font-size:13px;line-height:1.7;margin:0 0 24px;}
+    .offline-total{text-align:center;border-top:1px solid #ffffff17;border-bottom:1px solid #ffffff17;padding:18px 0 22px;margin-bottom:12px;}.offline-total small{display:block;color:#c0b8ce;font-size:11px;margin-bottom:9px;}.offline-total strong{font-size:40px;letter-spacing:-1px;color:#ffe5ae;}.offline-breakdown{list-style:none;padding:0;margin:10px 0 24px;}.offline-breakdown li{display:flex;align-items:center;justify-content:space-between;padding:10px 0;font-size:13px;}.offline-breakdown strong{font-variant-numeric:tabular-nums;color:#e4e7df;}.offline-dialog .btn{display:block;width:100%;padding:14px 15px;background:linear-gradient(110deg,#96c485,#c8c98e);color:#20271f;font-size:15px;}.offline-later{display:block;margin:13px auto 0;border:0;background:none;color:#b9b0c8;padding:8px 15px;cursor:pointer;}.offline-error{font-size:12px;color:#ffabab;line-height:1.6;min-height:0;margin:8px 0;}.offline-dialog .btn:disabled{opacity:.55;}
+    @media(max-width:640px){.offline-income-open{top:122px;max-width:86vw;white-space:nowrap;}.offline-dialog{padding:25px 21px 18px;}.offline-dialog h2{font-size:23px;}}
+    @media(prefers-reduced-motion:reduce){.avatar-frame,.tier-badge,.rank-medal{animation:none!important;}}
+
   </style>
 </head>
 <body>
@@ -1509,7 +1548,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v2.01</div>
+        <div class="intro-version">v2.10</div>
       </div>
     </div>
   </div>
@@ -1552,6 +1591,14 @@
     </button>
     <div class="nick-menu" id="nickMenu" hidden></div>
   </div>
+
+  <button type="button" id="offlineIncomeOpen" class="offline-income-open" hidden>🌰 오프라인 수익 <strong>0</strong> <span>수령하기 →</span></button>
+  <dialog id="offlineIncomeDialog" class="offline-dialog" aria-labelledby="offlineIncomeTitle">
+    <header><p class="offline-eyebrow">WELCOME BACK</p><div class="offline-hero" aria-hidden="true">🐿️ 🌰</div><h2 id="offlineIncomeTitle">친구들이 모아 뒀어요</h2><p class="offline-time" id="offlineIncomeTime"></p></header>
+    <div class="offline-total"><small>수령할 도토리</small><strong id="offlineIncomeTotal">0</strong></div>
+    <ul class="offline-breakdown"><li><span>🐿️ 다람쥐</span><strong id="offlineSquirrelValue">+0</strong></li><li><span>🌲 청솔모</span><strong id="offlineChipmunkValue">+0</strong></li><li><span>🌳 도토리나무</span><strong id="offlineTreeValue">+0</strong></li></ul>
+    <p id="offlineIncomeMessage" class="offline-error" role="status" aria-live="polite"></p><button type="button" class="btn" id="offlineIncomeClaim">한 번에 수령하기</button><button type="button" class="offline-later" id="offlineIncomeLater">나중에 받기</button>
+  </dialog>
 
   <div class="shop-btn locked" id="shopBtn" aria-label="상점 열기">
     🛒 상점
@@ -1696,7 +1743,7 @@
 
     <div class="item trophy-summary">
       <div class="trophy-big">
-        <span id="trophyMedalBig">🥉</span>
+        <span id="trophyMedalBig" class="rank-medal">🥉</span>
         <span id="trophyRankName">무등급</span>
       </div>
       <div class="trophy-sub" id="trophySummaryText">
@@ -1718,6 +1765,7 @@
       </div>
     </div>
 
+    <div class="rank-actions"><button type="button" class="btn" id="claimAllRankCoins">달성 보상 모두 받기</button><p>프로부터 단계마다 보상 +3 · 인피니티부터 +1<br>인피니티 등급은 현재 단계 주변으로 계속 이어져요.</p></div>
     <div class="rank-list" id="trophyRankList"></div>
   </div>
 
@@ -2046,7 +2094,7 @@
     </div>
   </div>
 
-  <script src="./acorn-config.js?v=20261101-profile-fix"></script>
+  <script src="./acorn-config.js?v=20261102-v210"></script>
   <script>
 const LS_KEY = "dotori_game_profiles_v129";
 
@@ -2166,6 +2214,92 @@ const FREE_COIN_COOLDOWN_MS = 10 * 60 * 1000;
 
 let jumpPlayedOnce = false;
 
+// Offline production stays pending until explicitly claimed; phases survive reloads.
+let offlineSquirrelAcorns=0,offlineChipmunkAcorns=0,offlineTreeAcorns=0,offlineElapsedMs=0;
+let offlineAnchorState=null,offlineOfferShown=false;
+const OFFLINE_MAX_NUMBER=1e300;
+function finiteIncome(value){const n=Number(value);return n>=0?Math.min(OFFLINE_MAX_NUMBER,n):0;}
+function advanceOfflineTimers(values,elapsed,period){
+  let ticks=0;
+  const remaining=(Array.isArray(values)?values:[]).map(value=>{
+    const first=Math.min(period,Math.max(0,Number(value)||0));
+    const count=elapsed>0&&elapsed>=first?Math.floor((elapsed-first)/period)+1:0;
+    ticks+=count;return count?first+count*period-elapsed:Math.max(0,first-elapsed);
+  });
+  return {ticks,remaining};
+}
+function settleOfflineState(source,now=Date.now()){
+  const p={...source},saved=Number(p.savedAt);
+  const elapsed=Number.isFinite(saved)&&saved>0?Math.max(0,now-saved):0;
+  const paused=Math.max(0,Number(p.incomePauseRemainingMs)||0),active=Math.max(0,elapsed-paused);
+  const sq=advanceOfflineTimers(p.squirrelRemainingMs,active,SQUIRREL_TICK_MS);
+  const cs=advanceOfflineTimers(p.chipmunkRemainingMs,active,CHIPMUNK_TICK_MS);
+  const tree=advanceOfflineTimers(p.treeRemainingMs,active,TREE_TICK_MS);
+  p.squirrelRemainingMs=sq.remaining;p.chipmunkRemainingMs=cs.remaining;p.treeRemainingMs=tree.remaining;
+  p.offlineSquirrelAcorns=finiteIncome(finiteIncome(p.offlineSquirrelAcorns)+sq.ticks*(1+(Number(p.squirrelIncomeBoostLevel)||0)*0.1));
+  p.offlineChipmunkAcorns=finiteIncome(finiteIncome(p.offlineChipmunkAcorns)+cs.ticks*CHIPMUNK_INCOME_PER_TICK);
+  p.offlineTreeAcorns=finiteIncome(finiteIncome(p.offlineTreeAcorns)+tree.ticks*TREE_INCOME_PER_TICK);
+  p.offlineElapsedMs=finiteIncome(finiteIncome(p.offlineElapsedMs)+elapsed);
+  p.incomePauseRemainingMs=Math.max(0,paused-elapsed);p.savedAt=Math.max(now,Number.isFinite(saved)?saved:0);
+  return p;
+}
+function getOfflineTotal(){return finiteIncome(offlineSquirrelAcorns+offlineChipmunkAcorns+offlineTreeAcorns);}
+function formatAwayTime(ms){
+  const seconds=Math.floor(ms/1000),days=Math.floor(seconds/86400),hours=Math.floor(seconds%86400/3600),minutes=Math.floor(seconds%3600/60);
+  return [days?days+"일":"",hours?hours+"시간":"",minutes?minutes+"분":"",!days&&!hours&&!minutes?Math.max(1,seconds)+"초":""].filter(Boolean).join(" ");
+}
+function renderOfflineIncome(){
+  const total=getOfflineTotal(),button=document.getElementById("offlineIncomeOpen");
+  button.hidden=!currentNick||total<=0;button.querySelector("strong").textContent=fmtShort(total);
+  document.getElementById("offlineIncomeTotal").textContent=fmtShort(total);
+  document.getElementById("offlineIncomeTotal").title=total.toLocaleString("ko-KR");
+  document.getElementById("offlineIncomeTime").textContent=formatAwayTime(offlineElapsedMs)+" 동안 친구들이 모아 뒀어요.";
+  for(const [id,value] of [["offlineSquirrelValue",offlineSquirrelAcorns],["offlineChipmunkValue",offlineChipmunkAcorns],["offlineTreeValue",offlineTreeAcorns]])document.getElementById(id).textContent="+"+fmtShort(value);
+  if(total<=0)closeOfflineIncome();
+}
+function openOfflineIncome(){
+  if(!currentNick||getOfflineTotal()<=0)return;renderOfflineIncome();
+  const dialog=document.getElementById("offlineIncomeDialog");if(!dialog.open)dialog.showModal();document.getElementById("offlineIncomeClaim").focus();
+}
+function closeOfflineIncome(){document.getElementById("offlineIncomeDialog").close();}
+function offerOfflineIncome(){if(!offlineOfferShown&&getOfflineTotal()>0){offlineOfferShown=true;openOfflineIncome();}}
+function clearOfflineIncome(){offlineSquirrelAcorns=offlineChipmunkAcorns=offlineTreeAcorns=offlineElapsedMs=0;offlineAnchorState=null;offlineOfferShown=false;closeOfflineIncome();}
+function claimLocalOfflineIncome(){
+  if(!currentNick||getOfflineTotal()<=0)return;
+  acorn=finiteIncome(acorn+getOfflineTotal());clearOfflineIncome();saveCurrent();render();
+}
+function acceptOnlineOfflineClaim(data){
+  const parts=data.claimedOffline||{};
+  acorn=finiteIncome(acorn+data.claimedAcorns);
+  offlineSquirrelAcorns=Math.max(0,offlineSquirrelAcorns-(parts.offlineSquirrelAcorns||0));
+  offlineChipmunkAcorns=Math.max(0,offlineChipmunkAcorns-(parts.offlineChipmunkAcorns||0));
+  offlineTreeAcorns=Math.max(0,offlineTreeAcorns-(parts.offlineTreeAcorns||0));
+  offlineElapsedMs=Math.max(0,offlineElapsedMs-(parts.offlineElapsedMs||0));
+  if(offlineAnchorState){
+    offlineAnchorState.acorn=finiteIncome(offlineAnchorState.acorn+data.claimedAcorns);
+    for(const key of ["offlineSquirrelAcorns","offlineChipmunkAcorns","offlineTreeAcorns","offlineElapsedMs"])offlineAnchorState[key]=Math.max(0,(offlineAnchorState[key]||0)-(parts[key]||0));
+  }
+  saveCurrent();render();
+}
+function suspendOfflineProduction(){
+  if(!currentNick||offlineAnchorState)return;
+  offlineAnchorState=buildSaveData();saveCurrent();
+}
+function resumeOfflineProduction(){
+  if(!currentNick||!offlineAnchorState)return;
+  const settled=settleOfflineState(offlineAnchorState);offlineAnchorState=null;
+  applyLoadedProfile(settled,{settleOffline:false});saveCurrent();render();offlineOfferShown=false;offerOfflineIncome();
+}
+document.getElementById("offlineIncomeOpen").addEventListener("click",openOfflineIncome);
+document.getElementById("offlineIncomeLater").addEventListener("click",closeOfflineIncome);
+document.getElementById("offlineIncomeClaim").addEventListener("click",()=>{
+  if(window.AcornOnline?.claimOfflineIncome)window.AcornOnline.claimOfflineIncome();else claimLocalOfflineIncome();
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden)suspendOfflineProduction();else resumeOfflineProduction();});
+window.addEventListener("pagehide",suspendOfflineProduction);
+window.addEventListener("pageshow",()=>{if(!document.hidden)resumeOfflineProduction();});
+
+
 const TROPHY_RANKS = [
   { name: "브론즈 1", stars: "★", need: 30, medal: "🥉", kind: "bronze" },
   { name: "브론즈 2", stars: "★★", need: 70, medal: "🥉", kind: "bronze" },
@@ -2211,6 +2345,80 @@ const TROPHY_RANKS = [
   { name: "마스터 2", stars: "★★", need: 182200, medal: "👑", kind: "master" },
   { name: "마스터 3", stars: "★★★", need: 222200, medal: "👑", kind: "master" }
 ];
+
+// Existing indices 0–32 stay unchanged so claimed rewards survive the update.
+const ASCENDED_KINDS = [
+  {name:"프로",kind:"pro",medal:"✦"}, {name:"오메가",kind:"omega",medal:"Ω"},
+  {name:"플레어",kind:"flare",medal:"☄"}, {name:"불멸",kind:"immortal",medal:"❖"}
+];
+for(const [group,item] of ASCENDED_KINDS.entries()){
+  for(let stage=1;stage<=3;stage++){
+    const step=group*3+stage-1;
+    TROPHY_RANKS.push({...item,name:item.name+" "+stage,stars:"★".repeat(stage),need:450000*2**step});
+  }
+}
+TROPHY_RANKS.forEach((rank,index)=>{rank.index=index;rank.reward=index<33?2:2+(index-32)*3;});
+const INFINITY_FIRST_NEED=1843200000;
+const RANK_THEMES={
+  unranked:{color:"#8c849b"},bronze:{color:"#c4864d"},silver:{color:"#d7dce7"},gold:{color:"#ffd84d"},
+  platinum:{color:"#e9f0f8"},emerald:{color:"#5adca0"},diamond:{color:"#78beff"},reddiamond:{color:"#ff6e82"},
+  hero:{color:"#ffbc5e"},myth:{color:"#b081ff"},legend:{color:"#ffd65c"},master:{color:"#f0faff"},
+  pro:{color:"#78edff",gradient:"#57e9ff,#c375ff,#ff8ddc,#e9ffff,#57e9ff"},
+  omega:{color:"#ba9aff",gradient:"#302153,#8980ff,#65d9ff,#d2b2ff,#302153"},
+  flare:{color:"#ffb77a",gradient:"#ff506d,#ff923c,#fff3a1,#e74c37,#ff506d"},
+  immortal:{color:"#b7ffe4",gradient:"#50dcb2,#eafff6,#e8c66a,#8e94dd,#50dcb2"},
+  infinity:{color:"#f4e9ff",gradient:"#ff78c6,#b999ff,#70d9ff,#8effd1,#fff4a0,#ffac77,#ff78c6"}
+};
+function toRoman(value){
+  let n=Math.max(1,Math.floor(value)),out="";
+  for(const [amount,label] of [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]]){
+    const count=Math.floor(n/amount);out+=label.repeat(count);n%=amount;
+  }
+  return out;
+}
+function getInfinityRank(level){
+  const n=Math.max(1,Math.floor(level));
+  return {name:"인피니티 "+toRoman(n),kind:"infinity",medal:"∞",stars:"",need:INFINITY_FIRST_NEED*2**(n-1),
+    index:TROPHY_RANKS.length+n-1,reward:38+n,infinityLevel:n,roman:toRoman(n)};
+}
+function getTrophyRankAt(index){return index<TROPHY_RANKS.length?TROPHY_RANKS[index]:getInfinityRank(index-TROPHY_RANKS.length+1);}
+function getTrophyRankFor(value){
+  const amount=finiteIncome(value);
+  if(amount>=INFINITY_FIRST_NEED){
+    let level=Math.max(1,Math.floor(Math.log2(amount)-Math.log2(INFINITY_FIRST_NEED))+1);
+    while(level>1&&getInfinityRank(level).need>amount)level--;
+    while(getInfinityRank(level+1).need<=amount)level++;
+    return {...getInfinityRank(level),...RANK_THEMES.infinity};
+  }
+  let current=null;for(const rank of TROPHY_RANKS){if(amount>=rank.need)current=rank;else break;}
+  return current?{...current,...RANK_THEMES[current.kind]}:null;
+}
+function getRankDisplayList(){
+  const current=getTrophyRankFor(achievementCount),level=current?.infinityLevel||0;
+  const levels=new Set([1,2,3,4,5,6]);
+  for(let n=Math.max(1,level-4);n<=level+5;n++)levels.add(n);
+  const firstUnclaimed=Array.from({length:level},(_,i)=>i+1).find(n=>!claimedCoinRankIndices.includes(TROPHY_RANKS.length+n-1));
+  if(firstUnclaimed)for(let n=firstUnclaimed;n<=Math.min(level,firstUnclaimed+3);n++)levels.add(n);
+  return [...TROPHY_RANKS,...[...levels].sort((a,b)=>a-b).map(getInfinityRank)];
+}
+function getRankRewards(){
+  const current=getTrophyRankFor(achievementCount),claimed=new Set(claimedCoinRankIndices);let count=0,total=0;
+  for(let i=0;i<=(current?.index??-1);i++)if(!claimed.has(i)){count++;total+=getTrophyRankAt(i).reward;}
+  return {count,total};
+}
+function applyRankTheme(element,rank){
+  const theme=RANK_THEMES[rank?.kind]||RANK_THEMES.unranked;
+  element.dataset.rank=rank?.kind||"unranked";
+  element.style.setProperty("--rank-color",theme.color);
+  element.style.setProperty("--rank-spectrum",theme.gradient||`${theme.color},${theme.color}`);
+  let mark=element.querySelector(".infinity-mark");
+  if(rank?.kind==="infinity"&&(element.classList.contains("avatar-frame")||element.classList.contains("rank-medal"))){
+    if(!mark){mark=document.createElement("span");mark.className="infinity-mark";mark.setAttribute("aria-hidden","true");element.append(mark);}
+    mark.textContent="∞ "+(rank.roman||toRoman(rank.infinityLevel||1));
+    element.title="인피니티 "+rank.infinityLevel+" · "+(rank.roman||"");
+  }else {if(mark)mark.remove();element.removeAttribute("title");}
+}
+
 
 const UPGRADE_STEPS = [
   { toTier: 1, toValue: 2, cost: 20, name: "클릭 수익 +1", desc: "구매 후: 클릭당 <b>+2</b>" },
@@ -2580,13 +2788,7 @@ function normalizeByTier(){
   clickValue = getClickValueByTier(tier);
 }
 
-function getUnclaimedRankCount(){
-  let count = 0;
-  for(let i = 0; i < TROPHY_RANKS.length; i++){
-    if(achievementCount >= TROPHY_RANKS[i].need && !claimedCoinRankIndices.includes(i)) count++;
-  }
-  return count;
-}
+function getUnclaimedRankCount(){return getRankRewards().count;}
 
 
 function isIncomePaused(){
@@ -2680,6 +2882,7 @@ function setLocked(isLocked){
 }
 
 function buildSaveData(){
+  if(offlineAnchorState)return {...offlineAnchorState};
   const nowPerf = performance.now();
   const squirrelRemainingMs = squirrelNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
   const chipmunkRemainingMs = chipmunkNextPayouts.map(t => Math.max(0, Math.round(t - nowPerf)));
@@ -2711,6 +2914,7 @@ function buildSaveData(){
     goldenReady,
     goldenRemainingMs: goldenReady ? Math.max(0, Math.round(GOLDEN_MIN_HOLD_MS - (nowPerf - goldenStartedAt))) : 0,
     jumpBestScore,
+    savedAt: Date.now(),offlineSquirrelAcorns,offlineChipmunkAcorns,offlineTreeAcorns,offlineElapsedMs,
     jumpPlayedOnce
   };
 }
@@ -2722,7 +2926,9 @@ function saveCurrent(){
   window.AcornOnline?.scheduleSave();
 }
 
-function applyLoadedProfile(p){
+function applyLoadedProfile(source,options={}){
+  const p=options.settleOffline===false?source:settleOfflineState(source);
+  offlineSquirrelAcorns=finiteIncome(p.offlineSquirrelAcorns);offlineChipmunkAcorns=finiteIncome(p.offlineChipmunkAcorns);offlineTreeAcorns=finiteIncome(p.offlineTreeAcorns);offlineElapsedMs=finiteIncome(p.offlineElapsedMs);
   const nowPerf = performance.now();
   acorn = Number(p.acorn ?? 0) || 0;
   tier = Number(p.tier ?? 0) || 0;
@@ -2773,17 +2979,19 @@ function resetAutoState(){
   lastSuspiciousDecay = performance.now();
 }
 
-function loadProfile(nick){
+function loadProfile(nick,options={}){
   const p = profiles[nick];
   if(!p) return false;
   currentNick = nick;
-  applyLoadedProfile(p);
+  offlineAnchorState=null;offlineOfferShown=false;
+  applyLoadedProfile(p,options);
+  profiles[nick]=buildSaveData();saveProfiles(profiles);
   resetAutoState();
   return true;
 }
 
 function createProfile(nick){
-  currentNick = nick;
+  currentNick = nick;clearOfflineIncome();
   acorn = 0;
   tier = 0;
   clickValue = 1;
@@ -2820,6 +3028,7 @@ function createProfile(nick){
 
 function resetCurrentNickProgress(){
   if(!currentNick) return;
+  clearOfflineIncome();
   acorn = 0;
   tier = 0;
   clickValue = 1;
@@ -2879,7 +3088,8 @@ function logout(){
 }
 
 function finishLogout(){
-  currentNick = null;
+  closeOfflineIncome();offlineAnchorState=null;
+  currentNick = null;document.getElementById("offlineIncomeOpen").hidden=true;
   closeShop();
   closeNickMenu();
   closeAchieve();
@@ -2935,19 +3145,8 @@ function canClaimAnyAchievement(){
   );
 }
 
-function getCurrentTrophyRank(){
-  let current = null;
-  for(const rank of TROPHY_RANKS){
-    if(achievementCount >= rank.need) current = rank;
-  }
-  return current;
-}
-function getNextTrophyRank(){
-  for(const rank of TROPHY_RANKS){
-    if(achievementCount < rank.need) return rank;
-  }
-  return null;
-}
+function getCurrentTrophyRank(){return getTrophyRankFor(achievementCount);}
+function getNextTrophyRank(){return getTrophyRankAt((getCurrentTrophyRank()?.index??-1)+1);}
 function getTrophyProgressInfo(){
   const current = getCurrentTrophyRank();
   const next = getNextTrophyRank();
@@ -2992,13 +3191,14 @@ function getTrophyProgressInfo(){
   };
 }
 
+let trophyListStamp="";
 function renderTrophyPanel(){
   const current = getCurrentTrophyRank();
   const next = getNextTrophyRank();
   const info = getTrophyProgressInfo();
   const unclaimedCount = getUnclaimedRankCount();
 
-  trophyMedalBig.textContent = current ? current.medal : "🥉";
+  if(trophyMedalBig.dataset.label!==(current?.name||"무등급")){trophyMedalBig.textContent=current?.medal||"🌰";applyRankTheme(trophyMedalBig,current);trophyMedalBig.dataset.label=current?.name||"무등급";}
   trophyRankName.textContent = current
     ? current.name + " " + current.stars
     : "무등급";
@@ -3007,7 +3207,7 @@ function renderTrophyPanel(){
     "현재 트로피: <b>" + fmtShort(achievementCount) + "</b>" +
     "<br>현재 등급: <b>" + (current ? (current.name + " " + current.stars) : "아직 없음") + "</b>" +
     "<br>보유 코인: <b>" + fmtShort(coinCount) + "</b>" +
-    "<br>수령 가능한 등급 코인: <b>" + fmtShort(unclaimedCount * 2) + "</b>";
+    "<br>수령 가능한 등급 코인: <b>" + fmtShort(getRankRewards().total) + "</b>";
 
   if(next){
     trophyNextText.textContent =
@@ -3028,7 +3228,10 @@ function renderTrophyPanel(){
   }
   panelTrophyBarFill.style.width = info.pct + "%";
 
-  trophyRankList.innerHTML = TROPHY_RANKS.map((rank, i)=>{
+  document.getElementById("claimAllRankCoins").disabled=unclaimedCount===0;
+  const stamp=achievementCount+"|"+claimedCoinRankIndices.join(",");if(stamp===trophyListStamp)return;trophyListStamp=stamp;
+  trophyRankList.innerHTML = getRankDisplayList().map(rank=>{
+    const i=rank.index,theme=RANK_THEMES[rank.kind];
     const cleared = achievementCount >= rank.need;
     const isCurrent = current && current.need === rank.need;
     const claimed = claimedCoinRankIndices.includes(i);
@@ -3039,18 +3242,18 @@ function renderTrophyPanel(){
     if(claimable) stateText = isCurrent ? "현재 등급 · 코인 받기" : "코인 받기";
 
     return `
-      <div class="rank-row ${rank.kind} ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""} ${claimable ? "claimable" : ""}" data-rank-index="${i}">
+      <div class="rank-row ${rank.kind} ${cleared ? "cleared" : ""} ${isCurrent ? "current" : ""} ${claimable ? "claimable" : ""}" data-rank-index="${i}" data-rank="${rank.kind}" style="--rank-color:${theme.color}">
         <div class="rank-top">
           <div class="rank-name">
-            <span>${rank.medal}</span>
+            <span class="rank-mini-emblem" data-rank="${rank.kind}">${rank.medal}</span>
             <span>${rank.name}</span>
             <span class="rank-stars">${rank.stars}</span>
           </div>
           <div class="rank-state">${stateText}</div>
         </div>
         <div class="rank-need">
-          필요 트로피: ${fmtShort(rank.need)}<br>
-          달성 보상: 코인 +2 ${claimable ? "· 눌러서 받기" : ""}
+          필요 트로피: ${fmtShort(rank.need)}<small>${rank.need.toLocaleString("ko-KR")}개</small>
+          달성 보상: 코인 +${rank.reward} ${claimable ? "· 눌러서 받기" : ""}
         </div>
       </div>
     `;
@@ -3285,6 +3488,7 @@ function render(){
     "클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>" +
     "참가비: <b>" + (jumpPlayedOnce ? "🌰 100k" : "첫 1회 무료") + "</b><br>" +
     "보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>";
+  renderOfflineIncome();
   window.AcornOnline?.onRender();
 }
 
@@ -3534,7 +3738,7 @@ acornBtn.addEventListener("keydown", (e)=>{
 });
 
 setInterval(()=>{
-  if(!currentNick) return;
+  if(!currentNick||document.hidden||offlineAnchorState) return;
 
   const now = performance.now();
 
@@ -3574,8 +3778,9 @@ setInterval(()=>{
 
   for(let i = 0; i < squirrelNextPayouts.length; i++){
     if(now >= squirrelNextPayouts[i]){
-      squirrelNextPayouts[i] += SQUIRREL_TICK_MS;
-      acorn += squirrelUnitIncome;
+      const ticks=Math.floor((now-squirrelNextPayouts[i])/SQUIRREL_TICK_MS)+1;
+      squirrelNextPayouts[i] += ticks*SQUIRREL_TICK_MS;
+      acorn=finiteIncome(acorn+ticks*squirrelUnitIncome);
       if(currentPage === "home") spawnSquirrelFloat();
       changed = true;
     }
@@ -3583,17 +3788,19 @@ setInterval(()=>{
 
   for(let i = 0; i < chipmunkNextPayouts.length; i++){
     if(now >= chipmunkNextPayouts[i]){
-      chipmunkNextPayouts[i] += CHIPMUNK_TICK_MS;
-      acorn += CHIPMUNK_INCOME_PER_TICK;
+      const ticks=Math.floor((now-chipmunkNextPayouts[i])/CHIPMUNK_TICK_MS)+1;
+      chipmunkNextPayouts[i] += ticks*CHIPMUNK_TICK_MS;
+      acorn=finiteIncome(acorn+ticks*CHIPMUNK_INCOME_PER_TICK);
       if(currentPage === "home") spawnChipmunkFloat();
       changed = true;
     }
   }
 
   for(let i = 0; i < treeNextPayouts.length; i++){
-    while(now >= treeNextPayouts[i]){
-      treeNextPayouts[i] += TREE_TICK_MS;
-      acorn += TREE_INCOME_PER_TICK;
+    if(now >= treeNextPayouts[i]){
+      const ticks=Math.floor((now-treeNextPayouts[i])/TREE_TICK_MS)+1;
+      treeNextPayouts[i] += ticks*TREE_TICK_MS;
+      acorn=finiteIncome(acorn+ticks*TREE_INCOME_PER_TICK);
       changed = true;
       if(currentPage === "home") spawnTreeFloat();
     }
@@ -3665,15 +3872,21 @@ trophyRankList.addEventListener("click", (e)=>{
   const idx = Number(row.dataset.rankIndex);
   if(Number.isNaN(idx)) return;
 
-  const rank = TROPHY_RANKS[idx];
+  const rank = getTrophyRankAt(idx);
   if(!rank) return;
   if(achievementCount < rank.need) return;
   if(claimedCoinRankIndices.includes(idx)) return;
 
   claimedCoinRankIndices.push(idx);
-  coinCount += 2;
+  coinCount += rank.reward;
   render();
   saveCurrent();
+});
+
+document.getElementById("claimAllRankCoins").addEventListener("click",()=>{
+  if(!currentNick)return;const rewards=getRankRewards();if(!rewards.count)return;
+  const current=getCurrentTrophyRank();for(let i=0;i<=current.index;i++)if(!claimedCoinRankIndices.includes(i))claimedCoinRankIndices.push(i);
+  coinCount+=rewards.total;render();saveCurrent();
 });
 
 claimAchievementAcorn.addEventListener("click", ()=>{
@@ -4524,8 +4737,8 @@ resetJumpGame();
 render();
 runOpening();
   </script>
-  <!-- 온라인 기능을 HTML에 포함해 별도 JS의 누락·캐시로 버튼이 끊기지 않게 합니다. -->
-  <script id="acornOnlineBundle" data-build="20261101-profile-fix">
+  <!-- 온라인 기능을 HTML에 포함: v2.10 -->
+  <script id="acornOnlineBundle" data-build="20261102-v210">
 /* 도토리 게임: 전체 닉네임 확인, 계정 로그인, 서버 저장, 랭킹. */
 (() => {
   "use strict";
@@ -4681,7 +4894,7 @@ runOpening();
     if (data.state && Object.keys(data.state).length) {
       profiles[data.nickname] = data.state;
       saveProfiles(profiles);
-      loadProfile(data.nickname);
+      loadProfile(data.nickname,{settleOffline:false});
     } else {
       createProfile(data.nickname);
     }
@@ -4697,6 +4910,7 @@ runOpening();
     status("온라인 · 기록 자동 저장");
     saveCurrent();
     if(recovered>0)saveJumpRecord();
+    offerOfflineIncome();
   }
 
   async function register() {
@@ -4733,6 +4947,7 @@ runOpening();
 
   function scheduleSave() {
     rememberBest();
+    if(document.hidden)return;
     if (!ready || !auth || conflict || signingOut || profileBusy || currentNick !== auth.nickname || saveTimer) return;
     saveTimer = setTimeout(() => { saveTimer = null; flush(); }, 10000);
   }
@@ -4816,10 +5031,10 @@ runOpening();
     try {
       const data = await api("/api/health", { token: null });
       if (data.ok !== true || data.api !== 1) throw new Error("잘못된 서버");
-      if(!data.features?.profiles){connected=false;available=false;status("서버가 최신 기능을 준비 중이에요. 서버 업데이트 후 다시 접속해 주세요.",true);refreshSignupButton();updateLogin();profileStamp="";paintProfile();return;}
+      if(!data.features?.profiles||!data.features?.offlineIncome||!data.features?.infiniteRanks){connected=false;available=false;status("v2.10 서버가 필요해요. 새 server.py로 교체한 뒤 start_public.py를 다시 실행해 주세요.",true);refreshSignupButton();updateLogin();profileStamp="";paintProfile();return;}
       const wasConnected = connected;
       connected = true;
-      if (!ready && !conflict) status("서버에 연결됐어요.");
+      if (!ready && !conflict) status(currentNick?"오프라인 플레이 · 온라인 순위에는 반영되지 않아요.":"서버에 연결됐어요.");
       if (!wasConnected) { checkedNick = "\0"; updateSignup(); }
       updateLogin();
       if (overlay.style.display === "flex") resume();
@@ -4867,7 +5082,7 @@ runOpening();
       const acorns = document.createElement("td"), trophies = document.createElement("td");
       const jump = document.createElement("td");
       setNumber(acorns, row.acorns);
-      const count=document.createElement("strong"),grade=document.createElement("span");count.className="rank-trophy-count";count.textContent=exactNumber(row.trophies);grade.className="rank-tier";grade.textContent=[tier.medal,tier.name,tier.stars].filter(Boolean).join(" ");grade.style.setProperty("--rank-color",tier.color);trophies.append(count,grade);
+      const count=document.createElement("strong"),grade=document.createElement("span");count.className="rank-trophy-count";count.textContent=exactNumber(row.trophies);grade.className="rank-tier";grade.textContent=[tier.medal,tier.name,tier.stars].filter(Boolean).join(" ");applyRankTheme(grade,tier);trophies.append(count,grade);
       setNumber(jump, row.jumpBestScore ?? 0);
       tr.append(rank, nick, acorns, trophies, jump); body.append(tr);
     }
@@ -4903,17 +5118,17 @@ runOpening();
     if(prior&&prior.score===next.score&&prior.epoch===next.epoch&&prior.accountId===next.accountId)return;
     bestCache[currentNick]=next;saveCaches();
   }
-  function tierFor(value){let rank={name:"무등급",kind:"unranked",stars:"",medal:"🌰",need:0};for(const item of TROPHY_RANKS){if(value>=item.need)rank=item;}return {...rank,color:TIER_COLORS[rank.kind]};}
+  function tierFor(value){return getTrophyRankFor(value)||{name:"무등급",kind:"unranked",stars:"",medal:"🌰",need:0,color:"#8c849b"};}
   function imageSource(value){return /^\/api\/avatars\/[0-9]+\/[0-9]+$/.test(value||"")?base+value:"";}
   function ownPhoto(){const meta=profileCache[currentNick]||{};return auth&&auth.nickname===currentNick?imageSource(accountInfo.avatarUrl):meta.avatarDataUrl||imageSource(meta.avatarUrl);}
   function paintAvatar(frame,img,source,rank){
-    frame.style.setProperty("--rank-color",rank.color||TIER_COLORS.unranked);
+    applyRankTheme(frame,rank);
     if(img.dataset.source===source)return;
     img.dataset.source=source;const fallback=frame.querySelector(".avatar-fallback");img.hidden=!source;fallback.hidden=Boolean(source);
     img.onerror=()=>{img.hidden=true;fallback.hidden=false;};
     if(source)img.src=source;else img.removeAttribute("src");
   }
-  function paintTier(element,rank){element.textContent=[rank.medal,rank.name,rank.stars].filter(Boolean).join(" ");element.style.setProperty("--rank-color",rank.color);}
+  function paintTier(element,rank){element.textContent=[rank.medal,rank.name,rank.stars].filter(Boolean).join(" ");applyRankTheme(element,rank);}
   function exactNumber(value){return Number(value||0).toLocaleString("ko-KR",{maximumFractionDigits:0});}
   function syncAccount(data){
     if(!data?.nickname)return;
@@ -5047,9 +5262,24 @@ runOpening();
   for(const id of ["profileCurrentPassword","profileNewPassword","profileConfirmPassword"])$(id).addEventListener("input",updateProfilePassword);
   $("profileSavePassword").addEventListener("click",changePassword);
 
+  async function claimOfflineIncome(){
+    const button=$("offlineIncomeClaim");if(button.disabled||getOfflineTotal()<=0)return;
+    button.disabled=true;$("offlineIncomeMessage").textContent="";
+    try{
+      if(auth&&ready){
+        await profileAction("offlineIncomeMessage",async()=>{
+          const data=await api("/api/me/offline/claim",{method:"POST",body:{revision,progressEpoch}});
+          revision=data.revision;syncAccount(data);acceptOnlineOfflineClaim(data);closeOfflineIncome();
+        });
+      }else if(!auth){claimLocalOfflineIncome();}
+      else throw new Error("온라인 기록을 확인한 뒤 수령해 주세요. 다시 로그인하면 보상을 불러와요.");
+    }catch(error){$("offlineIncomeMessage").textContent=error.message;}
+    finally{button.disabled=false;}
+  }
+
   window.AcornOnline = {
     updateSignup, updateLogin, register, login, scheduleSave, signOut, onOverlay,
-    openProfile,onRender:paintProfile,resetProgress,saveJumpRecord,
+    openProfile,onRender:paintProfile,resetProgress,saveJumpRecord,claimOfflineIncome,
     onPage(page) { if (page === "ranking") loadRanking(); if(page!=="profile")clearProfilePasswords();else {profileStamp="";paintProfile();} }
   };
 
@@ -5073,6 +5303,7 @@ runOpening();
     overlay.style.display = "none"; setLocked(false); nickWrap.style.display = "block";
     switchPage("home"); render();
     status("오프라인 플레이 · 온라인 순위에는 반영되지 않아요.");
+    saveCurrent();offerOfflineIncome();
   });
   $("rankingRefresh").addEventListener("click", loadRanking);
   document.querySelectorAll("[data-ranking-metric]").forEach(button => {
@@ -5087,9 +5318,9 @@ runOpening();
     });
   });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden" && ready) { saveCurrent(); flush(true); }
+    if (document.visibilityState === "hidden" && ready&&!profileBusy) { saveCurrent(); flush(true); }
   });
-  window.addEventListener("pagehide", () => { if (ready && !inFlight) flush(true); });
+  window.addEventListener("pagehide", () => { if (ready && !inFlight&&!profileBusy&&!document.hidden) flush(true); });
   setInterval(probe, 20000);
   setInterval(() => { if (currentPage === "ranking" && currentNick) loadRanking(); }, 20000);
   fillLocalOptions();
