@@ -1873,7 +1873,7 @@
                   <div class="item-name">🐿️ 다람쥐 점프!</div>
                   <div class="item-desc" id="jumpGameDesc">
                     클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>
-                    토관 사이 코인은 +5점, 그냥 통과하면 +1점.<br>
+                    짧은 위아래 토관 사이 코인 +5점, 그냥 통과하면 +1점.<br>
                     참가비: <b>첫 1회 무료</b> · 이후 <b>🌰 100k</b><br>
                     보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>
                   </div>
@@ -2034,7 +2034,7 @@
           <div class="developer-stat-row"><span>🪙 보유 코인</span><label class="auth-field" for="developerCoinValue">설정값<input id="developerCoinValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetCoin" type="button">설정</button></div>
           <div class="developer-stat-row"><span>🏆 트로피</span><label class="auth-field" for="developerTrophyValue">설정값<input id="developerTrophyValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetTrophy" type="button">설정</button></div>
           <div class="developer-stat-row"><span>🐿️ 점프 최고기록</span><label class="auth-field" for="developerJumpValue">설정값<input id="developerJumpValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetJump" type="button">설정</button></div>
-          <div class="developer-stat-row"><span>🐿️ 다람쥐 점프 무적</span><span class="page-sub">토관·적·총알·화면 끝 충돌 무시</span><button class="btn" id="developerJumpInvincible" type="button" aria-pressed="false">무적 꺼짐</button></div>
+          <div class="developer-stat-row"><span>🐿️ 다람쥐 점프 무적</span><span class="page-sub">토관·화면 끝 충돌 무시</span><button class="btn" id="developerJumpInvincible" type="button" aria-pressed="false">무적 꺼짐</button></div>
           <p class="msg" id="developerMessage" role="status" aria-live="polite"></p>
         </div>
         <div class="page-card profile-section">
@@ -2964,7 +2964,6 @@ let jumpGame = {
   bgOffset: 0,
   spawnCount: 0,
   lastMovingSpawn: -10,
-  lastEnemySpawn: -10,
   player: {
     x: 86,
     y: 330,
@@ -2973,7 +2972,6 @@ let jumpGame = {
     vy: 0
   },
   obstacles: [],
-  bullets: [],
   effects: []
 };
 
@@ -3694,7 +3692,7 @@ function render(){
 
   jumpGameDesc.innerHTML =
     "클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>" +
-    "토관 사이 코인을 먹으면 +5점, 그냥 지나가면 +1점. 30점부터 움직이는 토관, 50점 초과부터 적 등장.<br>" +
+    "짧은 위아래 토관 사이 코인 +5점, 다른 토관을 지나가면 +1점. 30점부터 움직이는 토관 등장.<br>" +
     "참가비: <b>" + (jumpPlayedOnce ? "🌰 100k" : "첫 1회 무료") + "</b><br>" +
     "보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>";
   renderOfflineIncome();
@@ -4442,7 +4440,6 @@ function resetJumpGame(){
   jumpGame.bgOffset = 0;
   jumpGame.spawnCount = 0;
   jumpGame.lastMovingSpawn = -10;
-  jumpGame.lastEnemySpawn = -10;
   jumpGame.player = {
     x: 86,
     y: 330,
@@ -4451,7 +4448,6 @@ function resetJumpGame(){
     vy: 0
   };
   jumpGame.obstacles = [];
-  jumpGame.bullets = [];
   jumpGame.effects = [];
   jumpStateText.textContent = "대기중";
   updateJumpTexts();
@@ -4512,7 +4508,7 @@ function startJumpGame(){
 
     if(count === 0){
       jumpOverlayBig.textContent = "START!";
-      jumpOverlaySub.innerHTML = "토관 사이 코인 +5점 · 그냥 통과 +1점";
+      jumpOverlaySub.innerHTML = "짧은 위아래 토관 사이 코인 +5점 · 그냥 통과 +1점";
       return;
     }
 
@@ -4564,16 +4560,6 @@ function createJumpObstacle(){
   const spawnIndex = jumpGame.spawnCount;
   const roll = Math.random();
 
-  // 적은 50점 초과부터 드물게 등장하며, 연속해서 나오지 않아요.
-  if(score > 50 && spawnIndex - jumpGame.lastEnemySpawn >= 7 && roll < 0.10){
-    jumpGame.lastEnemySpawn = spawnIndex;
-    jumpGame.obstacles.push({
-      x:jumpCanvas.width + 60, y:110 + Math.random() * (jumpCanvas.height - 260),
-      w:36, h:42, type:"shooter", scored:false, shootTimer:0.45
-    });
-    return;
-  }
-
   // 기존 기둥 UI를 유지하고, 중간중간 새 장애물만 섞음.
   // 구멍은 너무 크지 않게 줄이되 점프/낙하로 피할 수 있는 범위 안에서만 생성.
   const minGap = score >= 80 ? 112 : score >= 60 ? 118 : score >= 40 ? 124 : score >= 20 ? 132 : 142;
@@ -4607,7 +4593,7 @@ function createJumpObstacle(){
     phase: 0,
     moveAmp: type === "fullMove" ? 38 : type === "moving" ? 24 : 0,
     moveSpeed: type === "fullMove" ? 0.7 : type === "moving" ? 0.55 : 0,
-    hasCoin:true,
+    hasCoin:type === "stone",
     coinTaken:false
   };
 
@@ -4657,9 +4643,6 @@ function updateJumpObstacle(obs, dt){
 }
 
 function getObstacleRects(obs){
-  if(obs.type === "shooter"){
-    return [{ x:obs.x, y:obs.y, w:obs.w, h:obs.h }];
-  }
   if(obs.type === "stone"){
     return [
       { x: obs.x, y: obs.gapY - 32, w: obs.w + 14, h: 32 },
@@ -4722,14 +4705,6 @@ function jumpInvincible(){
   return window.AcornOnline?.jumpInvincible?.() === true;
 }
 
-function fireJumpShot(enemy, targetX, targetY){
-  const x=enemy.x-5,y=enemy.y+enemy.h*0.55;
-  const dx=targetX-x,dy=targetY-y,distance=Math.hypot(dx,dy)||1;
-  const speed=180;
-  jumpGame.bullets.push({x,y,vx:dx/distance*speed,vy:dy/distance*speed,r:6});
-  jumpGame.effects.push({x,y,life:0.23,type:"flash"});
-}
-
 function jumpLoop(now){
   if(!jumpGame.running) return;
 
@@ -4770,13 +4745,6 @@ function jumpLoop(now){
     obs.x -= jumpGame.worldSpeed * dt;
     updateJumpObstacle(obs, dt);
 
-    if(obs.type === "shooter"){
-      obs.shootTimer -= dt;
-      if(obs.x < jumpCanvas.width - 10 && obs.x > playerCx + 70 && obs.shootTimer <= 0){
-        fireJumpShot(obs,playerCx,playerCy);
-        obs.shootTimer=1.55;
-      }
-    }
     if(!invincible){
       for(const rect of getObstacleRects(obs)){
         if(circleRectCollide(playerCx, playerCy, playerR, rect.x, rect.y, rect.w, rect.h)){
@@ -4806,15 +4774,6 @@ function jumpLoop(now){
   }
 
   jumpGame.obstacles = jumpGame.obstacles.filter(obs => obs.x + obs.w > -40);
-  for(const shot of jumpGame.bullets){
-    shot.x += shot.vx * dt;shot.y += shot.vy * dt;
-    if(!invincible && Math.hypot(playerCx-shot.x,playerCy-shot.y) < playerR+shot.r){
-      drawJumpGame(true);
-      endJumpGame();
-      return;
-    }
-  }
-  jumpGame.bullets=jumpGame.bullets.filter(shot=>shot.x>-20&&shot.x<jumpCanvas.width+20&&shot.y>-20&&shot.y<jumpCanvas.height+20);
   for(const effect of jumpGame.effects){effect.life-=dt;effect.x-=jumpGame.worldSpeed*dt*0.65;}
   jumpGame.effects=jumpGame.effects.filter(effect=>effect.life>0);
 
@@ -4861,7 +4820,6 @@ function drawJumpGame(darken=false){
     drawObstacle(ctx, obs);
   }
 
-  for(const shot of jumpGame.bullets)drawJumpBullet(ctx,shot);
   drawPlayer(ctx, jumpGame.player);
   if(jumpInvincible()){
     ctx.strokeStyle="#ffe577";ctx.lineWidth=3;
@@ -4920,10 +4878,6 @@ function drawBgTree(ctx, x, groundY, scale, leafColor="#3fab58"){
 }
 
 function drawObstacle(ctx, obs){
-  if(obs.type === "shooter"){
-    drawJumpEnemy(ctx,obs);
-    return;
-  }
   const rects = getObstacleRects(obs);
 
   let c1 = "#573521";
@@ -4977,37 +4931,14 @@ function drawJumpCoin(ctx,x,y){
   ctx.fillText("C",x,y+3);ctx.textAlign="start";
 }
 
-function drawJumpEnemy(ctx,enemy){
-  const x=enemy.x,y=enemy.y;
-  ctx.fillStyle="#49324b";ctx.beginPath();ctx.ellipse(x+18,y+24,17,19,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#732f43";ctx.beginPath();ctx.arc(x+18,y+12,15,Math.PI,0);ctx.fill();
-  ctx.fillStyle="#241b2e";ctx.fillRect(x-11,y+20,24,8);
-  ctx.fillStyle="#efb052";ctx.fillRect(x-15,y+22,6,4);
-  ctx.fillStyle="#ffe578";ctx.beginPath();ctx.arc(x+12,y+14,3,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#e8b6ac";ctx.fillRect(x+8,y+39,8,4);ctx.fillRect(x+22,y+39,8,4);
-}
-
-function drawJumpBullet(ctx,shot){
-  ctx.strokeStyle="rgba(255,114,55,.55)";ctx.lineWidth=3;
-  ctx.beginPath();ctx.moveTo(shot.x-shot.vx*0.07,shot.y-shot.vy*0.07);
-  ctx.lineTo(shot.x,shot.y);ctx.stroke();
-  ctx.fillStyle="#ff7735";ctx.beginPath();ctx.arc(shot.x,shot.y,shot.r+2,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#fff0b5";ctx.beginPath();ctx.arc(shot.x,shot.y,shot.r-1,0,Math.PI*2);ctx.fill();
-}
-
 function drawJumpEffect(ctx,effect){
   ctx.save();
-  if(effect.type==="flash"){
-    ctx.globalAlpha=Math.max(0,effect.life/0.23);
-    ctx.fillStyle="#fff2a0";ctx.beginPath();ctx.arc(effect.x,effect.y,12,0,Math.PI*2);ctx.fill();
-  }else{
-    ctx.globalAlpha=Math.min(1,effect.life*2);
-    ctx.strokeStyle="#ffdc66";ctx.lineWidth=3;
-    ctx.beginPath();ctx.arc(effect.x,effect.y,10+(0.8-effect.life)*24,0,Math.PI*2);ctx.stroke();
-    ctx.font="bold 21px Malgun Gothic";ctx.textAlign="center";
-    ctx.fillStyle="#6d3a0e";ctx.fillText("+5점",effect.x+1,effect.y-26-(0.8-effect.life)*30+2);
-    ctx.fillStyle="#fff39a";ctx.fillText("+5점",effect.x,effect.y-26-(0.8-effect.life)*30);
-  }
+  ctx.globalAlpha=Math.min(1,effect.life*2);
+  ctx.strokeStyle="#ffdc66";ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(effect.x,effect.y,10+(0.8-effect.life)*24,0,Math.PI*2);ctx.stroke();
+  ctx.font="bold 21px Malgun Gothic";ctx.textAlign="center";
+  ctx.fillStyle="#6d3a0e";ctx.fillText("+5점",effect.x+1,effect.y-26-(0.8-effect.life)*30+2);
+  ctx.fillStyle="#fff39a";ctx.fillText("+5점",effect.x,effect.y-26-(0.8-effect.life)*30);
   ctx.restore();
 }
 
