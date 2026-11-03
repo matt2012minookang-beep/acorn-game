@@ -1502,6 +1502,29 @@
     .inspect-grid div{display:flex;flex-direction:column;gap:4px;padding:11px 13px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.035);}
     .inspect-grid span{color:#bdb0d2;font-size:12px;}.inspect-grid strong{overflow-wrap:anywhere;font-size:16px;}
     .inspect-actions .danger{color:#ff9ba4;border-color:#a3495a;}
+    .suspension-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
+    .suspension-fields .auth-field{margin:0;}
+    .suspension-fields .full{grid-column:1/-1;}
+    .suspension-fields textarea{width:100%;min-height:94px;resize:vertical;padding:11px 12px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:#14131e;color:#fff;font:inherit;font-size:15px;user-select:text;}
+    .suspension-message{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;}
+    .suspension-notice{margin:13px 0;padding:14px;border:1px solid #c77785;border-radius:14px;background:#502531;color:#fff;}
+    .suspension-notice h3{margin:0 0 7px;font-size:16px;}
+    .suspension-notice p{margin:7px 0;font-size:13px;}
+    .suspension-dialog{width:min(440px,calc(100vw - 32px));padding:24px;border:1px solid #b88499;border-radius:20px;background:#261e2b;color:#fff;box-shadow:0 20px 80px #0009;}
+    .suspension-dialog::backdrop{background:#08070bc7;}
+    .suspension-dialog h2{margin-top:0;}
+    .buy.press-wait{outline:2px solid #ffcf77;outline-offset:2px;}
+    .buy.repeat-buying{box-shadow:0 0 17px #ffdc83;filter:brightness(1.16);}
+    .view-as-hero{text-align:center;padding:22px 14px;border-radius:18px;background:radial-gradient(circle at top,#48335f,#251d30 72%);margin:20px 0;}
+    .view-as-hero h2{margin:14px 0 6px;font-size:24px;overflow-wrap:anywhere;}
+    .view-as-hero .avatar-frame{width:92px;height:92px;}.view-as-hero .avatar-fallback{font-size:44px;}
+    .view-as-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0;}
+    .view-as-values div{padding:17px 12px;border:1px solid var(--border);border-radius:15px;background:rgba(255,255,255,.045);}
+    .view-as-values span{display:block;font-size:12px;color:#cbbbd8;margin-bottom:7px;}
+    .view-as-values strong{font-size:23px;overflow-wrap:anywhere;}
+    .inspect-log{display:grid;gap:9px;margin:12px 0 25px;}
+    .inspect-log article{display:flex;flex-direction:column;gap:5px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.035);line-height:1.5;}
+    .inspect-log strong{font-size:13px;color:#eee4fa;}.inspect-log span,.inspect-note{font-size:12px;color:#c5bcd3;line-height:1.65;}
     @media(max-width:560px){.developer-stat-row{grid-template-columns:1fr auto;}.developer-stat-row>span{grid-column:1/-1;}.inspect-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
   </style>
 </head>
@@ -1563,7 +1586,7 @@
         <div class="intro-progress" aria-label="로딩 게이지">
           <div class="intro-progress-fill" id="introProgressFill"></div>
         </div>
-        <div class="intro-version">v2.10</div>
+        <div class="intro-version">v2.11</div>
       </div>
     </div>
   </div>
@@ -1997,6 +2020,7 @@
           <div class="ranking-heading"><h1 class="page-title">🛠️ 개발자 도구</h1><button class="close" id="developerBack" type="button">프로필</button></div>
           <p class="page-sub">내 계정의 숫자를 직접 설정해요. 트로피 테두리는 설정한 등급에 맞게 바뀌어요.</p>
           <div class="developer-stat-row"><span>🌰 보유 도토리</span><label class="auth-field" for="developerAcornValue">설정값<input id="developerAcornValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetAcorn" type="button">설정</button></div>
+          <div class="developer-stat-row"><span>🪙 보유 코인</span><label class="auth-field" for="developerCoinValue">설정값<input id="developerCoinValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetCoin" type="button">설정</button></div>
           <div class="developer-stat-row"><span>🏆 트로피</span><label class="auth-field" for="developerTrophyValue">설정값<input id="developerTrophyValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetTrophy" type="button">설정</button></div>
           <div class="developer-stat-row"><span>🐿️ 점프 최고기록</span><label class="auth-field" for="developerJumpValue">설정값<input id="developerJumpValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetJump" type="button">설정</button></div>
           <p class="msg" id="developerMessage" role="status" aria-live="polite"></p>
@@ -2010,11 +2034,41 @@
       </div>
     </div>
 
+    <div class="page" id="pageViewAs">
+      <div class="page-wrap">
+        <div class="page-card profile-section">
+          <div class="ranking-heading"><h1 class="page-title">👀 계정 관전</h1><button class="close" id="viewAsBack" type="button">돌아가기</button></div>
+          <p class="page-sub">개발자 관전 모드예요. 유저 비밀번호 없이 상태를 볼 수 있고, 이 계정의 도토리·코인·트로피·미니게임 기록은 바뀌지 않아요.</p>
+          <div class="view-as-hero">
+            <span class="avatar-frame avatar-large" id="viewAsAvatarFrame"><img id="viewAsAvatar" alt="관전 중인 유저 프로필 사진" hidden><span class="avatar-fallback" aria-hidden="true">🌰</span></span>
+            <h2 id="viewAsName">계정을 불러오는 중…</h2><span class="tier-badge" id="viewAsTier"></span>
+            <p id="viewAsId" class="profile-trophies"></p><p id="viewAsAccountState" class="profile-trophies"></p>
+          </div>
+          <div class="view-as-values">
+            <div><span>🌰 보유 도토리</span><strong id="viewAsAcorns">0</strong></div>
+            <div><span>🏆 트로피</span><strong id="viewAsTrophies">0</strong></div>
+            <div><span>🪙 보유 코인</span><strong id="viewAsCoins">0</strong></div>
+            <div><span>🐿️ 점프 최고기록</span><strong id="viewAsJump">0</strong></div>
+          </div>
+          <h2>게임 현황</h2>
+          <div class="inspect-grid">
+            <div><span>클릭당 도토리</span><strong id="viewAsClickValue">0</strong></div>
+            <div><span>누적 클릭</span><strong id="viewAsClicks">0</strong></div>
+            <div><span>다람쥐</span><strong id="viewAsSquirrels">0</strong></div>
+            <div><span>청설모</span><strong id="viewAsChipmunks">0</strong></div>
+            <div><span>도토리 나무</span><strong id="viewAsTrees">0</strong></div>
+            <div><span>코인 상점 구매</span><strong id="viewAsPurchases">0</strong></div>
+          </div>
+          <button class="btn" id="viewAsRecords" type="button">저장·감지 기록 보기</button>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="pageInspect">
       <div class="page-wrap">
         <div class="page-card profile-section">
           <div class="ranking-heading"><h1 class="page-title">계정 살펴보기</h1><button class="close" id="inspectBack" type="button">돌아가기</button></div>
-          <p class="page-sub">이 화면은 기록 조회 전용이에요. 이 유저의 게임을 플레이하거나 기록을 조작할 수 없어요.</p>
+          <p class="page-sub">유저 계정의 기록을 읽기 전용으로 확인해요. 비밀번호는 볼 수 없고 해당 계정으로 로그인하지 않아요.</p>
           <div class="profile-identity">
             <span class="avatar-frame avatar-large" id="inspectAvatarFrame"><img id="inspectAvatar" alt="유저 프로필 사진" hidden><span class="avatar-fallback" aria-hidden="true">🌰</span></span>
             <h2 id="inspectNickname"></h2><span class="tier-badge" id="inspectTier"></span>
@@ -2027,11 +2081,38 @@
             <div><span>⚠️ 이상 클릭 감지 횟수</span><strong id="inspectCheat">0</strong></div>
           </div>
           <p class="page-sub" id="inspectLastCheat"></p>
+          <button class="profile-secondary" id="inspectRefresh" type="button">최신 기록 불러오기</button>
           <h2>게임 기록</h2><div class="inspect-grid" id="inspectStats"></div>
+          <h2>최근 저장된 활동</h2>
+          <p class="inspect-note">최근 2시간의 저장 기록 중 최신 20개를 보여줘요. 자동 생산 수익도 도토리 변화에 포함돼요.</p>
+          <div class="inspect-log" id="inspectActivity"></div>
+          <h2>클릭 패턴 감지 기록</h2>
+          <p class="inspect-note">브라우저가 보고한 클릭 수와 간격이에요. 조작하거나 누락할 수 있으므로 이것만으로 오토클릭을 확정하지 마세요.</p>
+          <div class="inspect-log" id="inspectDetections"></div>
         </div>
         <div class="page-card profile-section">
           <h2>계정 관리</h2>
-          <p class="page-sub">정지하면 로그인할 수 없고 랭킹에서 숨겨져요. 초기화는 진행 기록만 지우고 닉네임·비밀번호·프로필 사진·감지 횟수는 남겨요.</p>
+          <p class="page-sub">정지 기간을 정하고 유저에게 보여줄 메시지를 입력하세요. 기간이 지나면 자동으로 해제돼요. 초기화는 진행 기록만 지워요.</p>
+          <div class="suspension-notice" id="inspectSuspensionInfo" hidden>
+            <strong id="inspectSuspensionEnd"></strong>
+            <p>유저에게 보낸 메시지</p>
+            <div class="suspension-message" id="inspectSuspensionMessage"></div>
+          </div>
+          <div class="suspension-fields" id="inspectSuspensionControls">
+            <label class="auth-field" for="inspectSuspendDuration">정지 기간
+              <select id="inspectSuspendDuration">
+                <option value="1d">1일</option><option value="3d">3일</option><option value="7d" selected>7일</option>
+                <option value="1m">1달</option><option value="1y">1년</option>
+                <option value="custom">직접 일수 입력</option><option value="forever">해제할 때까지</option>
+              </select>
+            </label>
+            <label class="auth-field" for="inspectSuspendDays" id="inspectCustomDaysWrap" hidden>정지할 일수 (1~3650일)
+              <input id="inspectSuspendDays" type="number" min="1" max="3650" step="1" placeholder="예: 14">
+            </label>
+            <label class="auth-field full" for="inspectSuspendMessage">유저에게 보낼 메시지를 입력하세요
+              <textarea id="inspectSuspendMessage" maxlength="1000" placeholder="정지 사유와 안내 내용을 입력하세요"></textarea>
+            </label>
+          </div>
           <div class="profile-actions inspect-actions">
             <button class="profile-secondary danger" id="inspectSuspend" type="button">계정 정지</button>
             <button class="profile-secondary" id="inspectUnsuspend" type="button" hidden>정지 해제</button>
@@ -2154,6 +2235,10 @@
           </label>
           <button class="btn auth-action" id="oldEnter" type="button" disabled>로그인</button>
           <div class="msg" id="oldMsg" role="status" aria-live="polite"></div>
+          <div class="suspension-notice" id="suspensionNotice" role="alert" hidden>
+            <h3>계정 정지 안내</h3><p id="suspensionEnd"></p>
+            <div class="suspension-message" id="suspensionMessage"></div>
+          </div>
         </div>
       </div>
       <div class="developer-code-step" id="developerCodeStep" hidden>
@@ -2172,7 +2257,22 @@
     </div>
   </div>
 
-  <script src="./acorn-config.js?v=20261102-v210"></script>
+  <dialog class="suspension-dialog" id="deliveredNoticeDialog" aria-labelledby="deliveredNoticeTitle">
+    <h2 id="deliveredNoticeTitle">계정 안내 메시지</h2>
+    <p>이전에 계정이 정지됐을 때 보낸 메시지예요.</p>
+    <div class="suspension-message" id="deliveredNoticeMessage"></div>
+    <button class="btn" id="deliveredNoticeClose" type="button">확인</button>
+  </dialog>
+
+  <dialog class="suspension-dialog" id="userActionDialog" aria-labelledby="userActionTitle">
+    <h2 id="userActionTitle">유저 계정 선택</h2>
+    <p><strong id="userActionName"></strong> 계정에서 무엇을 볼까요?</p>
+    <div class="profile-actions"><button class="btn" id="userActionInspect" type="button">기록 보기</button>
+      <button class="btn" id="userActionView" type="button">계정으로 이동</button>
+      <button class="profile-secondary" id="userActionCancel" type="button">취소</button></div>
+  </dialog>
+
+  <script src="./acorn-config.js?v=20261103-v211"></script>
   <script>
 const LS_KEY = "dotori_game_profiles_v129";
 
@@ -2786,6 +2886,7 @@ const pageRanking = document.getElementById("pageRanking");
 const pageProfile = document.getElementById("pageProfile");
 const pageDeveloper = document.getElementById("pageDeveloper");
 const pageInspect = document.getElementById("pageInspect");
+const pageViewAs = document.getElementById("pageViewAs");
 const navHome = document.getElementById("navHome");
 const navMinigame = document.getElementById("navMinigame");
 const navCoinShop = document.getElementById("navCoinShop");
@@ -2880,7 +2981,11 @@ function getIncomePauseRemainingText(){
   return Math.ceil(remain / 1000) + "초";
 }
 
-function pauseAllIncome(reason){
+function pauseAllIncome(reason,reasonCode){
+  const recentIntervals=clickIntervals.slice(-20);
+  const evidence={reasonCode,clicksInOneSecond:clickTimes.filter(t=>performance.now()-t<=1000).length,
+    sampleCount:recentIntervals.length,averageIntervalMs:recentIntervals.length?mean(recentIntervals):0,
+    intervalStddevMs:recentIntervals.length?stddev(recentIntervals):0};
   incomePausedUntil = performance.now() + 10000;
   suspiciousScore = 0;
   lastClickTime = 0;
@@ -2900,7 +3005,7 @@ function pauseAllIncome(reason){
 
   render();
   saveCurrent();
-  window.AcornOnline?.reportCheatDetection();
+  window.AcornOnline?.reportCheatDetection(evidence);
   showToast(reason || "비정상 클릭 패턴이 감지되어 클릭/자동 수익이 10초간 정지돼요.");
 }
 
@@ -2921,6 +3026,7 @@ function switchPage(page){
   pageProfile.classList.toggle("show", page === "profile");
   pageDeveloper.classList.toggle("show", page === "developer");
   pageInspect.classList.toggle("show", page === "inspect");
+  pageViewAs.classList.toggle("show", page === "viewAs");
 
   navHome.classList.toggle("active", page === "home");
   navMinigame.classList.toggle("active", page === "minigame" || page === "jumpgame");
@@ -3651,10 +3757,10 @@ function dominantRoundedCount(arr){
   }
   return max;
 }
-function addSuspicion(points, reason){
+function addSuspicion(points, reason, reasonCode){
   suspiciousScore += points;
   if(suspiciousScore >= 4){
-    pauseAllIncome(reason);
+    pauseAllIncome(reason, reasonCode);
     return false;
   }
   return true;
@@ -3677,7 +3783,7 @@ function runAutoChecks(now){
 
   const oneSecCount = clickTimes.filter(t => now - t <= HARD_CPS_WINDOW_MS).length;
   if(oneSecCount > HARD_CPS_LIMIT){
-    return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.");
+    return addSuspicion(4, "1초 동안 비정상적으로 많은 클릭이 감지되었어요.", "rapid");
   }
 
   if(clickIntervals.length >= 16){
@@ -3685,7 +3791,7 @@ function runAutoChecks(now){
     const avg16 = mean(last16);
     const std16 = stddev(last16);
     if(avg16 < 120 && std16 < 3.2){
-      return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.");
+      return addSuspicion(2, "너무 일정한 빠른 클릭 간격이 감지되었어요.", "regular");
     }
   }
 
@@ -3694,7 +3800,7 @@ function runAutoChecks(now){
     const avg20 = mean(last20);
     const dom = dominantRoundedCount(last20);
     if(avg20 < 130 && dom >= 15){
-      return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.");
+      return addSuspicion(2, "반복적으로 동일한 간격의 클릭이 감지되었어요.", "repeated");
     }
   }
 
@@ -3704,7 +3810,7 @@ function runAutoChecks(now){
     const std = stddev(recent);
     const cps = 1000 / Math.max(avg, 1);
     if(cps > 11.5 && std < 5){
-      return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.");
+      return addSuspicion(2, "장시간 지나치게 안정된 연타 패턴이 감지되었어요.", "stable");
     }
   }
 
@@ -3712,7 +3818,7 @@ function runAutoChecks(now){
     const last12 = clickIntervals.slice(-12);
     const tooFast = last12.filter(v => v < 45).length;
     if(tooFast >= 10){
-      return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.");
+      return addSuspicion(2, "비정상적으로 빠른 클릭이 반복되었어요.", "short");
     }
   }
 
@@ -4155,6 +4261,47 @@ buySquirrelBoostUpgrade.addEventListener("click", ()=>{
   render();
   saveCurrent();
 });
+
+// 짧게 누르면 한 번 구매, 1초 이상 누르면 0.1초마다 같은 항목 구매.
+function enableRepeatPurchase(button){
+  let pointer=null,delay=null,repeater=null,repeating=false,suppressUntil=0;
+  function finish(event){
+    if(pointer===null || (event && event.pointerId!==pointer))return;
+    if(repeating)suppressUntil=performance.now()+450;
+    clearTimeout(delay);clearInterval(repeater);
+    pointer=null;delay=null;repeater=null;repeating=false;
+    button.classList.remove("press-wait","repeat-buying");
+  }
+  button.addEventListener("pointerdown",event=>{
+    if(pointer!==null||button.disabled||event.button!==0)return;
+    pointer=event.pointerId;
+    button.classList.add("press-wait");
+    delay=setTimeout(()=>{
+      if(pointer===null)return;
+      repeating=true;button.classList.remove("press-wait");button.classList.add("repeat-buying");
+      const buyAgain=()=>{
+        if(button.disabled||document.hidden||!button.isConnected){finish();return;}
+        button.click();
+      };
+      buyAgain();
+      repeater=setInterval(buyAgain,100);
+    },1000);
+  });
+  // 자동 반복에 사용한 click()은 통과시키고, 손을 뗄 때 생기는 원래 클릭은 막아요.
+  button.addEventListener("click",event=>{
+    if(event.isTrusted&&event.detail>0&&performance.now()<suppressUntil){
+      suppressUntil=0;event.preventDefault();event.stopImmediatePropagation();
+    }
+  },true);
+  document.addEventListener("pointerup",finish);
+  document.addEventListener("pointercancel",finish);
+  button.addEventListener("pointerleave",()=>finish());
+  button.addEventListener("contextmenu",event=>{if(pointer!==null)event.preventDefault();});
+  window.addEventListener("blur",()=>finish());
+}
+for(const button of [buyUpgrade,buySquirrel,buyChipmunk,buyTree,buyGoldenChanceUpgrade,buySquirrelBoostUpgrade]){
+  enableRepeatPurchase(button);
+}
 
 function openNickMenu(){ nickMenu.classList.add("show"); }
 function closeNickMenu(){ nickMenu.classList.remove("show"); }
@@ -4820,9 +4967,9 @@ resetJumpGame();
 render();
 runOpening();
   </script>
-  <!-- 온라인 기능을 HTML에 포함: v2.10 -->
-  <script id="acornOnlineBundle" data-build="20261102-v210">
-/* 도토리 게임: 전체 닉네임 확인, 계정 로그인, 서버 저장, 랭킹. */
+  <!-- 온라인 기능을 HTML에 포함: v2.11 -->
+  <script id="acornOnlineBundle" data-build="20261103-v211">
+  /* 도토리 게임: 전체 닉네임 확인, 계정 로그인, 서버 저장, 랭킹. */
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
@@ -4844,6 +4991,7 @@ runOpening();
   let resumeTried = false, importingTouched = false, signingOut = false;
   let metric = "acorns", rankingSeq = 0, cachedRanking = null;
   let pendingDeveloperChallenge = null, inspectedUser = null, inspectFrom = "ranking";
+  let chooserTarget = null, viewedUser = null, viewAsFrom = "ranking";
 
   function status(message, bad = false) {
     for (const id of ["onlineConnection", "onlineSaveStatus"]) {
@@ -4872,6 +5020,7 @@ runOpening();
         const error = new Error(data?.message || "서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.");
         error.status = response.status;
         error.code = data?.error;
+        error.suspension = data?.suspension;
         throw error;
       }
       return data;
@@ -4879,6 +5028,22 @@ runOpening();
       if (error.status) throw error;
       throw new Error("서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.");
     } finally { clearTimeout(timeout); }
+  }
+
+  function suspensionEndText(endsAt){
+    return endsAt?"정지 종료: "+new Date(endsAt*1000).toLocaleString("ko-KR",{timeZone:"Asia/Seoul"}):"정지 종료: 해제할 때까지";
+  }
+  function showSuspensionNotice(error){
+    const notice=error?.suspension;
+    if(!notice)return;
+    $("suspensionNotice").hidden=false;
+    $("suspensionEnd").textContent=suspensionEndText(notice.endsAt);
+    $("suspensionMessage").textContent=notice.message||"계정이 정지됐어요. 관리자에게 문의해 주세요.";
+  }
+  function showDeliveredNotice(message){
+    if(!message)return;
+    $("deliveredNoticeMessage").textContent=message;
+    $("deliveredNoticeDialog").showModal();
   }
 
   function storeAuth() {
@@ -4996,6 +5161,7 @@ runOpening();
     saveCurrent();
     if(recovered>0)saveJumpRecord();
     offerOfflineIncome();
+    showDeliveredNotice(data.suspensionNotice);
   }
 
   async function register() {
@@ -5022,13 +5188,14 @@ runOpening();
     busy = true;
     refreshSignupButton(); updateLogin();
     setMsg(oldMsg, "기록을 불러오고 있어요…", null);
+    $("suspensionNotice").hidden=true;
     try {
       const data = await api("/api/login", { method: "POST", token: null, body: {
         nickname: sanitizeNick(oldNick.value), password: $("oldPassword").value
       } });
       if(data.requiresDeveloperCode)showDeveloperCodeStep(data.challenge);
       else enterAccount(data);
-    } catch (error) { setMsg(oldMsg, error.message, "bad"); }
+    } catch (error) { setMsg(oldMsg, error.message, "bad");showSuspensionNotice(error); }
     finally { busy = false; refreshSignupButton(); updateLogin(); }
   }
 
@@ -5086,6 +5253,9 @@ runOpening();
         if (error.code === "save_conflict") {
           conflict = true; ready = false; backupLocal(currentNick);
           status("다른 창에서 기록이 바뀌었어요. 로그아웃 후 다시 로그인해 주세요.", true);
+        } else if (error.code === "suspended") {
+          ready=false;auth=null;storeAuth();setLocked(true);showNicknameOverlay();
+          status(error.message,true);showSuspensionNotice(error);
         } else if (error.status === 401) {
           ready = false; auth = null; storeAuth();
           status("로그인이 만료됐어요. 이 기기에는 저장됐고, 다시 로그인하면 온라인으로 연결돼요.", true);
@@ -5125,9 +5295,10 @@ runOpening();
     busy = true; refreshSignupButton(); updateLogin();
     try { const data = await api("/api/me"); enterAccount(data, auth.token); }
     catch (error) {
-      if (error.status === 401) { auth = null; storeAuth(); }
+      if (error.status === 401 || error.code === "suspended") { auth = null; storeAuth(); }
       else resumeTried = false;
       setMsg(oldMsg, error.message, "bad");
+      showSuspensionNotice(error);
     } finally { busy = false; refreshSignupButton(); updateLogin(); }
   }
 
@@ -5142,7 +5313,7 @@ runOpening();
     try {
       const data = await api("/api/health", { token: null });
       if (data.ok !== true || data.api !== 1) throw new Error("잘못된 서버");
-      if(!data.features?.profiles||!data.features?.offlineIncome||!data.features?.infiniteRanks||!data.features?.developerTools){connected=false;available=false;status("최신 서버가 필요해요. 새 server.py로 교체한 뒤 start_public.py를 다시 실행해 주세요.",true);refreshSignupButton();updateLogin();profileStamp="";paintProfile();return;}
+      if(!data.features?.profiles||!data.features?.offlineIncome||!data.features?.infiniteRanks||!data.features?.developerTools||!data.features?.suspensionNotices){connected=false;available=false;status("최신 서버가 필요해요. 새 server.py로 교체한 뒤 start_public.py를 다시 실행해 주세요.",true);refreshSignupButton();updateLogin();profileStamp="";paintProfile();return;}
       const wasConnected = connected;
       connected = true;
       if (!ready && !conflict) status(currentNick?"오프라인 플레이 · 온라인 순위에는 반영되지 않아요.":"서버에 연결됐어요.");
@@ -5170,7 +5341,7 @@ runOpening();
     if (first) {
       $("rankingChampionNick").textContent = first.nickname;
       $("rankingChampionNick").classList.toggle("inspectable-name",Boolean(auth?.developer));
-      $("rankingChampionNick").onclick=auth?.developer?()=>openInspection(first.id):null;
+      $("rankingChampionNick").onclick=auth?.developer?()=>chooseUserAction(first.id,first.nickname):null;
       setNumber($("rankingChampionAcorns"), first.acorns);
       $("rankingChampionTrophies").textContent=exactNumber(first.trophies);
       const tier=first.trophyRank||tierFor(first.trophies);
@@ -5192,7 +5363,7 @@ runOpening();
       frame.className="avatar-frame";fallback.className="avatar-fallback";fallback.textContent="🌰";photo.alt=row.nickname+"의 프로필 사진";
       frame.append(photo,fallback);paintAvatar(frame,photo,imageSource(row.avatarUrl),tier);
       const label=document.createElement(auth?.developer?"button":"span");label.className="rank-person-name";label.textContent=row.nickname+(row.nickname===auth?.nickname?" (나)":"");
-      if(auth?.developer){label.type="button";label.classList.add("inspectable-name");label.addEventListener("click",()=>openInspection(row.id));}
+      if(auth?.developer){label.type="button";label.classList.add("inspectable-name");label.addEventListener("click",()=>chooseUserAction(row.id,row.nickname));}
       person.append(frame,label);nick.append(person);
       const acorns = document.createElement("td"), trophies = document.createElement("td");
       const jump = document.createElement("td");
@@ -5368,8 +5539,8 @@ runOpening();
   }
   async function refreshAccount(){
     if(!auth||!ready||profileBusy||signingOut)return;const token=auth.token;
-    try{const data=await api("/api/me/profile",{token});if(auth?.token===token)syncAccount(data);}
-    catch(error){if((error.status===401||error.code==="suspended")&&auth?.token===token){ready=false;auth=null;storeAuth();status(error.code==="suspended"?error.message:"다시 로그인해 주세요. 이 기기의 기록은 유지돼요.",true);profileStamp="";paintProfile();if(error.code==="suspended"){setLocked(true);showNicknameOverlay();}}}
+    try{const data=await api("/api/me/profile",{token});if(auth?.token===token){syncAccount(data);showDeliveredNotice(data.suspensionNotice);}}
+    catch(error){if((error.status===401||error.code==="suspended")&&auth?.token===token){ready=false;auth=null;storeAuth();status(error.code==="suspended"?error.message:"다시 로그인해 주세요. 이 기기의 기록은 유지돼요.",true);profileStamp="";paintProfile();if(error.code==="suspended"){setLocked(true);showNicknameOverlay();showSuspensionNotice(error);}}}
   }
 
   function adminReady(){return Boolean(auth?.developer&&ready&&connected&&!conflict&&!signingOut);}
@@ -5377,6 +5548,7 @@ runOpening();
     if(!adminReady())return;
     switchPage("developer");
     $("developerAcornValue").value=String(Math.floor(acorn));
+    $("developerCoinValue").value=String(Math.floor(coinCount));
     $("developerTrophyValue").value=String(Math.floor(achievementCount));
     $("developerJumpValue").value=String(Math.floor(jumpBestScore));
     setMsg($("developerMessage"),"",null);
@@ -5397,6 +5569,33 @@ runOpening();
     }catch(error){setMsg($("developerMessage"),error.message,"bad");}
   }
   function detailValue(element,value){$(element).textContent=Number(value||0).toLocaleString("ko-KR",{maximumFractionDigits:0});}
+  function chooseUserAction(id,nickname){
+    if(!adminReady())return;
+    chooserTarget={id,nickname};
+    $("userActionName").textContent=nickname;
+    $("userActionDialog").showModal();
+  }
+  function renderAccountView(data){
+    viewedUser=data;
+    $("viewAsName").textContent=data.nickname+"의 계정";
+    $("viewAsId").textContent="계정 ID "+data.id;
+    const rank=data.trophyRank||tierFor(data.trophies);
+    paintAvatar($("viewAsAvatarFrame"),$("viewAsAvatar"),imageSource(data.avatarUrl),rank);
+    paintTier($("viewAsTier"),rank);
+    detailValue("viewAsAcorns",data.acorns);detailValue("viewAsTrophies",data.trophies);
+    detailValue("viewAsCoins",data.stats?.coinCount);detailValue("viewAsJump",data.jumpBestScore);
+    for(const [name,key] of Object.entries({viewAsClickValue:"clickValue",viewAsClicks:"totalClicks",
+      viewAsSquirrels:"squirrels",viewAsChipmunks:"chipmunks",viewAsTrees:"trees",
+      viewAsPurchases:"totalCoinShopPurchases"}))detailValue(name,data.stats?.[key]);
+    $("viewAsAccountState").textContent=data.suspended?"현재 계정 정지 중":"현재 이용 중";
+  }
+  async function openAccountView(id){
+    if(!adminReady())return;
+    viewAsFrom=currentPage==="developer"?"developer":"ranking";
+    switchPage("viewAs");$("viewAsName").textContent="계정을 불러오는 중…";
+    try{const data=await api("/api/developer/users/"+encodeURIComponent(id));renderAccountView(data);}
+    catch(error){$("viewAsName").textContent=error.message;}
+  }
   function renderInspection(data){
     inspectedUser=data;
     $("inspectNickname").textContent=data.nickname;
@@ -5406,6 +5605,10 @@ runOpening();
     paintTier($("inspectTier"),rank);
     detailValue("inspectAcorns",data.acorns);detailValue("inspectTrophies",data.trophies);
     detailValue("inspectJump",data.jumpBestScore);detailValue("inspectCheat",data.cheatDetections);
+    $("inspectSuspensionControls").hidden=Boolean(data.suspended);
+    $("inspectSuspensionInfo").hidden=!data.suspended;
+    $("inspectSuspensionEnd").textContent=suspensionEndText(data.suspensionEndsAt);
+    $("inspectSuspensionMessage").textContent=data.suspensionMessage||"이전 버전에서 정지되어 입력된 안내 메시지가 없어요.";
     $("inspectLastCheat").textContent=data.lastCheatAt?"마지막 감지: "+new Date(data.lastCheatAt*1000).toLocaleString("ko-KR"):"이 업데이트 이후 보고된 기록만 표시해요.";
     const names={tier:"클릭 업그레이드 단계",clickValue:"클릭당 도토리",coinCount:"코인",totalClicks:"누적 클릭",totalSpentAcorn:"누적 소비 도토리",totalCoinShopPurchases:"코인 상점 구매",goldenChanceLevel:"황금 확률 단계",squirrelIncomeBoostLevel:"다람쥐 강화 단계",squirrels:"다람쥐",chipmunks:"청설모",trees:"나무"};
     const stats=$("inspectStats");stats.replaceChildren();
@@ -5413,41 +5616,80 @@ runOpening();
       const item=document.createElement("div"),name=document.createElement("span"),count=document.createElement("strong");
       name.textContent=label;count.textContent=Number(data.stats?.[key]||0).toLocaleString("ko-KR",{maximumFractionDigits:0});item.append(name,count);stats.append(item);
     }
+    const activity=$("inspectActivity");activity.replaceChildren();
+    const history=data.activity||[];
+    if(!history.length){activity.textContent="이 업데이트 이후 저장된 활동이 아직 없어요.";}
+    for(let i=0;i<history.length;i++){
+      const row=history[i],before=history[i+1],item=document.createElement("article");
+      const when=document.createElement("strong"),details=document.createElement("span");
+      when.textContent=new Date(row.savedAt*1000).toLocaleString("ko-KR")+" · 저장 "+row.saves+"회";
+      const change=before?" · 직전 기록 대비 클릭 "+(row.totalClicks-before.totalClicks).toLocaleString("ko-KR",{maximumFractionDigits:0})+"회":"";
+      details.textContent="누적 클릭 "+Number(row.totalClicks).toLocaleString("ko-KR")+"회 · 도토리 "+Number(row.acorns).toLocaleString("ko-KR",{maximumFractionDigits:0})+" · 트로피 "+Number(row.trophies).toLocaleString("ko-KR",{maximumFractionDigits:0})+change;
+      item.append(when,details);activity.append(item);
+    }
+    const detections=$("inspectDetections");detections.replaceChildren();
+    const reasons={rapid:"1초 클릭 수 초과",regular:"일정한 빠른 간격",repeated:"반복된 동일 간격",stable:"장시간 안정된 연타",short:"매우 짧은 간격 반복"};
+    if(!data.detectionEvents?.length){detections.textContent="이 업데이트 이후 상세 감지 기록이 없어요.";}
+    for(const event of data.detectionEvents||[]){
+      const item=document.createElement("article"),when=document.createElement("strong"),details=document.createElement("span");
+      when.textContent=new Date(event.at*1000).toLocaleString("ko-KR")+" · "+(reasons[event.evidence?.reasonCode]||"상세 정보 없음");
+      const evidence=event.evidence;
+      details.textContent=evidence?"1초 클릭 "+evidence.clicksInOneSecond+"회 · 최근 "+evidence.sampleCount+"번 평균 간격 "+evidence.averageIntervalMs+"ms · 편차 "+evidence.intervalStddevMs+"ms":"이전 버전에서 감지되어 클릭 패턴 수치는 없어요.";
+      item.append(when,details);detections.append(item);
+    }
     $("inspectSuspend").hidden=Boolean(data.suspended);$("inspectUnsuspend").hidden=!data.suspended;
     setMsg($("inspectMessage"),"",null);
   }
   async function openInspection(id){
     if(!adminReady())return;
-    inspectFrom=currentPage==="developer"?"developer":"ranking";
+    inspectFrom=currentPage==="developer"?"developer":currentPage==="viewAs"?"viewAs":"ranking";
+    inspectedUser=null;
     switchPage("inspect");$("inspectNickname").textContent="계정을 불러오는 중…";
     try{const data=await api("/api/developer/users/"+encodeURIComponent(id));renderInspection(data);}
+    catch(error){setMsg($("inspectMessage"),error.message,"bad");}
+  }
+  async function refreshInspection(){
+    if(!adminReady()||!inspectedUser)return;
+    try{const data=await api("/api/developer/users/"+inspectedUser.id);renderInspection(data);}
     catch(error){setMsg($("inspectMessage"),error.message,"bad");}
   }
   async function searchInspection(){
     if(!adminReady())return;
     const nickname=sanitizeNick($("developerSearch").value);
     if(!nickname){setMsg($("developerMessage"),"닉네임을 입력해 주세요.","bad");return;}
-    try{const data=await api("/api/developer/users?nickname="+encodeURIComponent(nickname));await openInspection(data.id);}
+    try{const data=await api("/api/developer/users?nickname="+encodeURIComponent(nickname));chooseUserAction(data.id,data.nickname);}
     catch(error){setMsg($("developerMessage"),error.message,"bad");}
   }
   async function moderate(action){
     if(!adminReady()||!inspectedUser)return;
     const person=inspectedUser;
     const verb={suspend:"정지",unsuspend:"정지 해제",reset:"초기화"}[action];
-    if(!confirm(person.nickname+" 계정을 "+verb+"하시겠습니까?"+(action==="reset"?"\n도토리·트로피·점프 최고점수가 초기화됩니다.":"")))return;
+    const body={action,confirmNickname:person.nickname};
+    if(action==="suspend"){
+      body.duration=$("inspectSuspendDuration").value;
+      body.message=$("inspectSuspendMessage").value;
+      if(!body.message.trim()||[...body.message].length>1000){setMsg($("inspectMessage"),"유저에게 보낼 메시지를 1~1000자로 입력해 주세요.","bad");return;}
+      if(body.duration==="custom"){
+        body.days=Number($("inspectSuspendDays").value);
+        if(!Number.isInteger(body.days)||body.days<1||body.days>3650){setMsg($("inspectMessage"),"정지 기간은 1일부터 3650일까지 입력해 주세요.","bad");return;}
+      }
+    }
+    const description=action==="suspend"?"\n기간: "+$("inspectSuspendDuration").selectedOptions[0].textContent+(body.duration==="custom"?" ("+body.days+"일)":"")+"\n전달할 메시지:\n"+body.message:action==="reset"?"\n도토리·트로피·점프 최고점수가 초기화됩니다.":"";
+    if(!confirm(person.nickname+" 계정을 "+verb+"하시겠습니까?"+description))return;
     if(action==="reset"&&prompt("확인하려면 유저의 닉네임을 입력해 주세요.")!==person.nickname)return;
     try{
-      const data=await api("/api/developer/users/"+person.id,{method:"POST",body:{action,confirmNickname:person.nickname}});
+      const data=await api("/api/developer/users/"+person.id,{method:"POST",body});
       renderInspection(data);setMsg($("inspectMessage"),verb+"했어요.","good");
+      if(action==="suspend")$("inspectSuspendMessage").value="";
       cachedRanking=null;
     }catch(error){setMsg($("inspectMessage"),error.message,"bad");}
   }
-  async function reportCheatDetection(){
+  async function reportCheatDetection(evidence){
     if(!auth||!ready||conflict)return;
     try{
       const bytes=new Uint8Array(24);crypto.getRandomValues(bytes);
       const eventId=[...bytes].map(n=>n.toString(16).padStart(2,"0")).join("");
-      await api("/api/me/cheat-detection",{method:"POST",body:{eventId}});
+      await api("/api/me/cheat-detection",{method:"POST",body:{eventId,evidence}});
     }catch(_){}
   }
   $("profileBack").addEventListener("click",()=>switchPage(beforeProfile));
@@ -5488,11 +5730,20 @@ runOpening();
   $("openDeveloperTools").addEventListener("click",openDeveloperTools);
   $("developerBack").addEventListener("click",()=>switchPage("profile"));
   $("developerSetAcorn").addEventListener("click",()=>setDeveloperStat("acorn","developerAcornValue"));
+  $("developerSetCoin").addEventListener("click",()=>setDeveloperStat("coinCount","developerCoinValue"));
   $("developerSetTrophy").addEventListener("click",()=>setDeveloperStat("achievementCount","developerTrophyValue"));
   $("developerSetJump").addEventListener("click",()=>setDeveloperStat("jumpBestScore","developerJumpValue"));
   $("developerFind").addEventListener("click",searchInspection);
+  $("userActionCancel").addEventListener("click",()=>$("userActionDialog").close());
+  $("userActionInspect").addEventListener("click",()=>{const target=chooserTarget;$("userActionDialog").close();if(target)openInspection(target.id);});
+  $("userActionView").addEventListener("click",()=>{const target=chooserTarget;$("userActionDialog").close();if(target)openAccountView(target.id);});
+  $("viewAsBack").addEventListener("click",()=>switchPage(viewAsFrom));
+  $("viewAsRecords").addEventListener("click",()=>{if(viewedUser)openInspection(viewedUser.id);});
   $("developerSearch").addEventListener("keydown",event=>{if(event.key==="Enter")searchInspection();});
   $("inspectBack").addEventListener("click",()=>switchPage(inspectFrom));
+  $("inspectSuspendDuration").addEventListener("change",()=>{$("inspectCustomDaysWrap").hidden=$("inspectSuspendDuration").value!=="custom";});
+  $("deliveredNoticeClose").addEventListener("click",()=>$("deliveredNoticeDialog").close());
+  $("inspectRefresh").addEventListener("click",refreshInspection);
   $("inspectSuspend").addEventListener("click",()=>moderate("suspend"));
   $("inspectUnsuspend").addEventListener("click",()=>moderate("unsuspend"));
   $("inspectReset").addEventListener("click",()=>moderate("reset"));
@@ -5542,7 +5793,6 @@ runOpening();
   probe();
   if (overlay.style.display === "flex") onOverlay();
 })();
-
   </script>
 </body>
 </html>
