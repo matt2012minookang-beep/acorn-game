@@ -1873,6 +1873,7 @@
                   <div class="item-name">🐿️ 다람쥐 점프!</div>
                   <div class="item-desc" id="jumpGameDesc">
                     클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>
+                    토관 사이 코인은 +5점, 그냥 통과하면 +1점.<br>
                     참가비: <b>첫 1회 무료</b> · 이후 <b>🌰 100k</b><br>
                     보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>
                   </div>
@@ -2033,6 +2034,7 @@
           <div class="developer-stat-row"><span>🪙 보유 코인</span><label class="auth-field" for="developerCoinValue">설정값<input id="developerCoinValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetCoin" type="button">설정</button></div>
           <div class="developer-stat-row"><span>🏆 트로피</span><label class="auth-field" for="developerTrophyValue">설정값<input id="developerTrophyValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetTrophy" type="button">설정</button></div>
           <div class="developer-stat-row"><span>🐿️ 점프 최고기록</span><label class="auth-field" for="developerJumpValue">설정값<input id="developerJumpValue" type="number" min="0" step="any"></label><button class="btn" id="developerSetJump" type="button">설정</button></div>
+          <div class="developer-stat-row"><span>🐿️ 다람쥐 점프 무적</span><span class="page-sub">토관·적·총알·화면 끝 충돌 무시</span><button class="btn" id="developerJumpInvincible" type="button" aria-pressed="false">무적 꺼짐</button></div>
           <p class="msg" id="developerMessage" role="status" aria-live="polite"></p>
         </div>
         <div class="page-card profile-section">
@@ -2960,6 +2962,9 @@ let jumpGame = {
   worldSpeed: 165,
   spawnTimer: 0,
   bgOffset: 0,
+  spawnCount: 0,
+  lastMovingSpawn: -10,
+  lastEnemySpawn: -10,
   player: {
     x: 86,
     y: 330,
@@ -2967,7 +2972,9 @@ let jumpGame = {
     h: 36,
     vy: 0
   },
-  obstacles: []
+  obstacles: [],
+  bullets: [],
+  effects: []
 };
 
 function normalizeByTier(){
@@ -3687,6 +3694,7 @@ function render(){
 
   jumpGameDesc.innerHTML =
     "클릭/터치/스페이스로 점프해서 장애물을 피해 점수를 올려.<br>" +
+    "토관 사이 코인을 먹으면 +5점, 그냥 지나가면 +1점. 30점부터 움직이는 토관, 50점 초과부터 적 등장.<br>" +
     "참가비: <b>" + (jumpPlayedOnce ? "🌰 100k" : "첫 1회 무료") + "</b><br>" +
     "보상: <b>코인 = 점수의 0.1배(반올림)</b>, <b>트로피 = 점수 × 10</b>";
   renderOfflineIncome();
@@ -4432,6 +4440,9 @@ function resetJumpGame(){
   jumpGame.worldSpeed = 165;
   jumpGame.spawnTimer = 0;
   jumpGame.bgOffset = 0;
+  jumpGame.spawnCount = 0;
+  jumpGame.lastMovingSpawn = -10;
+  jumpGame.lastEnemySpawn = -10;
   jumpGame.player = {
     x: 86,
     y: 330,
@@ -4440,6 +4451,8 @@ function resetJumpGame(){
     vy: 0
   };
   jumpGame.obstacles = [];
+  jumpGame.bullets = [];
+  jumpGame.effects = [];
   jumpStateText.textContent = "대기중";
   updateJumpTexts();
   drawJumpGame();
@@ -4499,7 +4512,7 @@ function startJumpGame(){
 
     if(count === 0){
       jumpOverlayBig.textContent = "START!";
-      jumpOverlaySub.innerHTML = "장애물을 피해 살아남아!";
+      jumpOverlaySub.innerHTML = "토관 사이 코인 +5점 · 그냥 통과 +1점";
       return;
     }
 
@@ -4547,6 +4560,19 @@ function getJumpSpawnInterval(){
 
 function createJumpObstacle(){
   const score = jumpGame.score;
+  jumpGame.spawnCount += 1;
+  const spawnIndex = jumpGame.spawnCount;
+  const roll = Math.random();
+
+  // 적은 50점 초과부터 드물게 등장하며, 연속해서 나오지 않아요.
+  if(score > 50 && spawnIndex - jumpGame.lastEnemySpawn >= 7 && roll < 0.10){
+    jumpGame.lastEnemySpawn = spawnIndex;
+    jumpGame.obstacles.push({
+      x:jumpCanvas.width + 60, y:110 + Math.random() * (jumpCanvas.height - 260),
+      w:36, h:42, type:"shooter", scored:false, shootTimer:0.45
+    });
+    return;
+  }
 
   // 기존 기둥 UI를 유지하고, 중간중간 새 장애물만 섞음.
   // 구멍은 너무 크지 않게 줄이되 점프/낙하로 피할 수 있는 범위 안에서만 생성.
@@ -4562,11 +4588,13 @@ function createJumpObstacle(){
 
   let type = "normal";
 
-  // 기존 기둥이 기본. 점수가 올라갈수록 가끔만 변형 장애물 출현.
-  if(score >= 80 && Math.random() < 0.12) type = "fullMove";
-  else if(score >= 60 && Math.random() < 0.18) type = "moving";
-  else if(score >= 40 && Math.random() < 0.18) type = "double";
-  else if(score >= 20 && Math.random() < 0.18) type = "stone";
+  // 움직이는 토관은 30점부터 나오되 4번에 한 번보다 자주 나오지 않아요.
+  const canMove = score >= 30 && spawnIndex - jumpGame.lastMovingSpawn >= 4;
+  if(canMove && score >= 80 && roll < 0.07) type = "fullMove";
+  else if(canMove && roll < 0.22) type = "moving";
+  else if(score >= 40 && roll < 0.39) type = "double";
+  else if(score >= 20 && roll < 0.54) type = "stone";
+  if(type === "moving" || type === "fullMove") jumpGame.lastMovingSpawn = spawnIndex;
 
   const base = {
     x: jumpCanvas.width + 60,
@@ -4575,9 +4603,12 @@ function createJumpObstacle(){
     gapH: gap,
     scored: false,
     type,
-    phase: Math.random() * Math.PI * 2,
-    moveAmp: type === "fullMove" ? 70 : type === "moving" ? 34 : 0,
-    moveSpeed: type === "fullMove" ? 1.08 : type === "moving" ? 0.95 : 0
+    originGapY:openY,
+    phase: 0,
+    moveAmp: type === "fullMove" ? 38 : type === "moving" ? 24 : 0,
+    moveSpeed: type === "fullMove" ? 0.7 : type === "moving" ? 0.55 : 0,
+    hasCoin:true,
+    coinTaken:false
   };
 
   jumpGame.obstacles.push(base);
@@ -4593,42 +4624,42 @@ function createJumpObstacle(){
       gapY: secondGapY,
       scored: true,
       type: "normal",
-      phase: Math.random() * Math.PI * 2,
+      originGapY:secondGapY,
+      phase: 0,
       moveAmp: 0,
-      moveSpeed: 0
+      moveSpeed: 0,
+      hasCoin:false
     });
   }
 }
 
+const JUMP_THEMES = [
+    { sky1:"#78d7ff", sky2:"#a9ecff", sky3:"#dcfbff", ground:"#68bf75", hill:"#7ac28d", cloud:"rgba(255,255,255,.82)", tree:"#3fab58" },
+    { sky1:"#73e6b7", sky2:"#b9f7d4", sky3:"#ecfff4", ground:"#48b878", hill:"#6ed79b", cloud:"rgba(255,255,255,.8)", tree:"#2e9e60" },
+    { sky1:"#7d8cff", sky2:"#b8c5ff", sky3:"#e6eeff", ground:"#5b83d6", hill:"#7ea0ec", cloud:"rgba(255,255,255,.72)", tree:"#4666bd" },
+    { sky1:"#ff9b71", sky2:"#ffc46b", sky3:"#5d2f4f", ground:"#8d5c3c", hill:"#b97955", cloud:"rgba(255,242,210,.7)", tree:"#7b6b3d" },
+    { sky1:"#1b1440", sky2:"#3c2d6f", sky3:"#12091f", ground:"#2c213f", hill:"#473a68", cloud:"rgba(220,210,255,.5)", tree:"#8369b6" },
+    { sky1:"#f990bb", sky2:"#ffd4cb", sky3:"#fff0dc", ground:"#946c85", hill:"#d695a8", cloud:"rgba(255,255,255,.8)", tree:"#8d658b" },
+    { sky1:"#1c939e", sky2:"#87e6d0", sky3:"#e1fff1", ground:"#318e85", hill:"#58bca4", cloud:"rgba(255,255,255,.75)", tree:"#257a6c" },
+    { sky1:"#a5cbff", sky2:"#e0f1ff", sky3:"#ffffff", ground:"#89a2bd", hill:"#bfd7ed", cloud:"rgba(255,255,255,.85)", tree:"#628ca9" },
+    { sky1:"#57308c", sky2:"#b064be", sky3:"#f8b4cb", ground:"#594776", hill:"#8a65a1", cloud:"rgba(255,216,253,.7)", tree:"#625591" }
+];
 function getJumpTheme(){
-  const stage = Math.floor(jumpGame.score / 20);
-
-  if(stage >= 4){
-    return { sky1:"#1b1440", sky2:"#3c2d6f", sky3:"#12091f", ground:"#2c213f", hill:"#473a68", cloud:"rgba(220,210,255,.5)", tree:"#8369b6" };
-  }
-  if(stage === 3){
-    return { sky1:"#ff9b71", sky2:"#ffc46b", sky3:"#5d2f4f", ground:"#8d5c3c", hill:"#b97955", cloud:"rgba(255,242,210,.7)", tree:"#7b6b3d" };
-  }
-  if(stage === 2){
-    return { sky1:"#7d8cff", sky2:"#b8c5ff", sky3:"#e6eeff", ground:"#5b83d6", hill:"#7ea0ec", cloud:"rgba(255,255,255,.72)", tree:"#4666bd" };
-  }
-  if(stage === 1){
-    return { sky1:"#73e6b7", sky2:"#b9f7d4", sky3:"#ecfff4", ground:"#48b878", hill:"#6ed79b", cloud:"rgba(255,255,255,.8)", tree:"#2e9e60" };
-  }
-
-  return { sky1:"#78d7ff", sky2:"#a9ecff", sky3:"#dcfbff", ground:"#68bf75", hill:"#7ac28d", cloud:"rgba(255,255,255,.82)", tree:"#3fab58" };
+  return JUMP_THEMES[Math.floor(jumpGame.score / 20) % JUMP_THEMES.length];
 }
 
 function updateJumpObstacle(obs, dt){
   if(obs.type === "moving" || obs.type === "fullMove"){
     obs.phase += obs.moveSpeed * dt;
-    const center = (jumpCanvas.height - obs.gapH) / 2;
-    const moved = center + Math.sin(obs.phase) * obs.moveAmp;
-    obs.gapY = Math.max(65, Math.min(jumpCanvas.height - 65 - obs.gapH, moved));
+    const moved = obs.originGapY + Math.sin(obs.phase) * obs.moveAmp;
+    obs.gapY = Math.max(72, Math.min(jumpCanvas.height - 78 - obs.gapH, moved));
   }
 }
 
 function getObstacleRects(obs){
+  if(obs.type === "shooter"){
+    return [{ x:obs.x, y:obs.y, w:obs.w, h:obs.h }];
+  }
   if(obs.type === "stone"){
     return [
       { x: obs.x, y: obs.gapY - 32, w: obs.w + 14, h: 32 },
@@ -4687,6 +4718,18 @@ function endJumpGame(){
     "트로피 총 보상: <b>" + fmtShort(trophyReward) + "</b>";
 }
 
+function jumpInvincible(){
+  return window.AcornOnline?.jumpInvincible?.() === true;
+}
+
+function fireJumpShot(enemy, targetX, targetY){
+  const x=enemy.x-5,y=enemy.y+enemy.h*0.55;
+  const dx=targetX-x,dy=targetY-y,distance=Math.hypot(dx,dy)||1;
+  const speed=180;
+  jumpGame.bullets.push({x,y,vx:dx/distance*speed,vy:dy/distance*speed,r:6});
+  jumpGame.effects.push({x,y,life:0.23,type:"flash"});
+}
+
 function jumpLoop(now){
   if(!jumpGame.running) return;
 
@@ -4711,23 +4754,47 @@ function jumpLoop(now){
   const playerR = jumpGame.player.w * 0.44;
   const playerCx = jumpGame.player.x + jumpGame.player.w / 2;
   const playerCy = jumpGame.player.y + jumpGame.player.h / 2;
+  const invincible = jumpInvincible();
 
   if(jumpGame.player.y <= 0 || jumpGame.player.y + jumpGame.player.h >= jumpCanvas.height){
-    drawJumpGame(true);
-    endJumpGame();
-    return;
+    if(!invincible){
+      drawJumpGame(true);
+      endJumpGame();
+      return;
+    }
+    jumpGame.player.y=Math.max(0,Math.min(jumpGame.player.y,jumpCanvas.height-jumpGame.player.h));
+    jumpGame.player.vy=0;
   }
 
   for(const obs of jumpGame.obstacles){
     obs.x -= jumpGame.worldSpeed * dt;
     updateJumpObstacle(obs, dt);
 
-    const rects = getObstacleRects(obs);
-    for(const rect of rects){
-      if(circleRectCollide(playerCx, playerCy, playerR, rect.x, rect.y, rect.w, rect.h)){
-        drawJumpGame(true);
-        endJumpGame();
-        return;
+    if(obs.type === "shooter"){
+      obs.shootTimer -= dt;
+      if(obs.x < jumpCanvas.width - 10 && obs.x > playerCx + 70 && obs.shootTimer <= 0){
+        fireJumpShot(obs,playerCx,playerCy);
+        obs.shootTimer=1.55;
+      }
+    }
+    if(!invincible){
+      for(const rect of getObstacleRects(obs)){
+        if(circleRectCollide(playerCx, playerCy, playerR, rect.x, rect.y, rect.w, rect.h)){
+          drawJumpGame(true);
+          endJumpGame();
+          return;
+        }
+      }
+    }
+
+    if(obs.hasCoin && !obs.coinTaken){
+      const coinX=obs.x+obs.w/2,coinY=obs.gapY+obs.gapH/2;
+      if(Math.hypot(playerCx-coinX,playerCy-coinY) < playerR+10){
+        obs.coinTaken=true;
+        obs.scored=true;
+        jumpGame.score += 5;
+        jumpGame.effects.push({x:coinX,y:coinY,life:0.8,type:"coin"});
+        updateJumpTexts();
       }
     }
 
@@ -4739,6 +4806,17 @@ function jumpLoop(now){
   }
 
   jumpGame.obstacles = jumpGame.obstacles.filter(obs => obs.x + obs.w > -40);
+  for(const shot of jumpGame.bullets){
+    shot.x += shot.vx * dt;shot.y += shot.vy * dt;
+    if(!invincible && Math.hypot(playerCx-shot.x,playerCy-shot.y) < playerR+shot.r){
+      drawJumpGame(true);
+      endJumpGame();
+      return;
+    }
+  }
+  jumpGame.bullets=jumpGame.bullets.filter(shot=>shot.x>-20&&shot.x<jumpCanvas.width+20&&shot.y>-20&&shot.y<jumpCanvas.height+20);
+  for(const effect of jumpGame.effects){effect.life-=dt;effect.x-=jumpGame.worldSpeed*dt*0.65;}
+  jumpGame.effects=jumpGame.effects.filter(effect=>effect.life>0);
 
   drawJumpGame(false);
   jumpGame.raf = requestAnimationFrame(jumpLoop);
@@ -4783,13 +4861,23 @@ function drawJumpGame(darken=false){
     drawObstacle(ctx, obs);
   }
 
+  for(const shot of jumpGame.bullets)drawJumpBullet(ctx,shot);
   drawPlayer(ctx, jumpGame.player);
+  if(jumpInvincible()){
+    ctx.strokeStyle="#ffe577";ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(jumpGame.player.x+18,jumpGame.player.y+18,26,0,Math.PI*2);ctx.stroke();
+  }
+  for(const effect of jumpGame.effects)drawJumpEffect(ctx,effect);
 
   ctx.fillStyle = "rgba(0,0,0,.28)";
   ctx.fillRect(14, 14, 156, 44);
   ctx.fillStyle = "#fff";
   ctx.font = "bold 24px Malgun Gothic";
   ctx.fillText("점수 " + jumpGame.score, 26, 44);
+  if(jumpInvincible()){
+    ctx.fillStyle="#ffe577";ctx.font="bold 16px Malgun Gothic";
+    ctx.fillText("무적", 183, 43);
+  }
 
   if(darken){
     ctx.fillStyle = "rgba(0,0,0,.42)";
@@ -4832,6 +4920,10 @@ function drawBgTree(ctx, x, groundY, scale, leafColor="#3fab58"){
 }
 
 function drawObstacle(ctx, obs){
+  if(obs.type === "shooter"){
+    drawJumpEnemy(ctx,obs);
+    return;
+  }
   const rects = getObstacleRects(obs);
 
   let c1 = "#573521";
@@ -4869,6 +4961,54 @@ function drawObstacle(ctx, obs){
       ctx.fillRect(rect.x - 3, rect.y, rect.w + 6, 8);
     }
   }
+  if(obs.hasCoin && !obs.coinTaken){
+    drawJumpCoin(ctx,obs.x+obs.w/2,obs.gapY+obs.gapH/2);
+  }
+}
+
+function drawJumpCoin(ctx,x,y){
+  ctx.fillStyle="rgba(255,208,55,.22)";
+  ctx.beginPath();ctx.arc(x,y,17,0,Math.PI*2);ctx.fill();
+  const gold=ctx.createRadialGradient(x-3,y-4,2,x,y,11);
+  gold.addColorStop(0,"#fff7b5");gold.addColorStop(0.55,"#ffd64d");gold.addColorStop(1,"#b87416");
+  ctx.fillStyle=gold;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#fff0a0";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#75420a";ctx.font="bold 10px Malgun Gothic";ctx.textAlign="center";
+  ctx.fillText("C",x,y+3);ctx.textAlign="start";
+}
+
+function drawJumpEnemy(ctx,enemy){
+  const x=enemy.x,y=enemy.y;
+  ctx.fillStyle="#49324b";ctx.beginPath();ctx.ellipse(x+18,y+24,17,19,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#732f43";ctx.beginPath();ctx.arc(x+18,y+12,15,Math.PI,0);ctx.fill();
+  ctx.fillStyle="#241b2e";ctx.fillRect(x-11,y+20,24,8);
+  ctx.fillStyle="#efb052";ctx.fillRect(x-15,y+22,6,4);
+  ctx.fillStyle="#ffe578";ctx.beginPath();ctx.arc(x+12,y+14,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#e8b6ac";ctx.fillRect(x+8,y+39,8,4);ctx.fillRect(x+22,y+39,8,4);
+}
+
+function drawJumpBullet(ctx,shot){
+  ctx.strokeStyle="rgba(255,114,55,.55)";ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(shot.x-shot.vx*0.07,shot.y-shot.vy*0.07);
+  ctx.lineTo(shot.x,shot.y);ctx.stroke();
+  ctx.fillStyle="#ff7735";ctx.beginPath();ctx.arc(shot.x,shot.y,shot.r+2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#fff0b5";ctx.beginPath();ctx.arc(shot.x,shot.y,shot.r-1,0,Math.PI*2);ctx.fill();
+}
+
+function drawJumpEffect(ctx,effect){
+  ctx.save();
+  if(effect.type==="flash"){
+    ctx.globalAlpha=Math.max(0,effect.life/0.23);
+    ctx.fillStyle="#fff2a0";ctx.beginPath();ctx.arc(effect.x,effect.y,12,0,Math.PI*2);ctx.fill();
+  }else{
+    ctx.globalAlpha=Math.min(1,effect.life*2);
+    ctx.strokeStyle="#ffdc66";ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(effect.x,effect.y,10+(0.8-effect.life)*24,0,Math.PI*2);ctx.stroke();
+    ctx.font="bold 21px Malgun Gothic";ctx.textAlign="center";
+    ctx.fillStyle="#6d3a0e";ctx.fillText("+5점",effect.x+1,effect.y-26-(0.8-effect.life)*30+2);
+    ctx.fillStyle="#fff39a";ctx.fillText("+5점",effect.x,effect.y-26-(0.8-effect.life)*30);
+  }
+  ctx.restore();
 }
 
 function drawPlayer(ctx, p){
@@ -5567,6 +5707,21 @@ runOpening();
   }
 
   function adminReady(){return Boolean(auth?.developer&&ready&&connected&&!conflict&&!signingOut);}
+  const JUMP_INVINCIBLE_KEY="acorn_developer_jump_invincible_v1:";
+  function developerJumpInvincible(){
+    return Boolean(auth?.developer&&ready&&localStorage.getItem(JUMP_INVINCIBLE_KEY+auth.id)==="on");
+  }
+  function paintDeveloperJumpInvincible(){
+    const button=$("developerJumpInvincible"),enabled=developerJumpInvincible();
+    button.textContent=enabled?"무적 켜짐":"무적 꺼짐";
+    button.setAttribute("aria-pressed",String(enabled));
+  }
+  function toggleDeveloperJumpInvincible(){
+    if(!adminReady())return;
+    localStorage.setItem(JUMP_INVINCIBLE_KEY+auth.id,developerJumpInvincible()?"off":"on");
+    paintDeveloperJumpInvincible();
+    setMsg($("developerMessage"),"다람쥐 점프 무적모드를 "+(developerJumpInvincible()?"켰어요.":"껐어요."),"good");
+  }
   function openDeveloperTools(){
     if(!adminReady())return;
     switchPage("developer");
@@ -5574,6 +5729,7 @@ runOpening();
     $("developerCoinValue").value=String(Math.floor(coinCount));
     $("developerTrophyValue").value=String(Math.floor(achievementCount));
     $("developerJumpValue").value=String(Math.floor(jumpBestScore));
+    paintDeveloperJumpInvincible();
     setMsg($("developerMessage"),"",null);
   }
   async function setDeveloperStat(field,inputId){
@@ -5788,7 +5944,7 @@ runOpening();
   window.AcornOnline = {
     updateSignup, updateLogin, register, login, scheduleSave, signOut, onOverlay,
     openProfile,onRender:paintProfile,resetProgress,saveJumpRecord,claimOfflineIncome,
-    reportCheatDetection,
+    reportCheatDetection,jumpInvincible:developerJumpInvincible,
     onPage(page) { if (page === "ranking") loadRanking(); if(page!=="profile")clearProfilePasswords();else {profileStamp="";paintProfile();} }
   };
 
@@ -5801,6 +5957,7 @@ runOpening();
   $("developerSetCoin").addEventListener("click",()=>setDeveloperStat("coinCount","developerCoinValue"));
   $("developerSetTrophy").addEventListener("click",()=>setDeveloperStat("achievementCount","developerTrophyValue"));
   $("developerSetJump").addEventListener("click",()=>setDeveloperStat("jumpBestScore","developerJumpValue"));
+  $("developerJumpInvincible").addEventListener("click",toggleDeveloperJumpInvincible);
   $("developerFind").addEventListener("click",searchInspection);
   $("userActionCancel").addEventListener("click",()=>$("userActionDialog").close());
   $("userActionInspect").addEventListener("click",()=>{const target=chooserTarget;$("userActionDialog").close();if(target)openInspection(target.id);});
