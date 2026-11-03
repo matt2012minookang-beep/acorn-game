@@ -1515,6 +1515,7 @@
     .suspension-dialog h2{margin-top:0;}
     .buy.press-wait,.btn.press-wait,.free-coin-btn.press-wait,.rank-row.press-wait{outline:2px solid #ffcf77;outline-offset:2px;}
     .buy.repeat-buying,.btn.repeat-buying,.free-coin-btn.repeat-buying,.rank-row.repeat-buying{box-shadow:0 0 17px #ffdc83;filter:brightness(1.16);}
+    .achievement-card .buy{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
     .view-as-hero{text-align:center;padding:22px 14px;border-radius:18px;background:radial-gradient(circle at top,#48335f,#251d30 72%);margin:20px 0;}
     .view-as-hero h2{margin:14px 0 6px;font-size:24px;overflow-wrap:anywhere;}
     .view-as-hero .avatar-frame{width:92px;height:92px;}.view-as-hero .avatar-fallback{font-size:44px;}
@@ -1525,6 +1526,14 @@
     .inspect-log{display:grid;gap:9px;margin:12px 0 25px;}
     .inspect-log article{display:flex;flex-direction:column;gap:5px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.035);line-height:1.5;}
     .inspect-log strong{font-size:13px;color:#eee4fa;}.inspect-log span,.inspect-note{font-size:12px;color:#c5bcd3;line-height:1.65;}
+    .inspect-summary{padding:15px 16px;border:1px solid #9a78bd;border-radius:14px;background:#332340;margin:12px 0 16px;line-height:1.5;}
+    .inspect-summary strong{display:block;font-size:17px;color:#fff;}.inspect-summary span{display:block;margin-top:5px;font-size:12px;color:#e1d3ef;}
+    #inspectActivity article{gap:6px;padding:15px 16px;}
+    #inspectActivity time{font-size:13px;color:#d7cbe9;font-weight:700;}
+    #inspectActivity .inspect-click-change{font-size:19px;color:#fff;}
+    #inspectActivity details{margin-top:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12);}
+    #inspectActivity summary{font-size:12px;color:#d7b9ff;cursor:pointer;}
+    #inspectActivity details span{display:block;padding-top:7px;overflow-wrap:anywhere;}
     @media(max-width:560px){.developer-stat-row{grid-template-columns:1fr auto;}.developer-stat-row>span{grid-column:1/-1;}.inspect-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
   </style>
 </head>
@@ -1714,6 +1723,7 @@
     <div class="achieve-header">
       <div class="achieve-title">🏆 업적</div>
       <button class="close" id="achieveClose">닫기</button>
+      <div class="owned">받기 버튼을 1초 이상 누르면 달성한 단계의 보상을 연속으로 받아요.</div>
     </div>
 
     <div class="item achievement-card" id="achievementCardAcorn">
@@ -2084,7 +2094,8 @@
           <button class="profile-secondary" id="inspectRefresh" type="button">최신 기록 불러오기</button>
           <h2>게임 기록</h2><div class="inspect-grid" id="inspectStats"></div>
           <h2>최근 저장된 활동</h2>
-          <p class="inspect-note">최근 2시간의 저장 기록 중 최신 20개를 보여줘요. 자동 생산 수익도 도토리 변화에 포함돼요.</p>
+          <p class="inspect-note">최근 2시간의 저장 기록 중 최신 20개예요. 클릭 변화는 저장된 누적 클릭 수의 차이이며, 저장 횟수와 달라요. 이것만으로 오토클릭 여부를 판단할 수는 없어요.</p>
+          <div class="inspect-summary" id="inspectActivitySummary"></div>
           <div class="inspect-log" id="inspectActivity"></div>
           <h2>클릭 패턴 감지 기록</h2>
           <p class="inspect-note">브라우저가 보고한 클릭 수와 간격이에요. 조작하거나 누락할 수 있으므로 이것만으로 오토클릭을 확정하지 마세요.</p>
@@ -4268,21 +4279,26 @@ function enableHoldRepeat(button){
   let pointer=null,delay=null,repeater=null,repeating=false,suppressUntil=0;
   function finish(event){
     if(pointer===null || (event && event.pointerId!==pointer))return;
+    const oldPointer=pointer;
     if(repeating)suppressUntil=performance.now()+450;
     clearTimeout(delay);clearInterval(repeater);
     pointer=null;delay=null;repeater=null;repeating=false;
     button.classList.remove("press-wait","repeat-buying");
+    if(button.hasPointerCapture?.(oldPointer))button.releasePointerCapture(oldPointer);
   }
   button.addEventListener("pointerdown",event=>{
     if(pointer!==null||button.disabled||event.button!==0)return;
     pointer=event.pointerId;
+    try{button.setPointerCapture?.(pointer);}catch(_){}
     button.classList.add("press-wait");
     delay=setTimeout(()=>{
       if(pointer===null)return;
       repeating=true;button.classList.remove("press-wait");button.classList.add("repeat-buying");
       const buyAgain=()=>{
         const dialog=button.closest?.("dialog");
-        if(button.disabled||document.hidden||!button.isConnected||(dialog&&!dialog.open)){finish();return;}
+        const panel=button.closest?.(".shop-panel,.achieve-panel,.trophy-panel");
+        if(button.disabled||document.hidden||!button.isConnected||(dialog&&!dialog.open)||
+           (panel&&!panel.classList.contains("show"))){finish();return;}
         button.click();
       };
       buyAgain();
@@ -4297,7 +4313,9 @@ function enableHoldRepeat(button){
   },true);
   document.addEventListener("pointerup",finish);
   document.addEventListener("pointercancel",finish);
-  button.addEventListener("pointerleave",()=>finish());
+  button.addEventListener("pointerleave",event=>{
+    if(event.pointerType==="mouse"&&!button.hasPointerCapture?.(event.pointerId))finish(event);
+  });
   button.addEventListener("contextmenu",event=>{if(pointer!==null)event.preventDefault();});
   window.addEventListener("blur",()=>finish());
 }
@@ -5601,6 +5619,24 @@ runOpening();
     try{const data=await api("/api/developer/users/"+encodeURIComponent(id));renderAccountView(data);}
     catch(error){$("viewAsName").textContent=error.message;}
   }
+  function activityComparison(newer,older){
+    if(!older)return null;
+    return {
+      clicks:Math.round(Number(newer.totalClicks)-Number(older.totalClicks)),
+      seconds:Math.max(0,Math.round(Number(newer.savedAt)-Number(older.savedAt)))
+    };
+  }
+  function activityDuration(seconds){
+    const hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
+    return [hours&&hours+"시간",minutes&&minutes+"분",rest&&rest+"초"]
+      .filter(Boolean).join(" ")||"0초";
+  }
+  function activityClickLabel(change){
+    if(!change)return "비교할 이전 기록 없음";
+    return change.clicks>=0
+      ?"클릭 +"+change.clicks.toLocaleString("ko-KR")+"회"
+      :"누적 클릭 기록 "+Math.abs(change.clicks).toLocaleString("ko-KR")+"회 감소";
+  }
   function renderInspection(data){
     inspectedUser=data;
     $("inspectNickname").textContent=data.nickname;
@@ -5621,16 +5657,43 @@ runOpening();
       const item=document.createElement("div"),name=document.createElement("span"),count=document.createElement("strong");
       name.textContent=label;count.textContent=Number(data.stats?.[key]||0).toLocaleString("ko-KR",{maximumFractionDigits:0});item.append(name,count);stats.append(item);
     }
-    const activity=$("inspectActivity");activity.replaceChildren();
+    const activity=$("inspectActivity"),overview=$("inspectActivitySummary");
+    activity.replaceChildren();overview.replaceChildren();
     const history=data.activity||[];
-    if(!history.length){activity.textContent="이 업데이트 이후 저장된 활동이 아직 없어요.";}
+    if(history.length>1){
+      const comparison=activityComparison(history[0],history[history.length-1]);
+      const headline=document.createElement("strong"),note=document.createElement("span");
+      headline.textContent="표시된 "+activityDuration(comparison.seconds)+" 동안 "+activityClickLabel(comparison);
+      note.textContent="가장 오래된 표시 기록과 최신 기록의 차이예요. 저장 횟수는 클릭 횟수가 아닙니다.";
+      overview.append(headline,note);
+    }else if(history.length===1){
+      overview.textContent="저장 기록이 1개라 클릭 변화를 비교할 수 없어요.";
+    }else{
+      overview.textContent="이 업데이트 이후 저장된 활동이 아직 없어요.";
+    }
+    const timeFormat=new Intl.DateTimeFormat("ko-KR",{
+      timeZone:"Asia/Seoul",month:"numeric",day:"numeric",
+      hour:"numeric",minute:"2-digit",second:"2-digit"
+    });
     for(let i=0;i<history.length;i++){
       const row=history[i],before=history[i+1],item=document.createElement("article");
-      const when=document.createElement("strong"),details=document.createElement("span");
-      when.textContent=new Date(row.savedAt*1000).toLocaleString("ko-KR")+" · 저장 "+row.saves+"회";
-      const change=before?" · 직전 기록 대비 클릭 "+(row.totalClicks-before.totalClicks).toLocaleString("ko-KR",{maximumFractionDigits:0})+"회":"";
-      details.textContent="누적 클릭 "+Number(row.totalClicks).toLocaleString("ko-KR")+"회 · 도토리 "+Number(row.acorns).toLocaleString("ko-KR",{maximumFractionDigits:0})+" · 트로피 "+Number(row.trophies).toLocaleString("ko-KR",{maximumFractionDigits:0})+change;
-      item.append(when,details);activity.append(item);
+      const change=activityComparison(row,before);
+      const when=document.createElement("time"),clicks=document.createElement("strong");
+      const interval=document.createElement("span"),details=document.createElement("details");
+      const summary=document.createElement("summary"),numbers=document.createElement("span");
+      when.dateTime=new Date(row.savedAt*1000).toISOString();
+      when.textContent=timeFormat.format(new Date(row.savedAt*1000));
+      clicks.className="inspect-click-change";
+      clicks.textContent=activityClickLabel(change);
+      interval.textContent=change
+        ?"직전 저장 시각과 "+activityDuration(change.seconds)+" 차이"
+        :"더 이전 기록은 이 목록에 없어요.";
+      summary.textContent="누적 수치와 저장 횟수 보기";
+      numbers.textContent="누적 클릭 "+Number(row.totalClicks).toLocaleString("ko-KR")+"회 · 도토리 "+
+        Number(row.acorns).toLocaleString("ko-KR",{maximumFractionDigits:0})+" · 트로피 "+
+        Number(row.trophies).toLocaleString("ko-KR",{maximumFractionDigits:0})+
+        " · 이 1분 동안 서버 저장 "+row.saves+"회";
+      details.append(summary,numbers);item.append(when,clicks,interval,details);activity.append(item);
     }
     const detections=$("inspectDetections");detections.replaceChildren();
     const reasons={rapid:"1초 클릭 수 초과",regular:"일정한 빠른 간격",repeated:"반복된 동일 간격",stable:"장시간 안정된 연타",short:"매우 짧은 간격 반복"};
