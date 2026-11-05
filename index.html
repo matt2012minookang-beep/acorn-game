@@ -2037,6 +2037,28 @@
           <div class="developer-stat-row"><span>🐿️ 다람쥐 점프 무적</span><span class="page-sub">토관·화면 끝 충돌 무시</span><button class="btn" id="developerJumpInvincible" type="button" aria-pressed="false">무적 꺼짐</button></div>
           <p class="msg" id="developerMessage" role="status" aria-live="polite"></p>
         </div>
+        <div class="page-card profile-section" id="developerDelegateSection" hidden>
+          <h2>랭킹에 표시되는 개발자 전용 계정</h2>
+          <p class="page-sub">한 번에 1개만 설정할 수 있어요. 이 계정은 개발자 도구를 사용하고 일반 유저처럼 랭킹에 표시돼요.</p>
+          <div id="developerDelegateCurrent" hidden>
+            <p>현재 설정: <strong id="developerDelegateName"></strong></p>
+            <button class="btn" id="developerDelegateRevoke" type="button">개발자 권한 해제</button>
+          </div>
+          <div id="developerDelegateSetup" hidden>
+            <label class="auth-field" for="developerDelegateNickname">닉네임
+              <input id="developerDelegateNickname" type="text" autocomplete="off">
+            </label>
+            <label class="auth-field" for="developerDelegatePassword">비밀번호 (4자 이상)
+              <input id="developerDelegatePassword" type="password" autocomplete="new-password">
+            </label>
+            <div class="profile-actions">
+              <button class="btn" id="developerDelegateCreate" type="button">새 계정 만들고 설정</button>
+              <button class="btn" id="developerDelegateAssign" type="button">기존 계정 설정</button>
+            </div>
+            <p class="page-sub">기존 계정을 설정하려면 해당 계정의 비밀번호도 입력해야 해요.</p>
+          </div>
+          <p class="msg" id="developerDelegateMessage" role="status" aria-live="polite"></p>
+        </div>
         <div class="page-card profile-section">
           <h2>유저 계정 살펴보기</h2>
           <p class="page-sub">랭킹에서 닉네임을 누르거나 여기서 닉네임을 검색하세요.</p>
@@ -2150,7 +2172,7 @@
         </div>
         <div class="page-card profile-section" id="profileDeveloperSection" hidden>
           <h2>개발자 계정</h2>
-          <p class="page-sub">내 기록을 설정하고 유저 계정을 살펴볼 수 있어요. 개발자 기록은 랭킹에 포함되지 않아요.</p>
+          <p class="page-sub" id="profileDeveloperHint">내 기록을 설정하고 유저 계정을 살펴볼 수 있어요.</p>
           <button class="btn" id="openDeveloperTools" type="button">개발자 도구 열기</button>
         </div>
         <div class="page-card profile-section">
@@ -5086,6 +5108,7 @@ runOpening();
   let metric = "acorns", rankingSeq = 0, cachedRanking = null;
   let pendingDeveloperChallenge = null, inspectedUser = null, inspectFrom = "ranking";
   let chooserTarget = null, viewedUser = null, viewAsFrom = "ranking";
+  let delegatedAccount = null, delegateBusy = false;
 
   function status(message, bad = false) {
     for (const id of ["onlineConnection", "onlineSaveStatus"]) {
@@ -5230,7 +5253,8 @@ runOpening();
     clearTimeout(saveTimer);
     saveTimer = null;
     backupLocal(data.nickname);
-    auth = { id:data.id, nickname: data.nickname, token: token || data.token, developer:data.developer === true };
+    auth = { id:data.id, nickname: data.nickname, token: token || data.token,
+      developer:data.developer === true, developerOwner:data.developerOwner === true };
     accountInfo=data;progressEpoch=Number(data.progressEpoch||0);pendingPhoto=null;syncAccount(data);
     storeAuth();
     revision = data.revision;
@@ -5407,7 +5431,7 @@ runOpening();
     try {
       const data = await api("/api/health", { token: null });
       if (data.ok !== true || data.api !== 1) throw new Error("잘못된 서버");
-      if(!data.features?.profiles||!data.features?.offlineIncome||!data.features?.infiniteRanks||!data.features?.developerTools||!data.features?.suspensionNotices){connected=false;available=false;status("최신 서버가 필요해요. 새 server.py로 교체한 뒤 start_public.py를 다시 실행해 주세요.",true);refreshSignupButton();updateLogin();profileStamp="";paintProfile();return;}
+      if(!data.features?.profiles||!data.features?.offlineIncome||!data.features?.infiniteRanks||!data.features?.developerTools||!data.features?.suspensionNotices||!data.features?.delegatedDeveloper){connected=false;available=false;status("최신 서버가 필요해요. 새 server.py로 교체한 뒤 start_public.py를 다시 실행해 주세요.",true);refreshSignupButton();updateLogin();profileStamp="";paintProfile();return;}
       const wasConnected = connected;
       connected = true;
       if (!ready && !conflict) status(currentNick?"오프라인 플레이 · 온라인 순위에는 반영되지 않아요.":"서버에 연결됐어요.");
@@ -5523,7 +5547,7 @@ runOpening();
     }
     accountInfo={...accountInfo,...data};if(!resetElsewhere)progressEpoch=Number(data.progressEpoch||0);
     if(!resetElsewhere&&ready&&Number(data.jumpBestScore)>jumpBestScore){jumpBestScore=Number(data.jumpBestScore);profiles[currentNick]=buildSaveData();saveProfiles(profiles);rememberBest();updateJumpTexts();}
-    if(auth){auth.id=data.id;auth.nickname=data.nickname;auth.developer=data.developer===true;storeAuth();}
+    if(auth){auth.id=data.id;auth.nickname=data.nickname;auth.developer=data.developer===true;auth.developerOwner=data.developerOwner===true;storeAuth();}
     const prior=profileCache[data.nickname]||{};
     profileCache[data.nickname]={...prior,id:data.id,avatarUrl:data.avatarUrl||"",progressEpoch,
       avatarDataUrl:prior.avatarUrl===data.avatarUrl?prior.avatarDataUrl||"":""};saveCaches();profileStamp="";paintProfile();
@@ -5538,21 +5562,24 @@ runOpening();
     $("profileTrophies").textContent="현재 트로피 "+exactNumber(achievementCount)+"개";
     paintAvatar($("profileAvatarFrame"),$("profileAvatar"),pendingPhoto===null?photo:pendingPhoto,rank);
     const canEdit=Boolean(auth&&ready&&connected&&!conflict&&!profileBusy);
-    $("profileNicknameSection").hidden=Boolean(auth?.developer);
-    $("profilePasswordSection").hidden=Boolean(auth?.developer);
+    $("profileNicknameSection").hidden=Boolean(auth?.developerOwner);
+    $("profilePasswordSection").hidden=Boolean(auth?.developerOwner);
     $("profileDeveloperSection").hidden=!auth?.developer;
+    $("profileDeveloperHint").textContent=auth?.developerOwner
+      ?"내 기록을 설정하고 유저 계정을 살펴볼 수 있어요. 이 계정의 기록은 랭킹에 포함되지 않아요."
+      :"내 기록을 설정하고 유저 계정을 살펴볼 수 있어요. 이 계정은 랭킹에 표시돼요.";
     $("openDeveloperTools").disabled=!canEdit||!auth?.developer;
     $("profileOnlineHint").hidden=Boolean(auth&&ready);
-    for(const id of ["profileNickname","profileCurrentPassword","profileNewPassword","profileConfirmPassword"])$(id).disabled=!canEdit||Boolean(auth?.developer);
+    for(const id of ["profileNickname","profileCurrentPassword","profileNewPassword","profileConfirmPassword"])$(id).disabled=!canEdit||Boolean(auth?.developerOwner);
     $("profileChoosePhoto").disabled=profileBusy;$("profileDefaultPhoto").disabled=profileBusy;
     $("btnLogout").disabled=profileBusy;$("btnResetNick").disabled=profileBusy;
     $("profileSavePhoto").disabled=profileBusy||pendingPhoto===null;
-    $("profileSaveNickname").disabled=!canEdit||Boolean(auth?.developer)||!profileNickAvailable||sanitizeNick($("profileNickname").value)===currentNick;
+    $("profileSaveNickname").disabled=!canEdit||Boolean(auth?.developerOwner)||!profileNickAvailable||sanitizeNick($("profileNickname").value)===currentNick;
     updateProfilePassword();
   }
   function updateProfilePassword(){
     const a=$("profileCurrentPassword").value,b=$("profileNewPassword").value,c=$("profileConfirmPassword").value;
-    $("profileSavePassword").disabled=!auth||!ready||!connected||profileBusy||auth.developer||[...a].length<4||[...b].length<4||b!==c;
+    $("profileSavePassword").disabled=!auth||!ready||!connected||profileBusy||auth.developerOwner||[...a].length<4||[...b].length<4||b!==c;
   }
   function clearProfilePasswords(){for(const id of ["profileCurrentPassword","profileNewPassword","profileConfirmPassword"])$(id).value="";}
   function openProfile(){
@@ -5662,6 +5689,58 @@ runOpening();
     $("developerJumpValue").value=String(Math.floor(jumpBestScore));
     paintDeveloperJumpInvincible();
     setMsg($("developerMessage"),"",null);
+    $("developerDelegateSection").hidden=!auth?.developerOwner;
+    if(auth?.developerOwner)loadDelegatedAccount();
+  }
+  function paintDelegatedAccount(){
+    $("developerDelegateCurrent").hidden=!delegatedAccount;
+    $("developerDelegateSetup").hidden=Boolean(delegatedAccount);
+    $("developerDelegateName").textContent=delegatedAccount?.nickname||"";
+    for(const id of ["developerDelegateNickname","developerDelegatePassword",
+      "developerDelegateCreate","developerDelegateAssign","developerDelegateRevoke"]){
+      $(id).disabled=delegateBusy;
+    }
+  }
+  async function loadDelegatedAccount(){
+    if(!adminReady()||!auth?.developerOwner)return;
+    delegateBusy=true;paintDelegatedAccount();
+    setMsg($("developerDelegateMessage"),"설정된 계정을 확인하고 있어요…",null);
+    try{
+      const data=await api("/api/developer/delegate");
+      delegatedAccount=data.account;setMsg($("developerDelegateMessage"),"",null);
+    }catch(error){setMsg($("developerDelegateMessage"),error.message,"bad");}
+    finally{delegateBusy=false;paintDelegatedAccount();}
+  }
+  async function setDelegatedAccount(action){
+    if(!adminReady()||!auth?.developerOwner||delegateBusy)return;
+    const nickname=sanitizeNick($("developerDelegateNickname").value);
+    const password=$("developerDelegatePassword").value;
+    if(!isValidNick(nickname)||[...password].length<4){
+      setMsg($("developerDelegateMessage"),"닉네임과 4자 이상 비밀번호를 입력해 줘.","bad");return;
+    }
+    delegateBusy=true;paintDelegatedAccount();
+    try{
+      const data=await api("/api/developer/delegate",{method:"POST",body:{action,nickname,password}});
+      delegatedAccount=data.account;
+      $("developerDelegatePassword").value="";
+      setMsg($("developerDelegateMessage"),action==="create"
+        ?"계정이 만들어졌어. 설정한 닉네임과 비밀번호로 로그인하면 개발자 도구를 쓸 수 있어."
+        :"기존 계정에 개발자 권한을 설정했어. 해당 계정에서 다시 접속하면 사용할 수 있어.","good");
+      cachedRanking=null;
+    }catch(error){setMsg($("developerDelegateMessage"),error.message,"bad");}
+    finally{delegateBusy=false;paintDelegatedAccount();}
+  }
+  async function revokeDelegatedAccount(){
+    if(!adminReady()||!auth?.developerOwner||!delegatedAccount||delegateBusy)return;
+    const nickname=delegatedAccount.nickname;
+    if(!confirm(nickname+" 계정의 개발자 권한을 해제할까? 계정과 기록은 그대로 남아."))return;
+    delegateBusy=true;paintDelegatedAccount();
+    try{
+      const data=await api("/api/developer/delegate",{method:"POST",body:{action:"revoke",confirmNickname:nickname}});
+      delegatedAccount=data.account;
+      setMsg($("developerDelegateMessage"),"개발자 권한을 해제했어. 이제 다른 계정을 설정할 수 있어.","good");
+    }catch(error){setMsg($("developerDelegateMessage"),error.message,"bad");}
+    finally{delegateBusy=false;paintDelegatedAccount();}
   }
   async function setDeveloperStat(field,inputId){
     if(!adminReady())return;
@@ -5889,6 +5968,9 @@ runOpening();
   $("developerSetTrophy").addEventListener("click",()=>setDeveloperStat("achievementCount","developerTrophyValue"));
   $("developerSetJump").addEventListener("click",()=>setDeveloperStat("jumpBestScore","developerJumpValue"));
   $("developerJumpInvincible").addEventListener("click",toggleDeveloperJumpInvincible);
+  $("developerDelegateCreate").addEventListener("click",()=>setDelegatedAccount("create"));
+  $("developerDelegateAssign").addEventListener("click",()=>setDelegatedAccount("assign"));
+  $("developerDelegateRevoke").addEventListener("click",revokeDelegatedAccount);
   $("developerFind").addEventListener("click",searchInspection);
   $("userActionCancel").addEventListener("click",()=>$("userActionDialog").close());
   $("userActionInspect").addEventListener("click",()=>{const target=chooserTarget;$("userActionDialog").close();if(target)openInspection(target.id);});
