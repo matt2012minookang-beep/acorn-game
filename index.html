@@ -2001,6 +2001,9 @@
             <button type="button" data-ranking-metric="trophies" aria-pressed="false">🏆 트로피순</button>
             <button type="button" data-ranking-metric="jump" aria-pressed="false">🐿️ 점프 최고점수순</button>
           </div>
+          <div class="ranking-sort" id="rankingDeveloperTools" hidden>
+            <button type="button" id="rankingZeroOnly" aria-pressed="false">개발자: 도토리 0개 계정 보기</button>
+          </div>
           <div class="ranking-champion" id="rankingChampion" hidden>
             <div class="ranking-crown" aria-hidden="true">👑</div>
             <div class="ranking-place">전체 1위</div>
@@ -2013,10 +2016,10 @@
               <div class="ranking-value"><span>🐿️ 도토리 점프 최고 점수</span><strong id="rankingChampionJump">0</strong></div>
             </div>
           </div>
-          <div class="ranking-empty" id="rankingEmpty">아직 등록된 기록이 없어요.</div>
+          <div class="ranking-empty" id="rankingEmpty">아직 랭킹에 표시할 기록이 없어요.</div>
           <div class="ranking-meta" id="rankingPlayers"></div>
           <div class="ranking-table-wrap"><table class="ranking-table" aria-label="전체 유저 랭킹">
-            <thead><tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">🌰 도토리</th><th scope="col">🏆 트로피 · 등급</th><th scope="col">🐿️ 점프 최고</th></tr></thead>
+            <thead><tr><th scope="col" id="rankingOrderHeader">순위</th><th scope="col">닉네임</th><th scope="col">🌰 도토리</th><th scope="col">🏆 트로피 · 등급</th><th scope="col">🐿️ 점프 최고</th></tr></thead>
             <tbody id="rankingRows"></tbody>
           </table></div>
           <p class="ranking-scroll-hint">좌우로 밀어서 모든 기록을 확인할 수 있어요.</p>
@@ -2152,7 +2155,9 @@
             <button class="profile-secondary danger" id="inspectSuspend" type="button">계정 정지</button>
             <button class="profile-secondary" id="inspectUnsuspend" type="button" hidden>정지 해제</button>
             <button class="profile-secondary danger" id="inspectReset" type="button">진행 기록 초기화</button>
+            <button class="profile-secondary danger" id="inspectDelete" type="button">계정 영구 삭제</button>
           </div>
+          <p class="inspect-note">계정 삭제는 닉네임·게임 기록·프로필 사진·로그인 정보를 모두 지우며 되돌릴 수 없어요. 개발자 권한 계정은 먼저 권한을 해제해야 해요.</p>
           <p class="msg" id="inspectMessage" role="status" aria-live="polite"></p>
         </div>
       </div>
@@ -2256,7 +2261,7 @@
           <details class="auth-details" id="importWrap" hidden>
             <summary>이 기기의 기존 게임 기록 가져오기</summary>
             <label class="auth-field" for="importProfile">가져올 기록<select id="importProfile"></select></label>
-            <p class="tiny">이 기기의 기록은 그대로 남고, 선택한 기록으로 온라인 계정을 시작해요.</p>
+            <p class="tiny">직접 기록을 선택하면 그 기록으로 시작해요. 선택하지 않으면 도토리 0개로 새로 시작해요.</p>
           </details>
           <button class="btn auth-action" id="newStart" type="button" disabled>가입하고 시작</button>
         </div>
@@ -5084,7 +5089,7 @@ render();
 runOpening();
   </script>
   <!-- 온라인 기능을 HTML에 포함: v2.12 -->
-  <script id="acornOnlineBundle" data-build="20261103-v212">
+  <script id="acornOnlineBundle" data-build="20261111-v212-accounts">
   /* 도토리 게임: 전체 닉네임 확인, 계정 로그인, 서버 저장, 랭킹. */
 (() => {
   "use strict";
@@ -5104,8 +5109,8 @@ runOpening();
   let connected = false, busy = false, ready = false, conflict = false;
   let saveTimer = null, inFlight = null, generation = 0, revision = 0;
   let availabilityTimer = null, availabilitySeq = 0, checkedNick = "", available = false;
-  let resumeTried = false, importingTouched = false, signingOut = false;
-  let metric = "acorns", rankingSeq = 0, cachedRanking = null;
+  let resumeTried = false, signingOut = false;
+  let metric = "acorns", zeroOnly = false, rankingSeq = 0, cachedRanking = null;
   let pendingDeveloperChallenge = null, inspectedUser = null, inspectFrom = "ranking";
   let chooserTarget = null, viewedUser = null, viewAsFrom = "ranking";
   let delegatedAccount = null, delegateBusy = false;
@@ -5196,7 +5201,6 @@ runOpening();
 
   function updateSignup() {
     const nickname = sanitizeNick(newNick.value);
-    if (!importingTouched && Object.hasOwn(profiles, nickname)) $("importProfile").value = nickname;
     const password = $("newPassword").value;
     const confirm = $("confirmPassword").value;
     const validPassword = [...password].length >= 4;
@@ -5242,17 +5246,26 @@ runOpening();
       [...$("oldPassword").value].length < 4;
   }
 
-  function enterAccount(data, token) {
-    const cached=bestCache[data.nickname],epoch=Number(data.progressEpoch||0),local=profiles[data.nickname];
-    const canRecover=cached?cached.epoch===epoch&&(!cached.accountId||cached.accountId===data.id):epoch===0;
-    const recovered=canRecover?Math.max(Number(local?.jumpBestScore)||0,Number(cached?.score)||0):0;
+  function enterAccount(data, token, options={}) {
+    const cached=bestCache[data.nickname],meta=profileCache[data.nickname];
+    const epoch=Number(data.progressEpoch||0),local=profiles[data.nickname];
+    const matchingBest=!options.newAccount&&cached?.accountId===data.id&&Number(cached.epoch)===epoch;
+    const matchingLocal=!options.newAccount&&meta?.id===data.id&&Number(meta.progressEpoch)===epoch;
+    const recovered=Math.max(matchingBest?Number(cached.score)||0:0,matchingLocal?Number(local?.jumpBestScore)||0:0);
     if(recovered>Number(data.state?.jumpBestScore||0))data.state={...(data.state||{}),jumpBestScore:recovered};
+    if(currentNick){
+      profiles[currentNick]=buildSaveData();saveProfiles(profiles);
+      if(currentNick!==data.nickname)backupLocal(currentNick);
+    }
     generation++;
     ready = false;
     conflict = false;
     clearTimeout(saveTimer);
     saveTimer = null;
     backupLocal(data.nickname);
+    currentNick=null;
+    if(options.newAccount||meta?.id!==data.id)delete profileCache[data.nickname];
+    if(options.newAccount||cached?.accountId!==data.id)delete bestCache[data.nickname];
     auth = { id:data.id, nickname: data.nickname, token: token || data.token,
       developer:data.developer === true, developerOwner:data.developerOwner === true };
     accountInfo=data;progressEpoch=Number(data.progressEpoch||0);pendingPhoto=null;syncAccount(data);
@@ -5294,7 +5307,7 @@ runOpening();
         nickname: sanitizeNick(newNick.value), password: $("newPassword").value, state, avatarDataUrl:profileCache[source]?.avatarDataUrl||""
       } });
       if(data.requiresDeveloperCode)showDeveloperCodeStep(data.challenge);
-      else enterAccount(data);
+      else enterAccount(data, undefined, {newAccount:true});
     } catch (error) {
       if (error.code === "nickname_taken") available = false;
       setMsg(newMsg, error.message, "bad");
@@ -5422,6 +5435,7 @@ runOpening();
 
   function onOverlay() {
     fillLocalOptions();
+    $("importProfile").value = "";
     checkedNick = "\0"; available = false;
     updateSignup(); updateLogin();
     resume();
@@ -5453,9 +5467,11 @@ runOpening();
   }
 
   function drawRanking(data) {
-    const first = data.rows[0];
+    const zeroView = data.view === "zero";
+    const first = zeroView ? null : data.rows[0];
     $("rankingChampion").hidden = !first;
-    $("rankingEmpty").hidden = Boolean(first);
+    $("rankingEmpty").hidden = data.rows.length > 0;
+    $("rankingEmpty").textContent = zeroView ? "도토리 0개인 계정이 없어요." : "아직 랭킹에 표시할 기록이 없어요.";
     if (first) {
       $("rankingChampionNick").textContent = first.nickname;
       $("rankingChampionNick").classList.toggle("inspectable-name",Boolean(auth?.developer));
@@ -5467,14 +5483,15 @@ runOpening();
       paintTier($("rankingChampionTier"),tier);
       setNumber($("rankingChampionJump"), first.jumpBestScore ?? 0);
     }
-    $("rankingPlayers").textContent = "전체 " + data.players.toLocaleString("ko-KR") + "명 · 상위 50명";
+    $("rankingPlayers").textContent = (zeroView ? "도토리 0개 계정 " : "랭킹 표시 계정 ") + data.players.toLocaleString("ko-KR") + "명 · 최대 50명 표시";
+    $("rankingOrderHeader").textContent = zeroView ? "번호" : "순위";
     const body = $("rankingRows");
     body.replaceChildren();
     for (const row of data.rows) {
       const tr = document.createElement("tr");
       if (row.nickname === auth?.nickname) tr.classList.add("is-me");
       const rank = document.createElement("td");
-      rank.textContent = row.rank <= 3 ? ["🥇", "🥈", "🥉"][row.rank - 1] : String(row.rank);
+      rank.textContent = !zeroView && row.rank <= 3 ? ["🥇", "🥈", "🥉"][row.rank - 1] : String(row.rank);
       const nick = document.createElement("td");
       const tier=row.trophyRank||tierFor(row.trophies),person=document.createElement("div");person.className="rank-person";
       const frame=document.createElement("span"),photo=document.createElement("img"),fallback=document.createElement("span");
@@ -5494,11 +5511,18 @@ runOpening();
 
   async function loadRanking() {
     const sequence = ++rankingSeq;
-    $("rankingStatus").textContent = "전체 유저의 기록을 불러오고 있어요…";
+    const developerView = adminReady();
+    if (!developerView) zeroOnly = false;
+    $("rankingDeveloperTools").hidden = !developerView;
+    $("rankingZeroOnly").classList.toggle("active", zeroOnly);
+    $("rankingZeroOnly").setAttribute("aria-pressed", String(zeroOnly));
+    $("rankingZeroOnly").textContent = zeroOnly ? "일반 랭킹으로 돌아가기" : "개발자: 도토리 0개 계정 보기";
+    $("rankingStatus").textContent = zeroOnly ? "도토리 0개 계정을 불러오고 있어요…" : "전체 유저의 기록을 불러오고 있어요…";
     $("rankingRefresh").disabled = true;
     try {
       if (ready) { if (inFlight) await inFlight; await flush(); }
-      const data = await api("/api/leaderboard?metric=" + metric, { token: null });
+      const data = await api("/api/leaderboard?metric=" + metric + "&view=" + (zeroOnly ? "zero" : "public"),
+        zeroOnly ? {} : { token: null });
       if (sequence !== rankingSeq) return;
       cachedRanking = data;
       drawRanking(data);
@@ -5539,7 +5563,7 @@ runOpening();
     const resetElsewhere=Boolean(currentNick&&ready&&Number(data.progressEpoch||0)!==progressEpoch);
     if(resetElsewhere){ready=false;conflict=true;status("다른 기기에서 기록이 초기화됐어요. 로그아웃 후 다시 로그인해 주세요.",true);}
     const old=currentNick;
-    if(old&&auth&&data.id===auth.id&&old!==data.nickname){
+    if(old&&ready&&auth&&auth.nickname===old&&data.id===auth.id&&old!==data.nickname){
       backupLocal(old);backupLocal(data.nickname);profiles[data.nickname]=buildSaveData();delete profiles[old];
       if(profileCache[old]){profileCache[data.nickname]=profileCache[old];delete profileCache[old];}
       if(bestCache[old]){bestCache[data.nickname]=bestCache[old];delete bestCache[old];}
@@ -5872,6 +5896,8 @@ runOpening();
       item.append(when,details);detections.append(item);
     }
     $("inspectSuspend").hidden=Boolean(data.suspended);$("inspectUnsuspend").hidden=!data.suspended;
+    $("inspectDelete").disabled=Boolean(data.developer)||data.id===auth?.id;
+    $("inspectDelete").title=data.developer?"개발자 권한을 먼저 해제해 주세요.":"";
     setMsg($("inspectMessage"),"",null);
   }
   async function openInspection(id){
@@ -5897,7 +5923,11 @@ runOpening();
   async function moderate(action){
     if(!adminReady()||!inspectedUser)return;
     const person=inspectedUser;
-    const verb={suspend:"정지",unsuspend:"정지 해제",reset:"초기화"}[action];
+    const verb={suspend:"정지",unsuspend:"정지 해제",reset:"초기화",delete:"영구 삭제"}[action];
+    if(!verb)return;
+    if(action==="delete"&&(person.developer||person.id===auth?.id)){
+      setMsg($("inspectMessage"),"개발자 권한 계정은 먼저 권한을 해제해 주세요.","bad");return;
+    }
     const body={action,confirmNickname:person.nickname};
     if(action==="suspend"){
       body.duration=$("inspectSuspendDuration").value;
@@ -5908,11 +5938,20 @@ runOpening();
         if(!Number.isInteger(body.days)||body.days<1||body.days>3650){setMsg($("inspectMessage"),"정지 기간은 1일부터 3650일까지 입력해 주세요.","bad");return;}
       }
     }
-    const description=action==="suspend"?"\n기간: "+$("inspectSuspendDuration").selectedOptions[0].textContent+(body.duration==="custom"?" ("+body.days+"일)":"")+"\n전달할 메시지:\n"+body.message:action==="reset"?"\n도토리·트로피·점프 최고점수가 초기화됩니다.":"";
+    const description=action==="suspend"?"\n기간: "+$("inspectSuspendDuration").selectedOptions[0].textContent+(body.duration==="custom"?" ("+body.days+"일)":"")+"\n전달할 메시지:\n"+body.message:action==="reset"?"\n도토리·트로피·점프 최고점수가 초기화됩니다.":action==="delete"?"\n닉네임, 기록, 프로필 사진, 로그인 정보가 삭제됩니다. 되돌릴 수 없습니다.":"";
     if(!confirm(person.nickname+" 계정을 "+verb+"하시겠습니까?"+description))return;
-    if(action==="reset"&&prompt("확인하려면 유저의 닉네임을 입력해 주세요.")!==person.nickname)return;
+    if((action==="reset"||action==="delete")&&prompt("확인하려면 유저의 닉네임을 입력해 주세요.")!==person.nickname)return;
+    if(action==="delete")body.confirmDelete=true;
     try{
       const data=await api("/api/developer/users/"+person.id,{method:"POST",body});
+      if(action==="delete"){
+        inspectedUser=null;viewedUser=null;cachedRanking=null;
+        const destination=inspectFrom==="developer"?"developer":"ranking";
+        switchPage(destination);
+        if(destination==="developer")setMsg($("developerMessage"),person.nickname+" 계정을 삭제했어요.","good");
+        else showToast(person.nickname+" 계정을 삭제했어요.");
+        return;
+      }
       renderInspection(data);setMsg($("inspectMessage"),verb+"했어요.","good");
       if(action==="suspend")$("inspectSuspendMessage").value="";
       cachedRanking=null;
@@ -5985,6 +6024,7 @@ runOpening();
   $("inspectSuspend").addEventListener("click",()=>moderate("suspend"));
   $("inspectUnsuspend").addEventListener("click",()=>moderate("unsuspend"));
   $("inspectReset").addEventListener("click",()=>moderate("reset"));
+  $("inspectDelete").addEventListener("click",()=>moderate("delete"));
 
   for (const id of ["newPassword", "confirmPassword"]) $(id).addEventListener("input", updateSignup);
   $("oldPassword").addEventListener("input", () => { setMsg(oldMsg, "", null); updateLogin(); });
@@ -5994,7 +6034,6 @@ runOpening();
   $("confirmPassword").addEventListener("keydown", event => {
     if (event.key === "Enter" && !newStart.disabled) register();
   });
-  $("importProfile").addEventListener("change", () => { importingTouched = true; });
   $("offlineEnter").addEventListener("click", () => {
     if (busy || signingOut) return;
     const nickname = $("offlineProfile").value;
@@ -6009,6 +6048,12 @@ runOpening();
     saveCurrent();offerOfflineIncome();
   });
   $("rankingRefresh").addEventListener("click", loadRanking);
+  $("rankingZeroOnly").addEventListener("click", () => {
+    if (!adminReady()) return;
+    zeroOnly = !zeroOnly;
+    cachedRanking = null;
+    loadRanking();
+  });
   document.querySelectorAll("[data-ranking-metric]").forEach(button => {
     button.addEventListener("click", () => {
       metric = button.dataset.rankingMetric;
